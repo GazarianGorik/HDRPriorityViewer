@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "WwiseHDRTool (Package)": {
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    },
+    "WwiseHDRTool (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -11,7 +11,7 @@
 
     <Grid x:Name="RootGrid" Padding="24" MinWidth="600" MinHeight="400" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.DataContext>
-            <local:GraphViewModel />
+            <local:ChartViewModel />
         </Grid.DataContext>
 
         <!-- Déclaration des lignes -->
@@ -36,9 +36,7 @@
 
         <!-- Section graphique -->
         <lvc:CartesianChart x:Name="chart"
-                            Width="600"  
                             Grid.Row="1"
-                            Series="{Binding GraphViewModel.Series}"
-                            ZoomMode="Y"/>
+                            Series="{Binding ChartViewModel.Series}"/>
     </Grid>
 </Window>

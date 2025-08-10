@@ -6,8 +6,10 @@ using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Newtonsoft.Json.Linq;
 using SkiaSharp;
 using System;
@@ -19,7 +21,10 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.System;
+using Windows.UI.Core;
 using WinRT.Interop;
+using LiveChartsCore.Drawing;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,10 +35,13 @@ namespace WwiseHDRTool
     {
         public static MainWindow Instance { get; private set; } // Permet d'accéder à MainWindow depuis ailleurs
         public MainViewModel MainViewModel { get; } = new MainViewModel();
-        public GraphViewModel GraphViewModel { get; } = new GraphViewModel();
+        public ChartViewModel ChartViewModel { get; } = new ChartViewModel();
         private const string EventsFolderKey = "EventsFolderPath";
         public IntPtr WindowHandle => WindowNative.GetWindowHandle(this);
-        public static DispatcherQueue MainDispatcherQueue { get; private set; }
+        public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue { get; private set; }
+        
+        private bool isCtrlDown = false;
+        private bool isMenuDown = false;
 
         public MainWindow()
         {
@@ -46,8 +54,8 @@ namespace WwiseHDRTool
 
             var xAxis = new Axis
             {
-                MaxLimit =-2,
-                MinLimit = 100
+                /*MaxLimit =-2,
+                MinLimit = 100*/
             };
             var yAxis = new Axis
             {
@@ -57,10 +65,95 @@ namespace WwiseHDRTool
                     StrokeThickness = 0.4f
                 }
             };
-
             chart.XAxes = new List<Axis> { xAxis};
             chart.YAxes = new List<Axis> { yAxis };
 
+            chart.ZoomMode = ZoomAndPanMode.Both;
+
+            RootGrid.KeyDown += KeyDown;
+            RootGrid.KeyUp += KeyUp;
+            this.Activated += AllKeyUp;
+
+            LiveCharts.DefaultSettings.MaxTooltipsAndLegendsLabelsWidth = 1000;
+        }
+
+        private void AllKeyUp(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
+        {
+            if (args.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
+            {
+                Console.WriteLine("All key NOT pressed");
+                chart.ZoomMode = ZoomAndPanMode.Both;
+                isMenuDown = false;
+                isCtrlDown = false;
+            }
+        }
+
+        private void KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            var key = e.Key;
+
+            if (key == VirtualKey.Control)
+            {
+                //First press
+                if (!isCtrlDown)
+                {
+                    chart.ZoomMode = ZoomAndPanMode.Y;
+                    Console.WriteLine("Control key pressed");
+                }
+
+                //Spam
+                isCtrlDown = true;
+            }
+            if (key == VirtualKey.Menu)
+            {
+                //First press
+                if (!isMenuDown)
+                {
+                    chart.ZoomMode = ZoomAndPanMode.X;
+                    Console.WriteLine("Menu key pressed");
+                }
+
+                //Spam
+                isMenuDown = true;
+            }
+        }
+
+        private void KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            var key = e.Key;
+
+            if (key == VirtualKey.Control)
+            {
+                //First press
+                if (isCtrlDown)
+                {
+                    Console.WriteLine("Control key NOT pressed");
+
+                    if (isMenuDown)
+                        chart.ZoomMode = ZoomAndPanMode.X;
+                    else
+                        chart.ZoomMode = ZoomAndPanMode.Both;
+                }
+
+                //Spam
+                isCtrlDown = false;
+            }
+            if (key == VirtualKey.Menu)
+            {
+                //First press
+                if (isMenuDown)
+                {
+                    Console.WriteLine("Menu key NOT pressed");
+
+                    if (isCtrlDown)
+                        chart.ZoomMode = ZoomAndPanMode.Y;
+                    else
+                        chart.ZoomMode = ZoomAndPanMode.Both;
+                }
+
+                //Spam
+                isMenuDown = false;
+            }
         }
 
         private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
@@ -98,16 +191,21 @@ namespace WwiseHDRTool
         {
             new Thread(() =>
             {
-                ProjectDataFetcher.ListSoundObjectsRoutedToHDR().Wait();
+                ChartBridge.ListSoundObjectsRoutedToHDR().Wait();
             }).Start();
         }
 
 
         private ContentDialog _dialog;
         private string _message;
+        private bool isDialogOpen = false;
 
-        private async Task ShowMessageAsync(string title, string message)
+        public async Task ShowMessageAsync(string title, string message)
         {
+            if (isDialogOpen)
+                return;
+
+            isDialogOpen = true;
             _message = message;
 
             var copyButton = new Button
@@ -136,7 +234,10 @@ namespace WwiseHDRTool
                 XamlRoot = this.Content.XamlRoot
             };
 
+
             await _dialog.ShowAsync();
+
+            isDialogOpen = false;
         }
         private void CopyButton_Click(object sender, RoutedEventArgs e)
         {
@@ -154,6 +255,10 @@ namespace WwiseHDRTool
         public CartesianChart GetChart()
         {
             return chart;
+        }
+        public bool IsCtrlDown()
+        {
+            return isCtrlDown;
         }
     }
 }

@@ -1,9 +1,13 @@
 using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
 using LiveChartsCore;
+using LiveChartsCore.Defaults;
+using LiveChartsCore.Drawing;
 using LiveChartsCore.Kernel;
+using LiveChartsCore.Kernel.Events;
 using LiveChartsCore.Kernel.Sketches;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
@@ -24,7 +28,9 @@ using Windows.Storage.Pickers;
 using Windows.System;
 using Windows.UI.Core;
 using WinRT.Interop;
-using LiveChartsCore.Drawing;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -39,7 +45,8 @@ namespace WwiseHDRTool
         private const string EventsFolderKey = "EventsFolderPath";
         public IntPtr WindowHandle => WindowNative.GetWindowHandle(this);
         public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue { get; private set; }
-        
+        IEnumerable<ChartPoint>? chartPointUnderCursor;
+
         private bool isCtrlDown = false;
         private bool isMenuDown = false;
 
@@ -56,35 +63,95 @@ namespace WwiseHDRTool
             {
                 /*MaxLimit =-2,
                 MinLimit = 100*/
+                IsVisible = false
             };
             var yAxis = new Axis
             {
-                Name = "dB",
+                Name = "Priority",
+                NameTextSize = 14,
                 SeparatorsPaint = new SolidColorPaint(SKColors.LightYellow)
                 {
                     StrokeThickness = 0.4f
-                }
+                },
+                NamePaint = new SolidColorPaint(SKColors.LightYellow, 1),
+                LabelsPaint = new SolidColorPaint(SKColors.LightYellow, 1)
             };
             chart.XAxes = new List<Axis> { xAxis};
             chart.YAxes = new List<Axis> { yAxis };
 
             chart.ZoomMode = ZoomAndPanMode.Both;
 
+            chart.HoveredPointsChanged += HoveredPointsChanged;
+            chart.PointerPressed += ChartPointerPressed;
+
             RootGrid.KeyDown += KeyDown;
             RootGrid.KeyUp += KeyUp;
-            this.Activated += AllKeyUp;
+            this.Activated += UpdateAppFocused;
 
             LiveCharts.DefaultSettings.MaxTooltipsAndLegendsLabelsWidth = 1000;
         }
 
-        private void AllKeyUp(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
+        private async void ChartPointerPressed(object sender, PointerRoutedEventArgs e)
         {
+            Console.WriteLine($"Point clicked!");
+
+            // Only open Wwise element if Ctrl is pressed
+            if (!isCtrlDown)
+                return;
+
+            if (chartPointUnderCursor.Count() == 1)
+            {
+                var point = chartPointUnderCursor.Single();
+
+                if (point.Context.DataSource is ErrorPoint errorPoint)
+                {
+                    var meta = errorPoint.MetaData as PointMetaData;
+                    string name = meta?.Name ?? "Unknown";
+                    string wwiseID = meta?.WwiseID ?? "Unknown";
+
+                    Console.WriteLine($"Point cliqué : {name} ({wwiseID})");
+
+                    await WaapiBridge.FocusWwiseWindow();
+                    await WaapiBridge.FindObjectInProjectExplorer(wwiseID);
+                    await WaapiBridge.InspectWwiseObject(wwiseID);
+                }
+            }
+            else
+            {
+                MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
+                {
+                    MainWindow.Instance.ShowMessageAsync("Warning", $"Can't open multiple Wwise objects at once. Please zoom in to select only one.");
+                });
+            }
+        }
+
+        private void HoveredPointsChanged(IChartView chart, IEnumerable<ChartPoint>? newItems, IEnumerable<ChartPoint>? oldItems)
+        {
+            if (newItems == null || !newItems.Any())
+            {
+                chartPointUnderCursor = null;
+                Console.WriteLine("No points under cursor");
+                return;
+            }
+            chartPointUnderCursor = newItems;
+            Console.WriteLine($"Points under cursor: {newItems.Count()}");
+        }
+
+        private void UpdateAppFocused(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
+        {
+            // UNFOCUSED
             if (args.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
             {
                 Console.WriteLine("All key NOT pressed");
                 chart.ZoomMode = ZoomAndPanMode.Both;
                 isMenuDown = false;
                 isCtrlDown = false;
+
+                chartPointUnderCursor = null;
+                Console.WriteLine("No points under cursor");
+            }
+            else // FOCUSED
+            {
             }
         }
 
@@ -208,14 +275,6 @@ namespace WwiseHDRTool
             isDialogOpen = true;
             _message = message;
 
-            var copyButton = new Button
-            {
-                Content = "Copy Error",
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Margin = new Thickness(0, 0, 12, 0),
-                MinWidth = 100
-            };
-            copyButton.Click += CopyButton_Click;
 
             var stackPanel = new StackPanel();
             stackPanel.Children.Add(new TextBlock
@@ -224,26 +283,30 @@ namespace WwiseHDRTool
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 12)
             });
-            stackPanel.Children.Add(copyButton);
 
             _dialog = new ContentDialog
             {
                 Title = title,
                 Content = stackPanel,
+                PrimaryButtonText = "Copy",
                 CloseButtonText = "OK",
                 XamlRoot = this.Content.XamlRoot
             };
 
+            var result = await _dialog.ShowAsync();
 
-            await _dialog.ShowAsync();
-
-            isDialogOpen = false;
-        }
-        private void CopyButton_Click(object sender, RoutedEventArgs e)
-        {
-            var dataPackage = new DataPackage();
-            dataPackage.SetText(_message);
-            Clipboard.SetContent(dataPackage);
+            if (result == ContentDialogResult.Primary)
+            {
+                isDialogOpen = false;
+                // Copier dans le presse-papier
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(message);
+                Clipboard.SetContent(dataPackage);
+            }
+            else
+            {
+                isDialogOpen = false;
+            }
         }
 
         public void SetChartTooltipFilter(ISeries[] whiteListedSeries)

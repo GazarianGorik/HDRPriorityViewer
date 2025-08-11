@@ -395,7 +395,7 @@ namespace WwiseHDRTool
         static async void EnqueueErrorMessage(string type, string message)
         {
             MainWindow.Instance.DispatcherQueue.TryEnqueue(async () => {
-                await MainWindow.Instance.ShowMessageAsync(type, $"Erreur lors de la connexion : {message}");
+                MainWindow.Instance.ShowMessageAsync(type, $"Erreur lors de la connexion : {message}");
             });
         }
     }

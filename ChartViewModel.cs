@@ -1,32 +1,23 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.Defaults;
-using LiveChartsCore.Drawing;
 using LiveChartsCore.Kernel;
 using LiveChartsCore.Kernel.Sketches;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
-using Microsoft.UI.Xaml;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using Windows.System;
-using Windows.UI.Core;
 
 namespace WwiseHDRTool;
 
 public class ChartViewModel : INotifyPropertyChanged
 {
     private ObservableCollection<ISeries> _series;
-    private ScatterSeries<ErrorPoint> _mainSeries;
-
-    public Axis[] XAxes { get; set; }
-    public Axis[] YAxes { get; set; }
+    private ScatterSeries<ObservablePoint> _borderSerie;
 
     public ObservableCollection<ISeries> Series
     {
@@ -40,109 +31,18 @@ public class ChartViewModel : INotifyPropertyChanged
 
     public ChartViewModel()
     {
-        _mainSeries = new ScatterSeries<ErrorPoint>
+        _borderSerie = new ScatterSeries<ObservablePoint>
         {
-            Values = new ObservableCollection<ErrorPoint>(),
-            Fill = new SolidColorPaint(SKColors.Red) { ZIndex = 10 },
-            Stroke = new SolidColorPaint(SKColors.Black) { StrokeThickness = 1.5f },
-            ErrorPaint = new SolidColorPaint(LightenColor(SKColors.Red, 0.1f, 0.6f)) { StrokeThickness = 5 },
-            GeometrySize = 15,
-            YToolTipLabelFormatter = point =>
-            {
-                if (point.Context.DataSource is ErrorPoint errorPoint)
-                {
-                    var myMeta = errorPoint.MetaData as PointMetaData;
-                    return myMeta?.Name.Replace("\r", "").Replace("\n", "") ?? "Unknown";
-                }
-                return "Unknown";
-            },
-            ZIndex = 10
+            GeometrySize = 0,
+            YToolTipLabelFormatter = null,
         };
 
-        // Abonnement à l'événement clic
-        _mainSeries.ChartPointPointerDown += async (chart, point) =>
-        {
-            Console.WriteLine($"Point cliqué !");
-            await OnClickPointOpenWwiseElement(point);
-        };
-
-        Series = new ObservableCollection<ISeries>
-        {
-            _mainSeries
-        };
+        Series = new ObservableCollection<ISeries>{};
     }
 
-    public async Task OnClickPointOpenWwiseElement(ChartPoint point)
-    {
-        if (!MainWindow.Instance.IsCtrlDown())
-            return;
+    private readonly Dictionary<SKColor, ScatterSeries<ErrorPoint>> _seriesByColor = new Dictionary<SKColor, ScatterSeries<ErrorPoint>>(new SKColorEqualityComparer());
 
-        var chart = point.Context.Chart;
-
-        // Valeurs du point cliqué (en unités de données)
-        var xClicked = point.Coordinate.PrimaryValue;
-        var yClicked = point.Coordinate.SecondaryValue;
-
-        // Seuil de proximité en unités de données (à ajuster)
-        double xThreshold = 0.1; // ex : 0.1 unité sur X
-        double yThreshold = 1.0; // ex : 1 unité sur Y
-
-        List<ErrorPoint> pointsNearClicked = new();
-
-        foreach (var series in Series)
-        {
-            foreach (ErrorPoint p in series.Values)
-            {
-                double xDiff = Math.Abs(p.Coordinate.PrimaryValue - xClicked);
-                double yDiff = Math.Abs(p.Coordinate.SecondaryValue- yClicked);
-
-                if (xDiff < xThreshold && yDiff < yThreshold)
-                {
-                    pointsNearClicked.Add(p);
-                }
-            }
-        }
-
-        Console.WriteLine($"Points proches du clic : {pointsNearClicked.Count}");
-
-        // Si plusieurs points se chevauchent, on bloque l'action
-        if (pointsNearClicked.Count > 1)
-        {
-            MainWindow.Instance.DispatcherQueue.TryEnqueue(async () => {
-                await MainWindow.Instance.ShowMessageAsync("Warning", $"Can't open multiple Wwise objects at once. Please zoom in to open only one.");
-            });
-            Console.WriteLine("Plusieurs points proches détectés, clic ignoré.");
-            return;
-        }
-
-        // Sinon on ouvre l’élément Wwise
-        if (point.Context.DataSource is ErrorPoint errorPoint)
-        {
-            var meta = errorPoint.MetaData as PointMetaData;
-            string name = meta?.Name ?? "Unknown";
-            string wwiseID = meta?.WwiseID ?? "Unknown";
-
-            Console.WriteLine($"Point cliqué : {name} ({wwiseID})");
-
-            await WaapiBridge.FocusWwiseWindow();
-            await WaapiBridge.FindObjectInProjectExplorer(wwiseID);
-            await WaapiBridge.InspectWwiseObject(wwiseID);
-        }
-    }
-
-    private readonly Dictionary<SKColor, ScatterSeries<ErrorPoint>> _seriesByColor
-    = new Dictionary<SKColor, ScatterSeries<ErrorPoint>>(new SKColorEqualityComparer());
-
-    public void AddPointWithVerticalError(
-    string name,
-    int index,
-    float volume,
-    float VolumeRTPCMinValue,
-    float VolumeRTPCMaxValue,
-    double pointOffset,
-    float maxLabelOffset,
-    SKColor color,
-    string wwiseID)
+    public void AddPointWithVerticalError(string name, int index, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, double pointOffset, SKColor color, string wwiseID)
     {
         MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
@@ -172,11 +72,6 @@ public class ChartViewModel : INotifyPropertyChanged
                 };
 
                 _seriesByColor[color] = series;
-                series.ChartPointPointerDown += async (chart, point) =>
-                {
-                    Console.WriteLine($"Point cliqué !");
-                    await OnClickPointOpenWwiseElement(point);
-                };
                 Series.Add(series);
             }
 
@@ -191,6 +86,56 @@ public class ChartViewModel : INotifyPropertyChanged
                     }
                 });
         });
+    }
+
+    public void UpdateBorders()
+    {
+        Console.WriteLine("[Info] Updating chart borders...");
+        double maxY = double.MinValue;
+        double maxX = double.MinValue;
+        double minX = double.MaxValue;
+
+        foreach (var s in Series)
+        {
+            if (s.Values is IEnumerable<ErrorPoint> points)
+            {
+                foreach (var p in points)
+                {
+                    double yVal = p.Y ?? double.MinValue;
+                    double xVal = p.X ?? double.MinValue;
+
+                    if (yVal > maxY)
+                        maxY = yVal;
+
+                    if (xVal > maxX)
+                        maxX = xVal;
+
+                    if (xVal < minX)
+                        minX = xVal;
+
+                    if (p.YErrorJ > maxY)
+                        maxY = p.YErrorJ;
+                }
+            }
+        }
+
+        float padding = 0.05f; // 5% padding
+
+        minX = minX - padding;
+        maxX = maxX + padding;
+        maxY = maxY + padding;
+
+
+        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+        {
+            _borderSerie.Values = new ObservableCollection<ObservablePoint>
+            {
+                new ObservablePoint(maxX, maxY),
+                new ObservablePoint(minX, maxY)
+            };
+            Series.Add(_borderSerie);
+        });
+        Console.WriteLine("[Info] Chart borders updated!");
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

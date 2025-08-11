@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -101,25 +102,10 @@ namespace WwiseHDRTool
                 Console.WriteLine($"[Info] {eventsWithActions.Count} Events have Actions routed to HDR.");
 
                 // Préparation pour le tracé
-                var volumeOffsets = new Dictionary<float, int>();
-                int xOffsetDirection = -1;
+                var yMinMaxList = new List<(float, float)>();
+                int xOffsetDirection = 1;
                 int index = 0;
                 int totalColor = routedActions.Count;
-
-                float maxXOffset = float.MinValue;
-                int tempXOffsetCount = 0;
-                int tempXOffsetDirection = -1;
-
-                foreach (var (_, actionsList) in eventsWithActions)
-                {
-                    foreach (var _ in actionsList)
-                    {
-                        tempXOffsetCount++;
-                        float tempXOffset = tempXOffsetCount * tempXOffsetDirection;
-                        if (tempXOffset > maxXOffset)
-                            maxXOffset = tempXOffset;
-                    }
-                }
 
                 // Itération sur les événements
                 foreach (var (evt, actionsList) in eventsWithActions)
@@ -136,22 +122,30 @@ namespace WwiseHDRTool
                         if (WwiseCache.volumeCache.TryGetValue(action.TargetId!, out var volVal) && volVal.HasValue)
                             volume = (float)Math.Round(volVal.Value, 2);
 
-                        var volumeRange = (WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out var vr) ? vr : null);
+                        var volumeRange = (WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out var vr) ? vr : (0,0));
 
-                        // Occurrence / décalage selon le volume
-                        int occurrence = volumeOffsets.TryGetValue(volume, out var existingCount) ? existingCount : 0;
-                        volumeOffsets[volume] = occurrence + 1;
+                        (float, float) yMinMax = (volumeRange.Value.min + volume, volumeRange.Value.max + volume);
+
+                        int occurrence = 0;
+
+                        foreach (var range in yMinMaxList)
+                        {
+                            // Check if the current yMinMax overlaps with any existing range
+                            if (yMinMax.Item1 <= range.Item2 || yMinMax.Item2 >= range.Item1)
+                            {
+                                occurrence++; // Increment occurrence if overlap found
+                            }
+                        }
+
+                        yMinMaxList.Add(yMinMax);
 
                         float volumeMin = 0, volumeMax = 0;
 
                         // Calcul du décalage horizontal (xOffset) selon occurrence, toujours cohérent
                         float xOffset = occurrence * xOffsetDirection;
 
-                        if (volumeRange != null)
-                        {
-                            volumeMin = (float)Math.Round(volumeRange.Value.min, 2);
-                            volumeMax = (float)Math.Round(volumeRange.Value.max, 2);
-                        }
+                        volumeMin = (float)Math.Round(volumeRange.Value.min, 2);
+                        volumeMax = (float)Math.Round(volumeRange.Value.max, 2);
 
                         Console.WriteLine($"    Volume: {volume} | Range: [{volumeMin}, {volumeMax}] | XOffset: {xOffset}");
 
@@ -165,7 +159,6 @@ namespace WwiseHDRTool
                                 volumeMin,
                                 volumeMax,
                                 xOffset,
-                                maxXOffset,
                                 action.Color,
                                 action.TargetId
                             );
@@ -177,6 +170,7 @@ namespace WwiseHDRTool
                     }
                     Console.WriteLine();
                 }
+                MainWindow.Instance.ChartViewModel.UpdateBorders();
             }
             catch (Exception ex)
             {

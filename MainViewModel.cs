@@ -1,21 +1,308 @@
-﻿using System.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
+using LiveChartsCore;
+using LiveChartsCore.Defaults;
+using LiveChartsCore.Drawing;
+using LiveChartsCore.Kernel;
+using LiveChartsCore.Kernel.Events;
+using LiveChartsCore.Kernel.Sketches;
+using LiveChartsCore.Measure;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
+using LiveChartsCore.SkiaSharpView.Painting;
+using Microsoft.UI;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Newtonsoft.Json.Linq;
+using SkiaSharp;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using Windows.System;
+using Windows.UI.Core;
+using WinRT.Interop;
 
-public class MainViewModel : INotifyPropertyChanged
+namespace WwiseHDRTool;
+
+public partial class MainViewModel : ObservableObject
 {
+    public ChartViewModel ChartViewModel { get; }
+
+    [ObservableProperty]
     private bool isButtonEnabled = false;
 
-    public bool IsButtonEnabled
-    {
-        get => isButtonEnabled;
-        set
-        {
-            isButtonEnabled = value;
-            OnPropertyChanged(nameof(IsButtonEnabled));
-        }
-    }
+    [ObservableProperty]
+    private string searchText = string.Empty;
+
+    public ObservableCollection<string> SearchSuggestions { get; } = new();
+
+    public ObservableCollection<ButtonData> CategorieFilterButtons { get; } = new();
+
+    public ObservableCollection<SearchItemViewModel> SearchItems { get; } = new();
+
+    public IRelayCommand<SearchItemViewModel> RemoveSearchItemCommand { get; }
 
     public event PropertyChangedEventHandler PropertyChanged;
     private void OnPropertyChanged(string propertyName)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
+    public List<string> Searches = new List<string>();
+
+    public MainViewModel()
+    {
+        Console.WriteLine("[Info] Initializing MainViewModel...");
+        ChartViewModel = new ChartViewModel();
+        RemoveSearchItemCommand = new RelayCommand<SearchItemViewModel>(RemoveSearchItem);
+
+        SearchItems.Add(new SearchItemViewModel());
+    }
+
+    private void RemoveSearchItem(SearchItemViewModel item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.PreviousValideText))
+        {
+            if (Searches.Contains(item.PreviousValideText))
+            {
+                Searches.Remove(item.PreviousValideText);
+            }
+            ChartViewModel.DehighlightPointByName(item.PreviousValideText);
+        }
+
+        if (SearchItems.Contains(item))
+            SearchItems.Remove(item);
+    }
+
+    private void AddSearchItem(SearchItemViewModel item)
+    {
+        // 1. Déhighlight si ce SearchItem avait déjà un point
+        if (!string.IsNullOrEmpty(item.PreviousValideText))
+            ChartViewModel.DehighlightPointByName(item.PreviousValideText);
+
+        var trimmedText = item.Text.Trim();
+
+        // 2. Toujours highlight le nouveau point pour ce SearchItem
+        ChartViewModel.HighlightPointByName(trimmedText);
+        item.PreviousValideText = trimmedText;
+
+        // 3. Ajouter à la liste globale si c’est un nouveau terme
+        if (!Searches.Contains(trimmedText))
+        {
+            if (item == SearchItems.Last())
+                SearchItems.Add(new SearchItemViewModel());
+
+            Searches.Add(trimmedText);
+        }
+    }
+
+
+    public void ValidateSearchItem(SearchItemViewModel item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.Text))
+        {
+            AddSearchItem(item);
+        }
+        else
+        {
+            if (SearchItems.Count > 1)
+            {
+                RemoveSearchItem(item);
+            }
+        }
+    }
+
+    public void UpdateSuggestions(SearchItemViewModel item)
+    {
+        SearchSuggestions.Clear();
+
+        if (!string.IsNullOrWhiteSpace(item.Text))
+        {
+            var matches = WwiseCache.allAudioObjectsName
+                .Where(n =>
+                    n.Contains(item.Text, StringComparison.OrdinalIgnoreCase) &&
+                    !n.Equals(item.Text, StringComparison.OrdinalIgnoreCase) // exclut l'identique
+                );
+
+            foreach (var m in matches)
+                SearchSuggestions.Add(m);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConnectToWwise()
+    {
+        Console.WriteLine("[Info] Attempting to connect to Wwise...");
+        try
+        {
+            await WaapiBridge.ConnectToWwise();
+        }
+        catch (Exception ex)
+        {
+            await MainWindow.Instance.ShowMessageAsync("Erreur", ex.Message);
+        }
+    }
+
+    [RelayCommand]
+    public void HideShowSeries(ButtonData btnData)
+    {
+        ChartViewModel._seriesByParentData.TryGetValue(btnData.ParentData, out var selectedSeries);
+
+        if (selectedSeries.IsVisible)
+        {
+            selectedSeries.IsVisible = false;
+            selectedSeries.ErrorPaint = null;
+            btnData.Background = new SolidColorBrush(Colors.LightCoral);
+        }
+        else
+        {
+            selectedSeries.IsVisible = true;
+            selectedSeries.ErrorPaint = new SolidColorPaint(
+                Utility.LightenColor(btnData.ParentData.Color, 0.1f, 0.6f)
+            )
+            { StrokeThickness = 2 };
+            btnData.Background = new SolidColorBrush(Colors.LightGreen);
+        }
+
+        ChartViewModel.RepositionPointsWithoutOverlap();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteValider))]
+    private void ListSoundObjectsRoutedToHDR()
+    {
+        new Thread(() =>
+        {
+            ChartBridge.ListSoundObjectsRoutedToHDR().Wait();
+        }).Start();
+    }
+
+    public void AddCategorieFilterButton(ParentData parentData)
+    {
+        Console.WriteLine($"[Info] Adding dynamic button: {parentData.Name}");
+
+        var btnData = new ButtonData
+        {
+            Background = new SolidColorBrush(Colors.LightGreen)
+        };
+
+        // Maintenant on peut utiliser btnData dans la lambda sans problème
+        btnData.ParentData = parentData;
+        btnData.Command = new RelayCommand(() => HideShowSeries(btnData));
+
+        btnData.Label = $"{char.ToUpper(parentData.Name[0]) + parentData.Name.Substring(1)}";
+
+        CategorieFilterButtons.Add(btnData);
+    }
+
+    private bool CanExecuteValider()
+    {
+        return isButtonEnabled;
+    }
+
+    partial void OnIsButtonEnabledChanged(bool oldValue, bool newValue)
+    {
+        ListSoundObjectsRoutedToHDRCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSearchTextChanged(string value)
+    {
+        Console.WriteLine($"[Info] SearchText changed: {value}");
+        SearchSuggestions.Clear();
+
+        // Split by ';' and trim spaces
+        var terms = value.Split(';')
+                         .Select(t => t.Trim())
+                         .Where(t => !string.IsNullOrWhiteSpace(t))
+                         .ToList();
+
+        // Get the last term (the one being edited)
+        var activeTerm = terms.Count > 0 ? terms.Last() : string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(activeTerm))
+        {
+            var matches = WwiseCache.allAudioObjectsName
+                .Where(n =>
+                    !terms.Contains(n, StringComparer.OrdinalIgnoreCase) && // Exclude already selected terms
+                    n.Contains(activeTerm, StringComparison.OrdinalIgnoreCase))
+                .Take(10);
+
+            foreach (var match in matches)
+                SearchSuggestions.Add(match);
+        }
+    }
+}
+
+public class ButtonData : ObservableObject
+{
+    private ParentData _parentData;
+    public ParentData ParentData
+    {
+        get => _parentData;
+        set => SetProperty(ref _parentData, value);
+    }
+
+    private string _label;
+    public string Label
+    {
+        get => _label;
+        set => SetProperty(ref _label, value);
+    }
+
+    private Brush _background;
+    public Brush Background
+    {
+        get => _background;
+        set => SetProperty(ref _background, value);
+    }
+
+    public ICommand Command { get; set; }
+}
+
+public class BoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is bool b)
+            return b ? Visibility.Visible : Visibility.Collapsed;
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        if (value is Visibility v)
+            return v == Visibility.Visible;
+        return false;
+    }
+}
+
+public class SearchItemViewModel : ObservableObject
+{
+    private string _text;
+    public string Text
+    {
+        get => _text;
+        set => SetProperty(ref _text, value);
+    }
+
+    private string _previousValideText;
+    public string PreviousValideText
+    {
+        get => _previousValideText;
+        set => SetProperty(ref _previousValideText, value);
+    }
 }

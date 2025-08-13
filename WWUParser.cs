@@ -101,8 +101,7 @@ namespace WwiseHDRTool
                                     IDsAddedToChart.Add(targetId);
 
                                     var targetName = objectRef.Attribute("Name")?.Value;
-                                    var colorCode = GetInheritedColorCode(objectRef);
-                                    var color = colorCode.HasValue ? GetSkColorFromWwiseCode(colorCode.Value) : new SKColor(128, 128, 128);
+                                    ParentData parentData = GetInheritedParentData(objectRef);
 
                                     actionsWithTargets.Add(new WwiseAction
                                     {
@@ -111,10 +110,10 @@ namespace WwiseHDRTool
                                         Path = eventPath,
                                         TargetId = targetId,
                                         TargetName = targetName,
-                                        Color = color
+                                        ParentData = parentData
                                     });
 
-                                    Console.WriteLine($"[Info] Found target '{objectRef.Attribute("Name")?.Value}' with color {colorCode}");
+                                    Console.WriteLine($"[Info] Found target '{objectRef.Attribute("Name")?.Value}' (Parent: {parentData.Name} with color {parentData.Color}");
                                 }
                             }
                         }
@@ -139,8 +138,14 @@ namespace WwiseHDRTool
             return new SKColor(200, 200, 200); // défaut
         }
 
-        private static int? GetInheritedColorCode(XElement element)
+        private static ParentData GetInheritedParentData(XElement element)
         {
+            ParentData parentData = new ParentData
+            {
+                Name = "[NONE]",
+                Color = new SKColor(200, 200, 200)
+            };
+
             XElement current = element;
 
             while (current != null)
@@ -160,19 +165,24 @@ namespace WwiseHDRTool
                     {
                         if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
                         {
-                            return colorCode; // couleur définie localement
+                            // Retourne la couleur + nom du parent qui a override
+                            var nameAttr = current.Attribute("Name")?.Value;
+
+                            parentData.Color = GetSkColorFromWwiseCode(colorCode);
+                            parentData.Name = nameAttr ?? "[NONE]";
+                            
+                            return parentData;
                         }
-                        // si pas d'override, on garde la valeur mais on continue à remonter au cas où un parent override
-                        if (!string.IsNullOrEmpty(colorProp) && int.TryParse(colorProp, out colorCode))
-                        {
-                            return colorCode;
-                        }
+                        // Si pas override, on garde la couleur mais pas le nom
+                        parentData.Color = GetSkColorFromWwiseCode(colorCode);
+                        parentData.Name = "[NONE]";
+                        return parentData;
                     }
                 }
                 current = current.Parent;
             }
 
-            return null;
+            return parentData;
         }
 
         /// <summary>

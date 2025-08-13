@@ -1,36 +1,23 @@
 using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
-using LiveChartsCore.Drawing;
 using LiveChartsCore.Kernel;
-using LiveChartsCore.Kernel.Events;
 using LiveChartsCore.Kernel.Sketches;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 using LiveChartsCore.SkiaSharpView.Painting;
-using Microsoft.UI.Dispatching;
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Newtonsoft.Json.Linq;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage;
-using Windows.Storage.Pickers;
 using Windows.System;
-using Windows.UI.Core;
 using WinRT.Interop;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -41,8 +28,6 @@ namespace WwiseHDRTool
     {
         public static MainWindow Instance { get; private set; } // Permet d'accéder à MainWindow depuis ailleurs
         public MainViewModel MainViewModel { get; } = new MainViewModel();
-        public ChartViewModel ChartViewModel { get; } = new ChartViewModel();
-        private const string EventsFolderKey = "EventsFolderPath";
         public IntPtr WindowHandle => WindowNative.GetWindowHandle(this);
         public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue { get; private set; }
         IEnumerable<ChartPoint>? chartPointUnderCursor;
@@ -53,21 +38,23 @@ namespace WwiseHDRTool
         public MainWindow()
         {
             this.InitializeComponent();
+
             Instance = this;
+
+            RootGrid.DataContext = MainViewModel;
+
             this.AppWindow.Resize(new Windows.Graphics.SizeInt32(800, 600));
             this.AppWindow.Closing += AppWindow_Closing;
-            RootGrid.DataContext = this;
+
             MainDispatcherQueue = this.DispatcherQueue;
 
             var xAxis = new Axis
             {
-                /*MaxLimit =-2,
-                MinLimit = 100*/
                 IsVisible = false
             };
             var yAxis = new Axis
             {
-                Name = "Priority",
+                Name = "HDR Priority",
                 NameTextSize = 14,
                 SeparatorsPaint = new SolidColorPaint(SKColors.LightYellow)
                 {
@@ -76,7 +63,7 @@ namespace WwiseHDRTool
                 NamePaint = new SolidColorPaint(SKColors.LightYellow, 1),
                 LabelsPaint = new SolidColorPaint(SKColors.LightYellow, 1)
             };
-            chart.XAxes = new List<Axis> { xAxis};
+            chart.XAxes = new List<Axis> { xAxis };
             chart.YAxes = new List<Axis> { yAxis };
 
             chart.ZoomMode = ZoomAndPanMode.Both;
@@ -86,6 +73,8 @@ namespace WwiseHDRTool
 
             RootGrid.KeyDown += KeyDown;
             RootGrid.KeyUp += KeyUp;
+            RootGrid.PointerPressed += RootGrid_PointerPressed;
+
             this.Activated += UpdateAppFocused;
 
             LiveCharts.DefaultSettings.MaxTooltipsAndLegendsLabelsWidth = 1000;
@@ -125,30 +114,84 @@ namespace WwiseHDRTool
             }
         }
 
+        private IEnumerable<ChartPoint>? lastNewItems = null;
+
         private void HoveredPointsChanged(IChartView chart, IEnumerable<ChartPoint>? newItems, IEnumerable<ChartPoint>? oldItems)
         {
             if (newItems == null || !newItems.Any())
             {
                 chartPointUnderCursor = null;
-                Console.WriteLine("No points under cursor");
+                MainViewModel.ChartViewModel.UnmakeClickablePointByName();
+                lastNewItems = null;
                 return;
             }
+
+            // Vérifier si newItems a les mêmes coordonnées que lastNewItems
+            bool isSamePoints = false;
+            if (lastNewItems != null)
+            {
+                var newCoords = newItems
+                    .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
+                    .OrderBy(t => t.PrimaryValue)
+                    .ThenBy(t => t.SecondaryValue)
+                    .ToList();
+
+                var lastCoords = lastNewItems
+                    .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
+                    .OrderBy(t => t.PrimaryValue)
+                    .ThenBy(t => t.SecondaryValue)
+                    .ToList();
+
+                // Comparaison avec tolérance
+                const double tolerance = 0.0001;
+                isSamePoints = newCoords.Count == lastCoords.Count &&
+                               newCoords.Zip(lastCoords, (a, b) =>
+                                   Math.Abs(a.PrimaryValue - b.PrimaryValue) < tolerance &&
+                                   Math.Abs(a.SecondaryValue - b.SecondaryValue) < tolerance
+                               ).All(equal => equal);
+            }
+
+            if (isSamePoints)
+            {
+                // Même point(s), pas besoin de faire quoi que ce soit
+                return;
+            }
+
+            // Sinon on met à jour le cache et on traite
+            lastNewItems = newItems.ToList();
             chartPointUnderCursor = newItems;
-            Console.WriteLine($"Points under cursor: {newItems.Count()}");
+
+            if (isCtrlDown)
+            {
+                var chartPoint = newItems.FirstOrDefault();
+                if (chartPoint?.Context.DataSource is ErrorPoint ep)
+                {
+                    var pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
+                    if (!string.IsNullOrEmpty(pointName))
+                    {
+                        MainViewModel.ChartViewModel.MakeClickablePointByName(chartPoint?.Context.DataSource as ErrorPoint);
+                    }
+                }
+            }
+            else
+            {
+                MainViewModel.ChartViewModel.UnmakeClickablePointByName();
+            }
         }
+
+
+
 
         private void UpdateAppFocused(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
             // UNFOCUSED
             if (args.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
             {
-                Console.WriteLine("All key NOT pressed");
                 chart.ZoomMode = ZoomAndPanMode.Both;
                 isMenuDown = false;
                 isCtrlDown = false;
 
                 chartPointUnderCursor = null;
-                Console.WriteLine("No points under cursor");
             }
             else // FOCUSED
             {
@@ -238,30 +281,6 @@ namespace WwiseHDRTool
             }).Start();
         }
 
-        private async void Button_ConnectToWwise(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                await Task.Run(async () =>
-                {
-                    await WaapiBridge.ConnectToWwise();
-                });
-            }
-            catch (Exception ex)
-            {
-                await ShowMessageAsync("Erreur", ex.Message);
-            }
-        }
-
-
-        private void Button_ListSoundObjectsRoutedToHDR(object sender, RoutedEventArgs e)
-        {
-            new Thread(() =>
-            {
-                ChartBridge.ListSoundObjectsRoutedToHDR().Wait();
-            }).Start();
-        }
-
 
         private ContentDialog _dialog;
         private string _message;
@@ -309,12 +328,6 @@ namespace WwiseHDRTool
             }
         }
 
-        public void SetChartTooltipFilter(ISeries[] whiteListedSeries)
-        {
-            var defaultTooltip = chart.Tooltip;
-            chart.Tooltip = new FilteredTooltip(defaultTooltip, whiteListedSeries);
-        }
-
         public CartesianChart GetChart()
         {
             return chart;
@@ -323,36 +336,86 @@ namespace WwiseHDRTool
         {
             return isCtrlDown;
         }
-    }
-}
 
-public class FilteredTooltip : IChartTooltip
-{
-    private readonly IChartTooltip _innerTooltip;
-    private readonly ISeries[] _excludedSeries;
-
-    public FilteredTooltip(IChartTooltip innerTooltip, params ISeries[] excludedSeries)
-    {
-        _innerTooltip = innerTooltip ?? throw new ArgumentNullException(nameof(innerTooltip));
-        _excludedSeries = excludedSeries ?? Array.Empty<ISeries>();
-    }
-
-    public TooltipFindingStrategy TooltipFindingStrategy { get; set; } = TooltipFindingStrategy.Automatic;
-
-    public void Show(IEnumerable<ChartPoint> points, Chart chart)
-    {
-        if (points.Any(p => _excludedSeries.Contains(p.Context.Series)))
+        private void SearchField_KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            Hide(chart);
+            if (sender is TextBox tb && tb.DataContext is SearchItemViewModel item)
+            {
+                if (e.Key == VirtualKey.Enter)
+                {
+                    MainViewModel.ValidateSearchItem(item);
+                }
+            }
         }
-        else
-        {
-            _innerTooltip.Show(points, chart);
-        }
-    }
 
-    public void Hide(Chart chart)
-    {
-        _innerTooltip.Hide(chart);
+        private void SehField_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb && tb.DataContext is SearchItemViewModel item)
+            {
+                MainViewModel.ValidateSearchItem(item);
+            }
+        }
+
+        private SearchItemViewModel _lastFocusedItem;
+
+        private void SearchField_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb && tb.DataContext is SearchItemViewModel item)
+            {
+                _lastFocusedItem = item;
+            }
+        }
+
+        private void RootGrid_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (SuggestionsPopup.IsOpen)
+                SuggestionsPopup.IsOpen = false;
+        }
+
+        private void SearchSuggestionSelected(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ListBox lb && lb.SelectedItem is string selected && _lastFocusedItem != null)
+            {
+                // Mettre la suggestion dans le champ actif
+                _lastFocusedItem.Text = selected;
+
+                // Valider l'élément (ce qui créera un nouveau champ si besoin)
+                MainViewModel.ValidateSearchItem(_lastFocusedItem);
+
+                // Fermer le popup
+                lb.SelectedItem = null;
+                SuggestionsPopup.IsOpen = false;
+            }
+        }
+
+        private void SearchField_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox tb && tb.DataContext is SearchItemViewModel item)
+            {
+                MainViewModel.UpdateSuggestions(item);
+
+                if (MainViewModel.SearchSuggestions.Count > 0)
+                {
+                    tb.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        var transform = tb.TransformToVisual(RootGrid);
+                        var position = transform.TransformPoint(new Windows.Foundation.Point(0, tb.ActualHeight));
+
+                        var padding = RootGrid.Padding;
+                        SuggestionsPopup.HorizontalOffset = position.X - padding.Left;
+                        SuggestionsPopup.VerticalOffset = position.Y - padding.Top;
+
+                        if (SuggestionsPopup.Child is FrameworkElement popupChild)
+                            popupChild.Width = tb.ActualWidth;
+
+                        SuggestionsPopup.IsOpen = true;
+                    });
+                }
+                else
+                {
+                    SuggestionsPopup.IsOpen = false;
+                }
+            }
+        }
     }
 }

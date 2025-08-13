@@ -7,6 +7,34 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
+using LiveChartsCore;
+using LiveChartsCore.Defaults;
+using LiveChartsCore.Drawing;
+using LiveChartsCore.Kernel;
+using LiveChartsCore.Kernel.Events;
+using LiveChartsCore.Kernel.Sketches;
+using LiveChartsCore.Measure;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
+using LiveChartsCore.SkiaSharpView.Painting;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using SkiaSharp;
+using System.Runtime.InteropServices;
+using System.Threading;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using Windows.System;
+using Windows.UI.Core;
+using WinRT.Interop;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace WwiseHDRTool
 {
@@ -23,6 +51,8 @@ namespace WwiseHDRTool
                 await client.Connect();
                 ConnectedToWwise = true;
 
+                Console.WriteLine("[Info] Connected to Wwise !");
+
                 MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
                 MainWindow.Instance.MainViewModel.IsButtonEnabled = true);
 
@@ -30,7 +60,7 @@ namespace WwiseHDRTool
 
                 client.Disconnected += () =>
                 {
-                    Console.WriteLine("Connexion perdue !");
+                    Console.Error.WriteLine("Lost connection to Wwise!");
                     ConnectedToWwise = false;
 
                     MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
@@ -395,7 +425,7 @@ namespace WwiseHDRTool
         static async void EnqueueErrorMessage(string type, string message)
         {
             MainWindow.Instance.DispatcherQueue.TryEnqueue(async () => {
-                MainWindow.Instance.ShowMessageAsync(type, $"Erreur lors de la connexion : {message}");
+                await MainWindow.Instance.ShowMessageAsync(type, $"Erreur lors de la connexion : {message}");
             });
         }
     }

@@ -10,11 +10,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace WwiseHDRTool;
 
-public class ChartViewModel : INotifyPropertyChanged
+public partial class ChartViewModel : INotifyPropertyChanged
 {
     private ObservableCollection<ISeries> _series;
     private ScatterSeries<ObservablePoint> _borderSerie;
@@ -37,12 +38,12 @@ public class ChartViewModel : INotifyPropertyChanged
             YToolTipLabelFormatter = null,
         };
 
-        Series = new ObservableCollection<ISeries>{};
+        Series = new ObservableCollection<ISeries> { };
     }
 
-    private readonly Dictionary<SKColor, ScatterSeries<ErrorPoint>> _seriesByColor = new Dictionary<SKColor, ScatterSeries<ErrorPoint>>(new SKColorEqualityComparer());
+    public Dictionary<ParentData, ScatterSeries<ErrorPoint>> _seriesByParentData = new Dictionary<ParentData, ScatterSeries<ErrorPoint>>(new ParentDataEqualityComparer());
 
-    public void AddPointWithVerticalError(string name, int index, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, double pointOffset, SKColor color, string wwiseID)
+    public void AddPointWithVerticalError(string name, int index, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, double pointOffset, ParentData parentData, string wwiseID)
     {
         MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
@@ -50,15 +51,16 @@ public class ChartViewModel : INotifyPropertyChanged
             double totalXOffset = 0 + pointOffset * xOffsetStep;
 
             // Si on n’a pas encore une série pour cette couleur, on la crée
-            if (!_seriesByColor.TryGetValue(color, out var series))
+            if (!_seriesByParentData.TryGetValue(parentData, out var series))
             {
                 series = new ScatterSeries<ErrorPoint>
                 {
+                    Name = parentData.Name,
                     Values = new ObservableCollection<ErrorPoint>(),
-                    Fill = new SolidColorPaint(color) { ZIndex = 10 },
-                    Stroke = new SolidColorPaint(SKColors.Black) { StrokeThickness = 1.5f },
-                    ErrorPaint = new SolidColorPaint(LightenColor(color, 0.1f, 0.6f)) { StrokeThickness = 2 },
-                    GeometrySize = 15,
+                    Fill = new SolidColorPaint(parentData.Color) { ZIndex = 10 },
+                    Stroke = AppSettings.chartPointStroke,
+                    ErrorPaint = AppSettings.chartPointError(parentData.Color),
+                    GeometrySize = AppSettings.chartPointSize,
                     YToolTipLabelFormatter = point =>
                     {
                         if (point.Context.DataSource is ErrorPoint errorPoint)
@@ -71,8 +73,9 @@ public class ChartViewModel : INotifyPropertyChanged
                     ZIndex = 10
                 };
 
-                _seriesByColor[color] = series;
+                _seriesByParentData[parentData] = series;
                 Series.Add(series);
+                MainWindow.Instance.MainViewModel.AddCategorieFilterButton(parentData);
             }
 
             // Ajoute le point à la bonne série
@@ -86,6 +89,207 @@ public class ChartViewModel : INotifyPropertyChanged
                     }
                 });
         });
+    }
+
+
+    // Ajoute dans ta classe un dictionnaire pour gérer les highlights par nom
+    private readonly Dictionary<string, ScatterSeries<ErrorPoint>> _highlightSeriesByName = new();
+
+    public void HighlightPointByName(string pointName)
+    {
+        Console.WriteLine($"[Info] Highlighting {pointName}...");
+
+        // Si on a déjà highlight ce pointName, on ne fait rien pour éviter doublons
+        if (_highlightSeriesByName.ContainsKey(pointName))
+        {
+            Console.WriteLine($"[Info] Point '{pointName}' already highlighted.");
+            return;
+        }
+
+        var pointsToHighlight = new List<ErrorPoint>();
+
+        // Parcourir toutes les séries (y compris les highlights déjà ajoutés)
+        var baseSeries = Series.ToList();
+
+        foreach (var s in baseSeries)
+        {
+            if (s is ScatterSeries<ErrorPoint> scatterSeries)
+            {
+                foreach (var pt in scatterSeries.Values)
+                {
+                    string ptNameWithoutOtherData = "";
+                    PointMetaData md = new PointMetaData();
+
+                    if (pt.MetaData is PointMetaData pointMetaData)
+                    {
+                        md = pointMetaData;
+                        ptNameWithoutOtherData = md.Name.Split(':')[0].Trim(); ;
+                    }
+
+                    if (!String.IsNullOrEmpty(ptNameWithoutOtherData) && ptNameWithoutOtherData == pointName)
+                    {
+                        pointsToHighlight.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
+                        {
+                            MetaData = new PointMetaData
+                            {
+                                Name = md.Name,
+                                WwiseID = md.WwiseID
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        if (pointsToHighlight.Count > 0)
+        {
+            var highlightSeries = new ScatterSeries<ErrorPoint>
+            {
+                Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
+                Fill = null,
+                Stroke = AppSettings.chartPointHighlightedStroke,
+                GeometrySize = 20,
+                ZIndex = 50,
+                DataLabelsSize = AppSettings.chartPointHighlightedDataLabelsSize,
+                DataLabelsPaint = new SolidColorPaint(SKColors.White),
+                DataLabelsFormatter = cp =>
+                {
+                    if (cp.Context.DataSource is ErrorPoint ep &&
+                        ep.MetaData is PointMetaData md)
+                        return md.Name.Split(':')[0];
+                    return "";
+                },
+                XToolTipLabelFormatter = _ => "",
+                YToolTipLabelFormatter = _ => "",
+            };
+
+            Series.Add(highlightSeries);
+
+            // Stocker la série par nom pour éviter doublons
+            _highlightSeriesByName[pointName] = highlightSeries;
+
+            Console.WriteLine($"[Info] Point '{pointName}' highlighted with {pointsToHighlight.Count} points.");
+        }
+        else
+        {
+            Console.WriteLine($"[Info] Aucun point trouvé avec le nom '{pointName}'.");
+        }
+    }
+
+
+    public void DehighlightPointByName(string pointName)
+    {
+        Console.WriteLine($"[Info] Dehighlighting {pointName}...");
+
+        // On va chercher les séries highlight associées au pointName
+        if (_highlightSeriesByName.TryGetValue(pointName, out var highlightSeries))
+        {
+            // Retirer la série du chart et de la collection
+            Series.Remove(highlightSeries);
+            _highlightSeriesByName.Remove(pointName);
+
+            Console.WriteLine($"[Info] Highlight removed for point '{pointName}'.");
+        }
+        else
+        {
+            Console.WriteLine($"[Info] No highlight found for point '{pointName}'.");
+        }
+    }
+
+    // Ajoute dans ta classe un dictionnaire pour gérer les highlights par nom
+    private ScatterSeries<ErrorPoint> _clickableSerieByName = new();
+
+    public void MakeClickablePointByName(ErrorPoint point)
+    {
+        string pointName = (point.MetaData as PointMetaData).Name;
+
+        UnmakeClickablePointByName();
+
+        Console.WriteLine($"[Info] Making clickable '{pointName}'...");
+
+        var pointsToHighlight = new List<ErrorPoint>();
+
+        // Parcourir toutes les séries (y compris les highlights déjà ajoutés)
+        var baseSeries = Series.ToList();
+
+        foreach (var s in baseSeries)
+        {
+            if (s is ScatterSeries<ErrorPoint> scatterSeries)
+            {
+                foreach (var pt in scatterSeries.Values)
+                {
+                    string ptNameWithoutOtherData = "";
+                    PointMetaData md = new PointMetaData();
+
+                    if (pt == point)
+                    {
+                        SKColor color = SKColors.Red;
+
+                        if (scatterSeries.Fill is SolidColorPaint solidColorPaint)
+                        {
+                            color = solidColorPaint.Color;
+                            // Tu peux utiliser color ici
+                            Console.WriteLine($"Couleur: {color}");
+                        }
+
+                        pointsToHighlight.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
+                        {
+                            MetaData = new PointMetaData
+                            {
+                                Name = md.Name,
+                                WwiseID = md.WwiseID,
+                                SerieColor = color
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        if (pointsToHighlight.Count > 0)
+        {
+            var clickableSeries = new ScatterSeries<ErrorPoint>
+            {
+                AnimationsSpeed = TimeSpan.FromMilliseconds(100),
+                Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
+                Fill = AppSettings.chartPointClickableFill((pointsToHighlight[0]?.MetaData as PointMetaData).SerieColor),
+                GeometrySize = AppSettings.chartPointClickabeSize,
+                ZIndex = 50,
+                XToolTipLabelFormatter = _ => "",
+                YToolTipLabelFormatter = _ => "",
+            };
+
+            Series.Add(clickableSeries);
+
+            // Stocker la série par nom pour éviter doublons
+            _clickableSerieByName = clickableSeries;
+
+            Console.WriteLine($"[Info] Point '{pointName}' Clickable with {pointsToHighlight.Count} points.");
+        }
+        else
+        {
+            Console.WriteLine($"[Info] Aucun point trouvé avec le nom '{pointName}'.");
+        }
+    }
+
+
+    public void UnmakeClickablePointByName()
+    {
+        Console.WriteLine($"[Info] UnmakeClickable...");
+
+        // On va chercher les séries highlight associées au pointName
+        if (_clickableSerieByName != null)
+        {
+            // Retirer la série du chart et de la collection
+            Series.Remove(_clickableSerieByName);
+            _clickableSerieByName = null;
+
+            Console.WriteLine($"[Info] Clickable removed for point.");
+        }
+        else
+        {
+            Console.WriteLine($"[Info] No Clickable found for point.");
+        }
     }
 
     public void UpdateBorders()
@@ -138,36 +342,59 @@ public class ChartViewModel : INotifyPropertyChanged
         Console.WriteLine("[Info] Chart borders updated!");
     }
 
+    // --- Nouvelle méthode à appeler pour repositionner les points (sans chevauchement)
+    public void RepositionPointsWithoutOverlap()
+    {
+        // Exemple simplifié, à adapter selon ta logique d'origine :
+        var yMinMaxList = new List<(double?, double?)>();
+        int xOffsetDirection = 1;
+
+        var points = GetAllPoints();
+
+        foreach (var point in points)
+        {
+            var yMinMax = (point.YErrorI + point.Y, point.YErrorJ + point.Y);
+
+            int occurrence = 0;
+            foreach (var range in yMinMaxList)
+            {
+                if (yMinMax.Item1 <= range.Item2 || yMinMax.Item2 >= range.Item1)
+                {
+                    occurrence++;
+                }
+            }
+
+            yMinMaxList.Add(yMinMax);
+
+            float xOffset = occurrence * xOffsetDirection;
+
+            // Update point position dans le graphique
+            point.X = xOffset;
+        }
+    }
+
+    public IEnumerable<ErrorPoint> GetAllPoints()
+    {
+        foreach (var series in Series)
+        {
+            if (series is ScatterSeries<ErrorPoint> errorSeries)
+            {
+                if (series.IsVisible)
+                {
+                    foreach (var point in errorSeries.Values)
+                    {
+                        yield return point;
+                    }
+                }
+            }
+        }
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-    SKColor LightenColor(SKColor color, float vanished = 0.3f, float transparency = 0f, bool invert = false)
-    {
-        // Clamp des valeurs pour éviter les débordements
-        vanished = Math.Clamp(vanished, 0f, 1f);
-        transparency = Math.Clamp(Math.Abs(1 - transparency), 0f, 1f);
-
-        // Inversion des couleurs si demandé
-        if (invert)
-        {
-            color = new SKColor(
-                (byte)(255 - color.Red),
-                (byte)(255 - color.Green),
-                (byte)(255 - color.Blue),
-                color.Alpha // On garde l'alpha original ici
-            );
-        }
-
-        // Application de l'éclaircissement
-        byte r = (byte)(color.Red + (255 - color.Red) * vanished);
-        byte g = (byte)(color.Green + (255 - color.Green) * vanished);
-        byte b = (byte)(color.Blue + (255 - color.Blue) * vanished);
-        byte a = (byte)(255 * transparency);
-
-        return new SKColor(r, g, b, a);
-    }
 }
 
 public class NoTooltip : IChartTooltip, IDisposable
@@ -192,16 +419,37 @@ public class NoTooltip : IChartTooltip, IDisposable
     // On doit aussi implémenter cette propriété (pas obligatoire, mais recommandée)
     public TooltipFindingStrategy TooltipFindingStrategy { get; set; } = TooltipFindingStrategy.Automatic;
 }
+
 public class PointMetaData : ChartEntityMetaData
 {
     public string Name { get; set; }
     public string WwiseID { get; set; }
+    public SKColor SerieColor { get; set; }
 }
-public class SKColorEqualityComparer : IEqualityComparer<SKColor>
-{
-    public bool Equals(SKColor x, SKColor y) =>
-        x.Red == y.Red && x.Green == y.Green && x.Blue == y.Blue && x.Alpha == y.Alpha;
 
-    public int GetHashCode(SKColor obj) =>
-        HashCode.Combine(obj.Red, obj.Green, obj.Blue, obj.Alpha);
+public class ParentDataEqualityComparer : IEqualityComparer<ParentData>
+{
+    public bool Equals(ParentData x, ParentData y)
+    {
+        if (ReferenceEquals(x, y)) return true;    // même objet
+        if (x is null || y is null) return false; // null safety
+
+        return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) &&
+               x.Color.Red == y.Color.Red &&
+               x.Color.Green == y.Color.Green &&
+               x.Color.Blue == y.Color.Blue &&
+               x.Color.Alpha == y.Color.Alpha;
+    }
+
+    public int GetHashCode(ParentData obj)
+    {
+        if (obj is null) return 0;
+        return HashCode.Combine(
+            obj.Name?.ToLowerInvariant(),  // case-insensitive hash
+            obj.Color.Red,
+            obj.Color.Green,
+            obj.Color.Blue,
+            obj.Color.Alpha
+        );
+    }
 }

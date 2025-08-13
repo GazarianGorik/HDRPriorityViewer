@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace WwiseHDRTool
@@ -13,168 +11,208 @@ namespace WwiseHDRTool
         {
             try
             {
-                Console.WriteLine("[Info] Requesting Audio Buses...");
-                var allBusses = await WaapiBridge.GetAudioBuses();
-                if (allBusses == null || allBusses.Count == 0)
-                {
-                    Console.WriteLine("[Warning] No AudioBus found.");
-                    return;
-                }
+                var allBusses = await GetRelevantAudioBuses();
+                var allEvents = await GetAllEvents();
+                var allActionsWithTargets = ParseActionsFromWWU();
 
-                var allRelevantBusIds = allBusses
-                    .Where(bus => bus.IsHDR || bus.HDRChild)
-                    .Select(bus => bus.Id)
-                    .Where(id => id != null)
-                    .ToHashSet()!;
+                var uniqueTargetIds = ExtractUniqueTargetIds(allActionsWithTargets);
 
-                Console.WriteLine("[Info] Requesting Events...");
-                var allEvents = await WaapiBridge.GetEvents();
-                if (allEvents == null || allEvents.Count == 0)
-                {
-                    Console.WriteLine("[Warning] No Event found.");
-                    return;
-                }
-                Console.WriteLine($"[Info] {allEvents.Count} Events retrieved.");
+                PreloadVolumeRanges();
 
-                Console.WriteLine("[Info] Parsing Actions and Targets from WWU files...");
-                var allActionsWithTargets = WWUParser.ParseEventActionsFromWorkUnits();
-                if (allActionsWithTargets.Count == 0)
-                {
-                    Console.WriteLine("[Info] No actions with targets found in events WWU.");
-                    return;
-                }
+                await BatchRequestTargetData(uniqueTargetIds);
 
-                // --- Collect unique target ids to batch WAAPI + preload volume ranges
-                var uniqueTargetIds = allActionsWithTargets
-                    .Select(a => a.TargetId)
-                    .Where(id => !string.IsNullOrEmpty(id))
-                    .Select(id => id!)
+                var routedActions = FilterActionsRoutedToHDR(allActionsWithTargets, allBusses);
+
+                WwiseCache.allAudioObjectsName = routedActions
+                    .Select(a => a.action.TargetName ?? "")
                     .Distinct()
-                    .ToList();
+                    .OrderBy(name => name)
+                    .ToArray();
 
-                Console.WriteLine($"[Info] {uniqueTargetIds.Count} unique TargetIds to query (batch).");
+                var eventsWithActions = GroupActionsByEvent(routedActions, allEvents);
 
-                // Preload volume RTPC ranges from audio objects WWU (scan once)
-                Console.WriteLine("[Info] Preloading volume RTPC ranges from audio object WWU files...");
-                WWUParser.PreloadVolumeRanges(); // sync preloading — fast enough; if too slow you can make it Task.Run()
+                PlotEvents(eventsWithActions);
 
-                // Batch WAAPI calls
-                Console.WriteLine("[Info] Batch requesting OutputBus for targets...");
-                await WaapiBridge.BatchGetTargetOutputBus(uniqueTargetIds);
-
-                Console.WriteLine("[Info] Batch requesting Volume for targets...");
-                await WaapiBridge.BatchGetVolumes(uniqueTargetIds);
-
-                // Filter actions whose target output bus is HDR or HDR child
-                var routedActions = new List<(WwiseAction action, string outputBusId)>();
-                foreach (var action in allActionsWithTargets)
-                {
-                    if (string.IsNullOrEmpty(action.TargetId))
-                        continue;
-
-                    if (WwiseCache.outputBusCache.TryGetValue(action.TargetId!, out var busId) && !string.IsNullOrEmpty(busId)
-                        && allRelevantBusIds.Contains(busId))
-                    {
-                        routedActions.Add((action, busId!));
-                    }
-                }
-
-                Console.WriteLine();
-                Console.WriteLine($"[Info] Found {routedActions.Count} actions routed to HDR buses via their targets.");
-
-                foreach (var (action, busId) in routedActions.Take(200)) // preview only first 200 in logs to avoid flooding console
-                {
-                    Console.WriteLine($"Action: {action.Name} (ID: {action.Id}) => Target: {action.TargetName} ({action.TargetId}) => OutputBus: {busId}");
-                }
-                if (routedActions.Count > 200)
-                    Console.WriteLine($"[Info] ... (omitted remaining {routedActions.Count - 200} lines)");
-
-                Console.WriteLine();
-
-                // Group routed actions by Event for efficient processing
-                var eventsByName = allEvents.ToDictionary(e => e.Name ?? "", e => e);
-                var eventsWithActions = routedActions
-                    .GroupBy(t => t.action.Path ?? "")
-                    .Select(g => (evt: eventsByName.TryGetValue(g.Key, out var e) ? e : new WwiseEvent { Name = g.Key }, actions: g.ToList()))
-                    .Where(x => x.actions.Count > 0)
-                    .ToList();
-
-                Console.WriteLine($"[Info] {eventsWithActions.Count} Events have Actions routed to HDR.");
-
-                // Préparation pour le tracé
-                var yMinMaxList = new List<(float, float)>();
-                int xOffsetDirection = 1;
-                int index = 0;
-                int totalColor = routedActions.Count;
-
-                // Itération sur les événements
-                foreach (var (evt, actionsList) in eventsWithActions)
-                {
-                    Console.WriteLine($"Event: {evt.Name} (ID: {evt.Id}) has {actionsList.Count} HDR routed action(s).");
-                    foreach (var (action, busId) in actionsList)
-                    {
-                        index++;
-
-                        Console.WriteLine($"  => Action: {action.Name} (ID: {action.Id}) => OutputBus: {busId}");
-
-                        // Récupération du volume arrondi
-                        float volume = 0;
-                        if (WwiseCache.volumeCache.TryGetValue(action.TargetId!, out var volVal) && volVal.HasValue)
-                            volume = (float)Math.Round(volVal.Value, 2);
-
-                        var volumeRange = (WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out var vr) ? vr : (0,0));
-
-                        (float, float) yMinMax = (volumeRange.Value.min + volume, volumeRange.Value.max + volume);
-
-                        int occurrence = 0;
-
-                        foreach (var range in yMinMaxList)
-                        {
-                            // Check if the current yMinMax overlaps with any existing range
-                            if (yMinMax.Item1 <= range.Item2 || yMinMax.Item2 >= range.Item1)
-                            {
-                                occurrence++; // Increment occurrence if overlap found
-                            }
-                        }
-
-                        yMinMaxList.Add(yMinMax);
-
-                        float volumeMin = 0, volumeMax = 0;
-
-                        // Calcul du décalage horizontal (xOffset) selon occurrence, toujours cohérent
-                        float xOffset = occurrence * xOffsetDirection;
-
-                        volumeMin = (float)Math.Round(volumeRange.Value.min, 2);
-                        volumeMax = (float)Math.Round(volumeRange.Value.max, 2);
-
-                        Console.WriteLine($"    Volume: {volume} | Range: [{volumeMin}, {volumeMax}] | XOffset: {xOffset}");
-
-                        // Ajout du point au graphique
-                        try
-                        {
-                            MainWindow.Instance.ChartViewModel.AddPointWithVerticalError(
-                                action.TargetName,
-                                index,
-                                volume,
-                                volumeMin,
-                                volumeMax,
-                                xOffset,
-                                action.Color,
-                                action.TargetId
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[Warning] Failed to add point to graph: {ex.Message}");
-                        }
-                    }
-                    Console.WriteLine();
-                }
-                MainWindow.Instance.ChartViewModel.UpdateBorders();
+                MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("[Error] Final error: " + ex.Message);
+            }
+        }
+
+        private static async Task<List<AudioBus>> GetRelevantAudioBuses()
+        {
+            Console.WriteLine("[Info] Requesting Audio Buses...");
+            var allBusses = await WaapiBridge.GetAudioBuses();
+
+            if (allBusses == null || allBusses.Count == 0)
+            {
+                Console.WriteLine("[Warning] No AudioBus found.");
+                return new List<AudioBus>();
+            }
+
+            return allBusses.Where(bus => bus.IsHDR || bus.HDRChild).ToList();
+        }
+
+        private static async Task<List<WwiseEvent>> GetAllEvents()
+        {
+            Console.WriteLine("[Info] Requesting Events...");
+            var allEvents = await WaapiBridge.GetEvents();
+
+            if (allEvents == null || allEvents.Count == 0)
+            {
+                Console.WriteLine("[Warning] No Event found.");
+                return new List<WwiseEvent>();
+            }
+
+            Console.WriteLine($"[Info] {allEvents.Count} Events retrieved.");
+            return allEvents;
+        }
+
+        private static List<WwiseAction> ParseActionsFromWWU()
+        {
+            Console.WriteLine("[Info] Parsing Actions and Targets from WWU files...");
+            var actions = WWUParser.ParseEventActionsFromWorkUnits();
+
+            if (actions.Count == 0)
+            {
+                Console.WriteLine("[Info] No actions with targets found in events WWU.");
+            }
+
+            return actions;
+        }
+
+        private static List<string> ExtractUniqueTargetIds(List<WwiseAction> actions)
+        {
+            var uniqueTargetIds = actions
+                .Select(a => a.TargetId)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct()
+                .ToList();
+
+            Console.WriteLine($"[Info] {uniqueTargetIds.Count} unique TargetIds to query (batch).");
+            return uniqueTargetIds;
+        }
+
+        private static void PreloadVolumeRanges()
+        {
+            Console.WriteLine("[Info] Preloading volume RTPC ranges from audio object WWU files...");
+            WWUParser.PreloadVolumeRanges();
+        }
+
+        private static async Task BatchRequestTargetData(List<string> targetIds)
+        {
+            Console.WriteLine("[Info] Batch requesting OutputBus for targets...");
+            await WaapiBridge.BatchGetTargetOutputBus(targetIds);
+
+            Console.WriteLine("[Info] Batch requesting Volume for targets...");
+            await WaapiBridge.BatchGetVolumes(targetIds);
+        }
+
+        private static List<(WwiseAction action, string outputBusId)> FilterActionsRoutedToHDR(
+            List<WwiseAction> allActionsWithTargets,
+            List<AudioBus> relevantBusses)
+        {
+            var allRelevantBusIds = new HashSet<string>(relevantBusses.Select(b => b.Id));
+
+            var routedActions = new List<(WwiseAction, string)>();
+
+            foreach (var action in allActionsWithTargets)
+            {
+                if (string.IsNullOrEmpty(action.TargetId))
+                    continue;
+
+                if (WwiseCache.outputBusCache.TryGetValue(action.TargetId!, out var busId)
+                    && !string.IsNullOrEmpty(busId)
+                    && allRelevantBusIds.Contains(busId))
+                {
+                    routedActions.Add((action, busId!));
+                }
+            }
+
+            Console.WriteLine($"[Info] Found {routedActions.Count} actions routed to HDR buses via their targets.");
+
+            return routedActions;
+        }
+
+        private static List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> GroupActionsByEvent(
+            List<(WwiseAction action, string busId)> routedActions,
+            List<WwiseEvent> allEvents)
+        {
+            var eventsByName = allEvents.ToDictionary(e => e.Name ?? "", e => e);
+
+            var grouped = routedActions
+                .GroupBy(t => t.action.Path ?? "")
+                .Select(g => (
+                    evt: eventsByName.TryGetValue(g.Key, out var e) ? e : new WwiseEvent { Name = g.Key },
+                    actions: g.ToList()
+                ))
+                .Where(x => x.actions.Count > 0)
+                .ToList();
+
+            Console.WriteLine($"[Info] {grouped.Count} Events have Actions routed to HDR.");
+            return grouped;
+        }
+
+        private static void PlotEvents(List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions)
+        {
+            var yMinMaxList = new List<(float, float)>();
+            int xOffsetDirection = 1;
+            int index = 0;
+
+            foreach (var (evt, actionsList) in eventsWithActions)
+            {
+                Console.WriteLine($"Event: {evt.Name} (ID: {evt.Id}) has {actionsList.Count} HDR routed action(s).");
+                foreach (var (action, busId) in actionsList)
+                {
+                    index++;
+
+                    Console.WriteLine($"  => Action: {action.Name} (ID: {action.Id}) => OutputBus: {busId}");
+
+                    // Récupérer volume arrondi
+                    float volume = 0;
+                    if (WwiseCache.volumeCache.TryGetValue(action.TargetId!, out var volVal) && volVal.HasValue)
+                        volume = (float)Math.Round(volVal.Value, 2);
+
+                    var volumeRange = WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out var vr) ? vr : (0, 0);
+
+                    var yMinMax = (volumeRange.Value.min + volume, volumeRange.Value.max + volume);
+
+                    int occurrence = 0;
+                    foreach (var range in yMinMaxList)
+                    {
+                        if (yMinMax.Item1 <= range.Item2 || yMinMax.Item2 >= range.Item1)
+                        {
+                            occurrence++;
+                        }
+                    }
+
+                    yMinMaxList.Add(yMinMax);
+
+                    float xOffset = occurrence * xOffsetDirection;
+
+                    Console.WriteLine($"    Volume: {volume} | Range: [{volumeRange.Value.min}, {volumeRange.Value.max}] | XOffset: {xOffset}");
+
+                    try
+                    {
+                        MainWindow.Instance.MainViewModel.ChartViewModel.AddPointWithVerticalError(
+                            action.TargetName,
+                            index,
+                            volume,
+                            volumeRange.Value.min,
+                            volumeRange.Value.max,
+                            xOffset,
+                            action.ParentData,
+                            action.TargetId
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Warning] Failed to add point to graph: {ex.Message}");
+                    }
+                }
+                Console.WriteLine();
             }
         }
     }

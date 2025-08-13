@@ -31,7 +31,7 @@ namespace WwiseHDRTool
         public string? Path { get; set; }
         public string? TargetId { get; set; }
         public string? TargetName { get; set; }
-        public SKColor Color { get; set; }
+        public ParentData? ParentData { get; set; }
     }
 
     public static class WwiseCache
@@ -40,5 +40,12 @@ namespace WwiseHDRTool
         public static ConcurrentDictionary<string, string?> outputBusCache = new();
         public static ConcurrentDictionary<string, float?> volumeCache = new();
         public static ConcurrentDictionary<string, (float min, float max)?> volumeRangeCache = new();
+        public static string[] allAudioObjectsName = Array.Empty<string>();
+    }
+
+    public class ParentData()
+    {
+        public string Name { get; set; }
+        public SKColor Color { get; set; }
     }
 }

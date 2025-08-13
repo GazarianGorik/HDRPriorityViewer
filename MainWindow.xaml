@@ -10,9 +10,6 @@
     Title="WwiseHDRTool">
 
     <Grid x:Name="RootGrid" Padding="24" MinWidth="600" MinHeight="400" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Grid.DataContext>
-            <local:ChartViewModel />
-        </Grid.DataContext>
 
         <!-- Déclaration des lignes -->
         <Grid.RowDefinitions>
@@ -25,18 +22,63 @@
 
             <!-- Action buttons -->
             <StackPanel Orientation="Horizontal" Spacing="12">
-                <Button x:Name="button_ConnectToWwise" Click="Button_ConnectToWwise" Width="150" Height="36" Content="Connect to Wwise"/>
-                <Button x:Name="button_ListSoundObjectsRoutedToHDR" Click="Button_ListSoundObjectsRoutedToHDR"
-                        IsEnabled="{x:Bind MainViewModel.IsButtonEnabled, Mode=OneWay}" Width="230" Height="36" Content="List sound objects routed to HDR"/>
+                <Button Content="Connect to Wwise" Command="{Binding ConnectToWwiseCommand}"  Width="150" Height="36"/>
+                <Button Content="List sound objects routed to HDR" Command="{Binding ListSoundObjectsRoutedToHDRCommand }" Width="230" Height="36" />
             </StackPanel>
 
-            <!-- Meter visualisation (optionnel si tu veux ajouter autre chose plus tard) -->
-            <StackPanel x:Name="VolumeMetersPanel" Orientation="Vertical" Spacing="8" Margin="0,20,0,0"/>
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <ItemsControl ItemsSource="{Binding CategorieFilterButtons}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Label}" 
+                                    Command="{Binding Command}" 
+                                    Margin="6"
+                                    Foreground="{Binding Background}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <ItemsControl ItemsSource="{Binding SearchItems}" x:Name="SearchFields">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="8"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="4">
+                            <TextBox Width="200"
+                                     Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PlaceholderText="Search..."
+                                     KeyDown="SearchField_KeyDown"
+                                     TextChanged="SearchField_TextChanged"
+                                     GotFocus="SearchField_GotFocus"
+                                     LostFocus ="SehField_LostFocus"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
+
+        <!-- Popup de suggestions -->
+        <Popup x:Name="SuggestionsPopup">
+            <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="Gray" BorderThickness="1">
+                <ListBox ItemsSource="{Binding SearchSuggestions}"
+                        SelectionChanged="SearchSuggestionSelected"
+                        MaxHeight="200"/>
+            </Border>
+        </Popup>
 
         <!-- Section graphique -->
         <lvc:CartesianChart x:Name="chart"
                             Grid.Row="1"
                             Series="{Binding ChartViewModel.Series}"/>
+
     </Grid>
 </Window>

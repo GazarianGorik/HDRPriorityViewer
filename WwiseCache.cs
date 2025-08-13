@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using LiveChartsCore.Defaults;
 using SkiaSharp;
 
 namespace WwiseHDRTool
@@ -40,7 +42,7 @@ namespace WwiseHDRTool
         public static ConcurrentDictionary<string, string?> outputBusCache = new();
         public static ConcurrentDictionary<string, float?> volumeCache = new();
         public static ConcurrentDictionary<string, (float min, float max)?> volumeRangeCache = new();
-        public static string[] allAudioObjectsName = Array.Empty<string>();
+        public static List<ErrorPoint> chartDefaultPoints = new List<ErrorPoint>();
     }
 
     public class ParentData()

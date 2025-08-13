@@ -23,12 +23,6 @@ namespace WwiseHDRTool
 
                 var routedActions = FilterActionsRoutedToHDR(allActionsWithTargets, allBusses);
 
-                WwiseCache.allAudioObjectsName = routedActions
-                    .Select(a => a.action.TargetName ?? "")
-                    .Distinct()
-                    .OrderBy(name => name)
-                    .ToArray();
-
                 var eventsWithActions = GroupActionsByEvent(routedActions, allEvents);
 
                 PlotEvents(eventsWithActions);

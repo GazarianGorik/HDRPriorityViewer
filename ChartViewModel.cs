@@ -79,16 +79,19 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 MainWindow.Instance.MainViewModel.AddCategorieFilterButton(parentData);
             }
 
-            // Ajoute le point à la bonne série
-            ((ObservableCollection<ErrorPoint>)series.Values).Add(
-                new ErrorPoint(totalXOffset, volume, 0, 0, VolumeRTPCMinValue, VolumeRTPCMaxValue)
+            ErrorPoint pointToAdd = new ErrorPoint(totalXOffset, volume, 0, 0, VolumeRTPCMinValue, VolumeRTPCMaxValue)
+            {
+                MetaData = new PointMetaData
                 {
-                    MetaData = new PointMetaData
-                    {
-                        Name = $"{name} : {volume}dB ({VolumeRTPCMinValue} | {VolumeRTPCMaxValue})",
-                        WwiseID = wwiseID
-                    }
-                });
+                    Name = $"{name} : {volume}dB ({VolumeRTPCMinValue} | {VolumeRTPCMaxValue})",
+                    WwiseID = wwiseID,
+                    OwnerSerie = series
+                }
+            };
+
+            // Ajoute le point à la bonne série
+            ((ObservableCollection<ErrorPoint>)series.Values).Add(pointToAdd);
+            WwiseCache.chartDefaultPoints.Add(pointToAdd);
         });
     }
 
@@ -486,6 +489,7 @@ public class PointMetaData : ChartEntityMetaData
     public string Name { get; set; }
     public string WwiseID { get; set; }
     public SKColor SerieColor { get; set; }
+    public ScatterSeries<ErrorPoint> OwnerSerie { get; set; }
 }
 
 public class ParentDataEqualityComparer : IEqualityComparer<ParentData>

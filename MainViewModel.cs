@@ -133,14 +133,13 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(item.Text))
         {
-            var matches = WwiseCache.allAudioObjectsName
-                .Where(n =>
-                    n.Contains(item.Text, StringComparison.OrdinalIgnoreCase) &&
-                    !n.Equals(item.Text, StringComparison.OrdinalIgnoreCase) // exclut l'identique
-                );
+            var matches = WwiseCache.chartDefaultPoints
+                .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
+                .Where(n => (n.MetaData as PointMetaData).Name.Split(':')[0].Contains(item.Text, StringComparison.OrdinalIgnoreCase) &&
+                    !(n.MetaData as PointMetaData).Name.Split(':')[0].Equals(item.Text, StringComparison.OrdinalIgnoreCase));
 
             foreach (var m in matches)
-                SearchSuggestions.Add(m);
+                SearchSuggestions.Add((m.MetaData as PointMetaData).Name.Split(':')[0]);
         }
     }
 
@@ -217,33 +216,6 @@ public partial class MainViewModel : ObservableObject
     partial void OnIsButtonEnabledChanged(bool oldValue, bool newValue)
     {
         ListSoundObjectsRoutedToHDRCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnSearchTextChanged(string value)
-    {
-        Console.WriteLine($"[Info] SearchText changed: {value}");
-        SearchSuggestions.Clear();
-
-        // Split by ';' and trim spaces
-        var terms = value.Split(';')
-                         .Select(t => t.Trim())
-                         .Where(t => !string.IsNullOrWhiteSpace(t))
-                         .ToList();
-
-        // Get the last term (the one being edited)
-        var activeTerm = terms.Count > 0 ? terms.Last() : string.Empty;
-
-        if (!string.IsNullOrWhiteSpace(activeTerm))
-        {
-            var matches = WwiseCache.allAudioObjectsName
-                .Where(n =>
-                    !terms.Contains(n, StringComparer.OrdinalIgnoreCase) && // Exclude already selected terms
-                    n.Contains(activeTerm, StringComparison.OrdinalIgnoreCase))
-                .Take(10);
-
-            foreach (var match in matches)
-                SearchSuggestions.Add(match);
-        }
     }
 }
 

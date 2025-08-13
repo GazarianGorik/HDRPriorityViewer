@@ -34,6 +34,7 @@ namespace WwiseHDRTool
 
         private bool isCtrlDown = false;
         private bool isMenuDown = false;
+        private bool isPointClickable = false;
 
         public MainWindow()
         {
@@ -85,7 +86,7 @@ namespace WwiseHDRTool
             Console.WriteLine($"Point clicked!");
 
             // Only open Wwise element if Ctrl is pressed
-            if (!isCtrlDown)
+            if (!isCtrlDown || chartPointUnderCursor == null || chartPointUnderCursor.Count() == 0)
                 return;
 
             if (chartPointUnderCursor.Count() == 1)
@@ -118,68 +119,80 @@ namespace WwiseHDRTool
 
         private void HoveredPointsChanged(IChartView chart, IEnumerable<ChartPoint>? newItems, IEnumerable<ChartPoint>? oldItems)
         {
-            if (newItems == null || !newItems.Any())
+            chartPointUnderCursor = newItems?.ToList();
+
+            Console.WriteLine($"Hovered points changed: {chartPointUnderCursor?.Count() ?? 0} points under cursor.");
+
+            // Toujours tenter de mettre à jour si Ctrl est enfoncé
+            UpdateClickablePoint();
+        }
+
+        private void UpdateClickablePoint()
+        {
+            if (chartPointUnderCursor == null || !chartPointUnderCursor.Any())
             {
-                chartPointUnderCursor = null;
-                MainViewModel.ChartViewModel.UnmakeClickablePointByName();
-                lastNewItems = null;
+                if (isPointClickable)
+                {
+                    MainViewModel.ChartViewModel.UnmakeClickablePointByName();
+                    isPointClickable = false;
+                    lastNewItems = null;
+                }
                 return;
             }
-
-            // Vérifier si newItems a les mêmes coordonnées que lastNewItems
-            bool isSamePoints = false;
-            if (lastNewItems != null)
-            {
-                var newCoords = newItems
-                    .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
-                    .OrderBy(t => t.PrimaryValue)
-                    .ThenBy(t => t.SecondaryValue)
-                    .ToList();
-
-                var lastCoords = lastNewItems
-                    .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
-                    .OrderBy(t => t.PrimaryValue)
-                    .ThenBy(t => t.SecondaryValue)
-                    .ToList();
-
-                // Comparaison avec tolérance
-                const double tolerance = 0.0001;
-                isSamePoints = newCoords.Count == lastCoords.Count &&
-                               newCoords.Zip(lastCoords, (a, b) =>
-                                   Math.Abs(a.PrimaryValue - b.PrimaryValue) < tolerance &&
-                                   Math.Abs(a.SecondaryValue - b.SecondaryValue) < tolerance
-                               ).All(equal => equal);
-            }
-
-            if (isSamePoints)
-            {
-                // Même point(s), pas besoin de faire quoi que ce soit
-                return;
-            }
-
-            // Sinon on met à jour le cache et on traite
-            lastNewItems = newItems.ToList();
-            chartPointUnderCursor = newItems;
 
             if (isCtrlDown)
             {
-                var chartPoint = newItems.FirstOrDefault();
+                var chartPoint = chartPointUnderCursor.FirstOrDefault();
                 if (chartPoint?.Context.DataSource is ErrorPoint ep)
                 {
                     var pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
                     if (!string.IsNullOrEmpty(pointName))
                     {
-                        MainViewModel.ChartViewModel.MakeClickablePointByName(chartPoint?.Context.DataSource as ErrorPoint);
+                        // Ne refaire que si le point a changé
+                        if (!isPointClickable || !IsSameAsLast(chartPointUnderCursor))
+                        {
+                            MainViewModel.ChartViewModel.MakeClickablePointByName(ep);
+                            lastNewItems = chartPointUnderCursor.ToList();
+                            isPointClickable = true;
+                        }
                     }
                 }
             }
             else
             {
-                MainViewModel.ChartViewModel.UnmakeClickablePointByName();
+                if (isPointClickable)
+                {
+                    MainViewModel.ChartViewModel.UnmakeClickablePointByName();
+                    isPointClickable = false;
+                    lastNewItems = null;
+                }
             }
         }
 
+        private bool IsSameAsLast(IEnumerable<ChartPoint> newPoints)
+        {
+            if (lastNewItems == null) return false;
 
+            var newCoords = newPoints
+                .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
+                .OrderBy(t => t.PrimaryValue)
+                .ThenBy(t => t.SecondaryValue)
+                .ToList();
+
+            var lastCoords = lastNewItems
+                .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
+                .OrderBy(t => t.PrimaryValue)
+                .ThenBy(t => t.SecondaryValue)
+                .ToList();
+
+            const double tolerance = 0.0001;
+
+            return newCoords.Count == lastCoords.Count &&
+                   newCoords.Zip(lastCoords, (a, b) =>
+                       Math.Abs(a.PrimaryValue - b.PrimaryValue) < tolerance &&
+                       Math.Abs(a.SecondaryValue - b.SecondaryValue) < tolerance
+                   ).All(equal => equal);
+        }
 
 
         private void UpdateAppFocused(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
@@ -200,69 +213,33 @@ namespace WwiseHDRTool
 
         private void KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            var key = e.Key;
-
-            if (key == VirtualKey.Control)
+            if (e.Key == VirtualKey.Control && !isCtrlDown)
             {
-                //First press
-                if (!isCtrlDown)
-                {
-                    chart.ZoomMode = ZoomAndPanMode.Y;
-                    Console.WriteLine("Control key pressed");
-                }
-
-                //Spam
                 isCtrlDown = true;
+                chart.ZoomMode = ZoomAndPanMode.Y;
+                UpdateClickablePoint();
             }
-            if (key == VirtualKey.Menu)
-            {
-                //First press
-                if (!isMenuDown)
-                {
-                    chart.ZoomMode = ZoomAndPanMode.X;
-                    Console.WriteLine("Menu key pressed");
-                }
 
-                //Spam
+            if (e.Key == VirtualKey.Menu && !isMenuDown)
+            {
                 isMenuDown = true;
+                chart.ZoomMode = ZoomAndPanMode.X;
             }
         }
 
         private void KeyUp(object sender, KeyRoutedEventArgs e)
         {
-            var key = e.Key;
-
-            if (key == VirtualKey.Control)
+            if (e.Key == VirtualKey.Control && isCtrlDown)
             {
-                //First press
-                if (isCtrlDown)
-                {
-                    Console.WriteLine("Control key NOT pressed");
-
-                    if (isMenuDown)
-                        chart.ZoomMode = ZoomAndPanMode.X;
-                    else
-                        chart.ZoomMode = ZoomAndPanMode.Both;
-                }
-
-                //Spam
                 isCtrlDown = false;
+                chart.ZoomMode = isMenuDown ? ZoomAndPanMode.X : ZoomAndPanMode.Both;
+                UpdateClickablePoint();
             }
-            if (key == VirtualKey.Menu)
+
+            if (e.Key == VirtualKey.Menu && isMenuDown)
             {
-                //First press
-                if (isMenuDown)
-                {
-                    Console.WriteLine("Menu key NOT pressed");
-
-                    if (isCtrlDown)
-                        chart.ZoomMode = ZoomAndPanMode.Y;
-                    else
-                        chart.ZoomMode = ZoomAndPanMode.Both;
-                }
-
-                //Spam
                 isMenuDown = false;
+                chart.ZoomMode = isCtrlDown ? ZoomAndPanMode.Y : ZoomAndPanMode.Both;
             }
         }
 

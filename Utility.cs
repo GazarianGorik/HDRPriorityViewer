@@ -34,5 +34,16 @@ namespace WwiseHDRTool
 
             return new SKColor(r, g, b, a);
         }
+
+        public static SKColor OpaqueColor(SKColor color)
+        {
+            // Application de l'éclaircissement
+            byte r = (byte)(color.Red);
+            byte g = (byte)(color.Green);
+            byte b = (byte)(color.Blue);
+            byte a = (byte)(255);
+
+            return new SKColor(r, g, b, a);
+        }
     }
 }

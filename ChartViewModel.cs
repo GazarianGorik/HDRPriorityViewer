@@ -57,10 +57,11 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 {
                     Name = parentData.Name,
                     Values = new ObservableCollection<ErrorPoint>(),
-                    Fill = new SolidColorPaint(parentData.Color) { ZIndex = 10 },
+                    Fill = AppSettings.chartPointFill(parentData.Color),
                     Stroke = AppSettings.chartPointStroke,
                     ErrorPaint = AppSettings.chartPointError(parentData.Color),
                     GeometrySize = AppSettings.chartPointSize,
+
                     YToolTipLabelFormatter = point =>
                     {
                         if (point.Context.DataSource is ErrorPoint errorPoint)
@@ -111,12 +112,15 @@ public partial class ChartViewModel : INotifyPropertyChanged
         // Parcourir toutes les séries (y compris les highlights déjà ajoutés)
         var baseSeries = Series.ToList();
 
+        SKColor matchedPointSerrieColor = SKColors.Red;
+
         foreach (var s in baseSeries)
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
                 foreach (var pt in scatterSeries.Values)
                 {
+                    // Fetch point name without other data
                     string ptNameWithoutOtherData = "";
                     PointMetaData md = new PointMetaData();
 
@@ -126,8 +130,15 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         ptNameWithoutOtherData = md.Name.Split(':')[0].Trim(); ;
                     }
 
+                    // If the point name without other data matches the pointName we want to highlight
                     if (!String.IsNullOrEmpty(ptNameWithoutOtherData) && ptNameWithoutOtherData == pointName)
                     {
+                        if (scatterSeries.Fill is SolidColorPaint solidColor)
+                        {
+                            matchedPointSerrieColor = solidColor.Color;
+                        }
+
+                        // Create a new ErrorPoint with the same coordinates and metadata
                         pointsToHighlight.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
                         {
                             MetaData = new PointMetaData
@@ -141,14 +152,20 @@ public partial class ChartViewModel : INotifyPropertyChanged
             }
         }
 
+        // If we found points to highlight, create a new series and add it to the chart
         if (pointsToHighlight.Count > 0)
         {
+            // If its the firs highlight, we dim the default points
+            if (pointsToHighlight.Count == 1)
+                DimDefaultChartPoints();
+
             var highlightSeries = new ScatterSeries<ErrorPoint>
             {
                 Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
-                Fill = null,
+                Fill = new SolidColorPaint(Utility.OpaqueColor(matchedPointSerrieColor)),
                 Stroke = AppSettings.chartPointHighlightedStroke,
                 GeometrySize = 20,
+                IsHoverable = false,
                 ZIndex = 50,
                 DataLabelsSize = AppSettings.chartPointHighlightedDataLabelsSize,
                 DataLabelsPaint = new SolidColorPaint(SKColors.White),
@@ -165,7 +182,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
             Series.Add(highlightSeries);
 
-            // Stocker la série par nom pour éviter doublons
+            // Stock the highlight series by pointName to avoid duplicates
             _highlightSeriesByName[pointName] = highlightSeries;
 
             Console.WriteLine($"[Info] Point '{pointName}' highlighted with {pointsToHighlight.Count} points.");
@@ -176,6 +193,43 @@ public partial class ChartViewModel : INotifyPropertyChanged
         }
     }
 
+    private void DimDefaultChartPoints()
+    {
+        foreach (var s in Series.ToList())
+        {
+            if (s is ScatterSeries<ErrorPoint> scatterSeries)
+            {
+                if (scatterSeries.Fill is SolidColorPaint solidColor)
+                {
+                    // If it's the first highlight, make original serie a bit transparent
+                    if (_highlightSeriesByName.Count == 0)
+                    {
+                        scatterSeries.Fill = AppSettings.chartPointFillDimed(solidColor.Color);
+                        scatterSeries.ErrorPaint = AppSettings.chartPointErrorDimed(solidColor.Color);
+                    }
+                }
+            }
+        }
+    }
+
+    private void UnDimDefaultChartPoints()
+    {
+        foreach (var s in Series.ToList())
+        {
+            if (s is ScatterSeries<ErrorPoint> scatterSeries)
+            {
+                if (scatterSeries.Fill is SolidColorPaint solidColor)
+                {
+                    // If it's the first highlight, make original serie a bit transparent
+                    if (_highlightSeriesByName.Count == 0)
+                    {
+                        scatterSeries.Fill = AppSettings.chartPointFill(Utility.OpaqueColor(solidColor.Color));
+                        scatterSeries.ErrorPaint = AppSettings.chartPointError(Utility.OpaqueColor(solidColor.Color));
+                    }
+                }
+            }
+        }
+    }
 
     public void DehighlightPointByName(string pointName)
     {
@@ -189,6 +243,12 @@ public partial class ChartViewModel : INotifyPropertyChanged
             _highlightSeriesByName.Remove(pointName);
 
             Console.WriteLine($"[Info] Highlight removed for point '{pointName}'.");
+
+            // Si plus de highlights, on restaure les couleurs d'origine
+            if (_highlightSeriesByName.Count == 0)
+            {
+                UnDimDefaultChartPoints();
+            }
         }
         else
         {
@@ -254,6 +314,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
                 Fill = AppSettings.chartPointClickableFill((pointsToHighlight[0]?.MetaData as PointMetaData).SerieColor),
                 GeometrySize = AppSettings.chartPointClickabeSize,
+                IsHoverable = false,
                 ZIndex = 50,
                 XToolTipLabelFormatter = _ => "",
                 YToolTipLabelFormatter = _ => "",

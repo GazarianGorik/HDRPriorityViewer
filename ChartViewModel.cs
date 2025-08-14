@@ -48,10 +48,10 @@ public partial class ChartViewModel : INotifyPropertyChanged
         MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
             float xOffsetStep = 0.04f;
-            double totalXOffset = 0 + pointOffset * xOffsetStep;
+            double totalXOffset = 0 + (pointOffset * xOffsetStep);
 
             // If we don't have a series for this color yet, create it
-            if (!_seriesByParentData.TryGetValue(parentData, out var series))
+            if (!_seriesByParentData.TryGetValue(parentData, out ScatterSeries<ErrorPoint>? series))
             {
                 series = new ScatterSeries<ErrorPoint>
                 {
@@ -66,7 +66,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                     {
                         if (point.Context.DataSource is ErrorPoint errorPoint)
                         {
-                            var myMeta = errorPoint.MetaData as PointMetaData;
+                            PointMetaData? myMeta = errorPoint.MetaData as PointMetaData;
                             return myMeta?.Name ?? "Unknown";
                         }
                         return "Unknown";
@@ -110,18 +110,18 @@ public partial class ChartViewModel : INotifyPropertyChanged
             return;
         }
 
-        var pointsToHighlight = new List<ErrorPoint>();
+        List<ErrorPoint> pointsToHighlight = new List<ErrorPoint>();
 
         // Go through all series (including highlights already added)
-        var baseSeries = Series.ToList();
+        List<ISeries> baseSeries = Series.ToList();
 
         SKColor matchedPointSerrieColor = SKColors.Red;
 
-        foreach (var s in baseSeries)
+        foreach (ISeries? s in baseSeries)
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
-                foreach (var pt in scatterSeries.Values)
+                foreach (ErrorPoint pt in scatterSeries.Values)
                 {
                     // Fetch point name without other data
                     string ptNameWithoutOtherData = "";
@@ -160,9 +160,11 @@ public partial class ChartViewModel : INotifyPropertyChanged
         {
             // If it's the first highlight, we dim the default points
             if (pointsToHighlight.Count == 1)
+            {
                 DimDefaultChartPoints();
+            }
 
-            var highlightSeries = new ScatterSeries<ErrorPoint>
+            ScatterSeries<ErrorPoint> highlightSeries = new ScatterSeries<ErrorPoint>
             {
                 Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
                 Fill = new SolidColorPaint(Utility.OpaqueColor(matchedPointSerrieColor)),
@@ -176,7 +178,10 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 {
                     if (cp.Context.DataSource is ErrorPoint ep &&
                         ep.MetaData is PointMetaData md)
+                    {
                         return md.Name.Split(':')[0];
+                    }
+
                     return "";
                 },
                 XToolTipLabelFormatter = _ => "",
@@ -198,7 +203,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     private void DimDefaultChartPoints()
     {
-        foreach (var s in Series.ToList())
+        foreach (ISeries? s in Series.ToList())
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
@@ -217,7 +222,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     private void UnDimDefaultChartPoints()
     {
-        foreach (var s in Series.ToList())
+        foreach (ISeries? s in Series.ToList())
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
@@ -239,7 +244,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
         Console.WriteLine($"[Info] Dehighlighting {pointName}...");
 
         // Look for highlight series associated with pointName
-        if (_highlightSeriesByName.TryGetValue(pointName, out var highlightSeries))
+        if (_highlightSeriesByName.TryGetValue(pointName, out ScatterSeries<ErrorPoint>? highlightSeries))
         {
             // Remove the series from the chart and collection
             Series.Remove(highlightSeries);
@@ -270,16 +275,16 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
         Console.WriteLine($"[Info] Making clickable '{pointName}'...");
 
-        var pointsToHighlight = new List<ErrorPoint>();
+        List<ErrorPoint> pointsToHighlight = new List<ErrorPoint>();
 
         // Go through all series (including highlights already added)
-        var baseSeries = Series.ToList();
+        List<ISeries> baseSeries = Series.ToList();
 
-        foreach (var s in baseSeries)
+        foreach (ISeries? s in baseSeries)
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
-                foreach (var pt in scatterSeries.Values)
+                foreach (ErrorPoint pt in scatterSeries.Values)
                 {
                     PointMetaData md = new PointMetaData();
 
@@ -310,7 +315,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
         if (pointsToHighlight.Count > 0)
         {
-            var clickableSeries = new ScatterSeries<ErrorPoint>
+            ScatterSeries<ErrorPoint> clickableSeries = new ScatterSeries<ErrorPoint>
             {
                 AnimationsSpeed = TimeSpan.FromMilliseconds(100),
                 Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
@@ -362,26 +367,34 @@ public partial class ChartViewModel : INotifyPropertyChanged
         double maxX = double.MinValue;
         double minX = double.MaxValue;
 
-        foreach (var s in Series)
+        foreach (ISeries s in Series)
         {
             if (s.Values is IEnumerable<ErrorPoint> points)
             {
-                foreach (var p in points)
+                foreach (ErrorPoint p in points)
                 {
                     double yVal = p.Y ?? double.MinValue;
                     double xVal = p.X ?? double.MinValue;
 
                     if (yVal > maxY)
+                    {
                         maxY = yVal;
+                    }
 
                     if (xVal > maxX)
+                    {
                         maxX = xVal;
+                    }
 
                     if (xVal < minX)
+                    {
                         minX = xVal;
+                    }
 
                     if (p.YErrorJ > maxY)
+                    {
                         maxY = p.YErrorJ;
+                    }
                 }
             }
         }
@@ -409,17 +422,17 @@ public partial class ChartViewModel : INotifyPropertyChanged
     public void RepositionPointsWithoutOverlap()
     {
         // Simplified example, adapt according to your original logic:
-        var yMinMaxList = new List<(double?, double?)>();
+        List<(double?, double?)> yMinMaxList = new List<(double?, double?)>();
         int xOffsetDirection = 1;
 
-        var points = GetAllPoints();
+        IEnumerable<ErrorPoint> points = GetAllPoints();
 
-        foreach (var point in points)
+        foreach (ErrorPoint point in points)
         {
-            var yMinMax = (point.YErrorI + point.Y, point.YErrorJ + point.Y);
+            (double?, double?) yMinMax = (point.YErrorI + point.Y, point.YErrorJ + point.Y);
 
             int occurrence = 0;
-            foreach (var range in yMinMaxList)
+            foreach ((double?, double?) range in yMinMaxList)
             {
                 if (yMinMax.Item1 <= range.Item2 || yMinMax.Item2 >= range.Item1)
                 {
@@ -438,13 +451,13 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     public IEnumerable<ErrorPoint> GetAllPoints()
     {
-        foreach (var series in Series)
+        foreach (ISeries series in Series)
         {
             if (series is ScatterSeries<ErrorPoint> errorSeries)
             {
                 if (series.IsVisible)
                 {
-                    foreach (var point in errorSeries.Values)
+                    foreach (ErrorPoint point in errorSeries.Values)
                     {
                         yield return point;
                     }
@@ -495,8 +508,15 @@ public class ParentDataEqualityComparer : IEqualityComparer<ParentData>
 {
     public bool Equals(ParentData x, ParentData y)
     {
-        if (ReferenceEquals(x, y)) return true;    // same object
-        if (x is null || y is null) return false; // null safety
+        if (ReferenceEquals(x, y))
+        {
+            return true;    // same object
+        }
+
+        if (x is null || y is null)
+        {
+            return false; // null safety
+        }
 
         return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) &&
                x.Color.Red == y.Color.Red &&
@@ -507,7 +527,11 @@ public class ParentDataEqualityComparer : IEqualityComparer<ParentData>
 
     public int GetHashCode(ParentData obj)
     {
-        if (obj is null) return 0;
+        if (obj is null)
+        {
+            return 0;
+        }
+
         return HashCode.Combine(
             obj.Name?.ToLowerInvariant(),  // case-insensitive hash
             obj.Color.Red,

@@ -1,11 +1,9 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
-using SkiaSharp;
 
 namespace WwiseHDRTool
 {
@@ -58,48 +56,48 @@ namespace WwiseHDRTool
         /// </summary>
         public static List<WwiseAction> ParseEventActionsFromWorkUnits()
         {
-            var actionsWithTargets = new List<WwiseAction>();
+            List<WwiseAction> actionsWithTargets = new List<WwiseAction>();
             if (string.IsNullOrEmpty(eventsWWUFolderPath) || !Directory.Exists(eventsWWUFolderPath))
             {
                 Console.WriteLine($"[Warning] Events WWU folder path is not set or doesn't exist: {eventsWWUFolderPath}");
                 return actionsWithTargets;
             }
 
-            var wwuFiles = Directory.GetFiles(eventsWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
+            string[] wwuFiles = Directory.GetFiles(eventsWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
             Console.WriteLine($"[Info] Found {wwuFiles.Length} .wwu event files.");
 
-            var IDsAddedToChart = new List<string>();
+            List<string> IDsAddedToChart = new List<string>();
 
-            foreach (var wwuFile in wwuFiles)
+            foreach (string wwuFile in wwuFiles)
             {
                 try
                 {
-                    var doc = XDocument.Load(wwuFile);
-                    var events = doc.Descendants("Event");
+                    XDocument doc = XDocument.Load(wwuFile);
+                    IEnumerable<XElement> events = doc.Descendants("Event");
 
-                    foreach (var evt in events)
+                    foreach (XElement evt in events)
                     {
-                        var eventPath = evt.Attribute("Name")?.Value ?? "";
+                        string eventPath = evt.Attribute("Name")?.Value ?? "";
 
-                        foreach (var action in evt.Descendants("Action"))
+                        foreach (XElement action in evt.Descendants("Action"))
                         {
-                            var actionId = action.Attribute("ID")?.Value;
-                            var actionName = action.Attribute("Name")?.Value ?? "";
+                            string? actionId = action.Attribute("ID")?.Value;
+                            string actionName = action.Attribute("Name")?.Value ?? "";
 
-                            var targetRef = action.Descendants("Reference")
+                            XElement? targetRef = action.Descendants("Reference")
                                 .FirstOrDefault(r => r.Attribute("Name")?.Value == "Target");
 
-                            var objectRef = targetRef?.Element("ObjectRef");
+                            XElement? objectRef = targetRef?.Element("ObjectRef");
 
                             if (objectRef != null)
                             {
-                                var targetId = objectRef.Attribute("ID")?.Value;
+                                string? targetId = objectRef.Attribute("ID")?.Value;
 
                                 if (!IDsAddedToChart.Contains(targetId))
                                 {
                                     IDsAddedToChart.Add(targetId);
 
-                                    var targetName = objectRef.Attribute("Name")?.Value;
+                                    string? targetName = objectRef.Attribute("Name")?.Value;
                                     ParentData parentData = GetInheritedParentData(objectRef);
 
                                     actionsWithTargets.Add(new WwiseAction
@@ -133,7 +131,10 @@ namespace WwiseHDRTool
         private static SKColor GetSkColorFromWwiseCode(int index)
         {
             if (index >= 0 && index < WwisePalette.Length)
+            {
                 return WwisePalette[index];
+            }
+
             return new SKColor(200, 200, 200); // default color
         }
 
@@ -149,14 +150,14 @@ namespace WwiseHDRTool
 
             while (current != null)
             {
-                var propertyList = current.Element("PropertyList");
+                XElement? propertyList = current.Element("PropertyList");
                 if (propertyList != null)
                 {
-                    var overrideColor = propertyList.Elements("Property")
+                    string? overrideColor = propertyList.Elements("Property")
                         .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideColor")
                         ?.Attribute("Value")?.Value;
 
-                    var colorProp = propertyList.Elements("Property")
+                    string? colorProp = propertyList.Elements("Property")
                         .FirstOrDefault(p => p.Attribute("Name")?.Value == "Color")
                         ?.Attribute("Value")?.Value;
 
@@ -165,7 +166,7 @@ namespace WwiseHDRTool
                         if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
                         {
                             // Return parent color + name if override is enabled
-                            var nameAttr = current.Attribute("Name")?.Value;
+                            string? nameAttr = current.Attribute("Name")?.Value;
 
                             parentData.Color = GetSkColorFromWwiseCode(colorCode);
                             parentData.Name = nameAttr ?? "[NONE]";
@@ -198,38 +199,47 @@ namespace WwiseHDRTool
                     return;
                 }
 
-                var wwuFiles = Directory.GetFiles(audioObjWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
+                string[] wwuFiles = Directory.GetFiles(audioObjWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
                 Console.WriteLine($"[Info] {wwuFiles.Length} .wwu files found in {audioObjWWUFolderPath}");
 
-                foreach (var file in wwuFiles)
+                foreach (string file in wwuFiles)
                 {
                     try
                     {
-                        var doc = XDocument.Load(file);
-                        var objects = doc.Descendants()
+                        XDocument doc = XDocument.Load(file);
+                        IEnumerable<XElement> objects = doc.Descendants()
                             .Where(e => e.Name == "ActorMixer" || e.Name == "Sound" || e.Name == "RandomSequenceContainer" || e.Name == "BlendContainer");
 
-                        foreach (var obj in objects)
+                        foreach (XElement? obj in objects)
                         {
-                            var id = obj.Attribute("ID")?.Value;
-                            if (string.IsNullOrEmpty(id)) continue;
+                            string? id = obj.Attribute("ID")?.Value;
+                            if (string.IsNullOrEmpty(id))
+                            {
+                                continue;
+                            }
 
-                            var rtpcs = obj.Descendants("RTPC")
+                            IEnumerable<XElement> rtpcs = obj.Descendants("RTPC")
                                 .Where(rtpc =>
                                     rtpc.Element("PropertyList")?.Elements("Property")
                                         .Any(p => p.Attribute("Name")?.Value == "PropertyName" &&
                                                   p.Attribute("Value")?.Value == "Volume") == true);
 
-                            if (!rtpcs.Any()) continue;
+                            if (!rtpcs.Any())
+                            {
+                                continue;
+                            }
 
-                            var yValues = rtpcs
+                            List<float> yValues = rtpcs
                                 .SelectMany(rtpc => rtpc.Descendants("Point")
                                     .Select(p => p.Element("YPos")?.Value)
                                     .Where(y => !string.IsNullOrWhiteSpace(y))
                                     .Select(y =>
                                     {
-                                        if (float.TryParse(y.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+                                        if (float.TryParse(y.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v))
+                                        {
                                             return v;
+                                        }
+
                                         return float.NaN;
                                     })
                                     .Where(v => !float.IsNaN(v)))
@@ -237,8 +247,8 @@ namespace WwiseHDRTool
 
                             if (yValues.Count > 0)
                             {
-                                var min = yValues.Min();
-                                var max = yValues.Max();
+                                float min = yValues.Min();
+                                float max = yValues.Max();
                                 WwiseCache.volumeRangeCache[id] = (min, max);
                             }
                         }

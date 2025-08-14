@@ -1,43 +1,19 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
-using LiveChartsCore;
 using LiveChartsCore.Defaults;
-using LiveChartsCore.Drawing;
-using LiveChartsCore.Kernel;
-using LiveChartsCore.Kernel.Events;
-using LiveChartsCore.Kernel.Sketches;
-using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.UI;
-using Microsoft.UI.Dispatching;
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Newtonsoft.Json.Linq;
-using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using Windows.System;
-using Windows.UI.Core;
-using WinRT.Interop;
 
 namespace WwiseHDRTool;
 
@@ -79,16 +55,20 @@ public partial class MainViewModel : ObservableObject
         }
 
         if (SearchItems.Contains(item))
+        {
             SearchItems.Remove(item);
+        }
     }
 
     private void AddSearchItem(SearchItemViewModel item)
     {
         // 1. Dehighlight if this SearchItem already had a point
         if (!string.IsNullOrEmpty(item.PreviousValideText))
+        {
             ChartViewModel.DehighlightPointByName(item.PreviousValideText);
+        }
 
-        var trimmedText = item.Text.Trim();
+        string trimmedText = item.Text.Trim();
 
         // 2. Always highlight the new point for this SearchItem
         ChartViewModel.HighlightPointByName(trimmedText);
@@ -98,7 +78,9 @@ public partial class MainViewModel : ObservableObject
         if (!Searches.Contains(trimmedText))
         {
             if (item == SearchItems.Last())
+            {
                 SearchItems.Add(new SearchItemViewModel());
+            }
 
             Searches.Add(trimmedText);
         }
@@ -126,13 +108,15 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(item.Text))
         {
-            var matches = WwiseCache.chartDefaultPoints
+            IEnumerable<ErrorPoint> matches = WwiseCache.chartDefaultPoints
                 .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
                 .Where(n => (n.MetaData as PointMetaData).Name.Split(':')[0].Contains(item.Text, StringComparison.OrdinalIgnoreCase) &&
                     !(n.MetaData as PointMetaData).Name.Split(':')[0].Equals(item.Text, StringComparison.OrdinalIgnoreCase));
 
-            foreach (var m in matches)
+            foreach (ErrorPoint? m in matches)
+            {
                 SearchSuggestions.Add((m.MetaData as PointMetaData).Name.Split(':')[0]);
+            }
         }
     }
 
@@ -153,7 +137,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void HideShowSeries(ButtonData btnData)
     {
-        ChartViewModel._seriesByParentData.TryGetValue(btnData.ParentData, out var selectedSeries);
+        ChartViewModel._seriesByParentData.TryGetValue(btnData.ParentData, out ScatterSeries<ErrorPoint>? selectedSeries);
 
         if (selectedSeries.IsVisible)
         {
@@ -187,7 +171,7 @@ public partial class MainViewModel : ObservableObject
     {
         Console.WriteLine($"[Info] Adding dynamic button: {parentData.Name}");
 
-        var btnData = new ButtonData
+        ButtonData btnData = new ButtonData
         {
             Background = new SolidColorBrush(Colors.LightGreen)
         };
@@ -233,14 +217,20 @@ public class BoolToVisibilityConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         if (value is bool b)
+        {
             return b ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         return Visibility.Collapsed;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
         if (value is Visibility v)
+        {
             return v == Visibility.Visible;
+        }
+
         return false;
     }
 }

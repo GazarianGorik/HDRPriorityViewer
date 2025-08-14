@@ -1,40 +1,9 @@
 ﻿using CSharpMarkup.WinUI;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
-using LiveChartsCore;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.Drawing;
-using LiveChartsCore.Kernel;
-using LiveChartsCore.Kernel.Events;
-using LiveChartsCore.Kernel.Sketches;
-using LiveChartsCore.Measure;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
-using LiveChartsCore.SkiaSharpView.Painting;
-using Microsoft.UI.Dispatching;
-using Microsoft.UI.Input;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using SkiaSharp;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using Windows.System;
-using Windows.UI.Core;
-using WinRT.Interop;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace WwiseHDRTool
 {
@@ -89,7 +58,7 @@ namespace WwiseHDRTool
         {
             try
             {
-                var response = await GenericClienCall(ak.wwise.core.getInfo, null, null);
+                JObject response = await GenericClienCall(ak.wwise.core.getInfo, null, null);
                 Console.WriteLine(response);
                 return response;
             }
@@ -105,13 +74,13 @@ namespace WwiseHDRTool
         {
             try
             {
-                var projectInfo = await GenericClienCall(ak.wwise.core.getProjectInfo, null, null);
+                JObject projectInfo = await GenericClienCall(ak.wwise.core.getProjectInfo, null, null);
 
                 // Extract Wwise version from the displayTitle field
                 string displayTitle = projectInfo["displayTitle"]?.ToString() ?? "";
                 string wwiseVersion = "unknown";
 
-                var match = System.Text.RegularExpressions.Regex.Match(displayTitle, @"Wwise (\d+\.\d+\.\d+)");
+                System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(displayTitle, @"Wwise (\d+\.\d+\.\d+)");
                 if (match.Success)
                 {
                     wwiseVersion = match.Groups[1].Value;
@@ -154,38 +123,38 @@ namespace WwiseHDRTool
 
         public static async Task<List<AudioBus>> GetAudioBuses()
         {
-            var buses = new List<AudioBus>();
+            List<AudioBus> buses = new List<AudioBus>();
 
-            var query = new JObject(
+            JObject query = new JObject(
                 new JProperty("from", new JObject(
                     new JProperty("ofType", new JArray("Bus"))
                 ))
             );
 
-            var options = new JObject(
+            JObject options = new JObject(
                 new JProperty("return", new JArray("id", "name", "path", "HdrEnable"))
             );
 
             try
             {
-                var result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
 
-                var hdrMap = result["return"]?
+                Dictionary<string, bool> hdrMap = result["return"]?
                     .ToDictionary(
                         bus => bus["path"]?.ToString() ?? "",
                         bus => bus["HdrEnable"]?.Value<bool>() ?? false
                     ) ?? new Dictionary<string, bool>();
 
-                foreach (var bus in result["return"]!)
+                foreach (JToken bus in result["return"]!)
                 {
-                    var path = bus["path"]?.ToString() ?? "";
-                    var isHDR = bus["HdrEnable"]?.Value<bool>() ?? false;
+                    string path = bus["path"]?.ToString() ?? "";
+                    bool isHDR = bus["HdrEnable"]?.Value<bool>() ?? false;
 
                     bool isHDRChild = false;
-                    var parts = path.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+                    string[] parts = path.Split('\\', StringSplitOptions.RemoveEmptyEntries);
                     for (int i = parts.Length - 1; i > 0; i--)
                     {
-                        var parentPath = "\\" + string.Join("\\", parts.Take(i));
+                        string parentPath = "\\" + string.Join("\\", parts.Take(i));
                         if (hdrMap.TryGetValue(parentPath, out bool parentIsHDR) && parentIsHDR)
                         {
                             isHDRChild = true;
@@ -215,23 +184,23 @@ namespace WwiseHDRTool
 
         public static async Task<List<WwiseEvent>> GetEvents()
         {
-            var events = new List<WwiseEvent>();
+            List<WwiseEvent> events = new List<WwiseEvent>();
 
-            var query = new JObject(
+            JObject query = new JObject(
                 new JProperty("from", new JObject(
                     new JProperty("ofType", new JArray("Event"))
                 ))
             );
 
-            var options = new JObject(
+            JObject options = new JObject(
                 new JProperty("return", new JArray("id", "name", "path"))
             );
 
             try
             {
-                var result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
 
-                foreach (var evt in result["return"]!)
+                foreach (JToken evt in result["return"]!)
                 {
                     events.Add(new WwiseEvent
                     {
@@ -260,33 +229,38 @@ namespace WwiseHDRTool
         /// </summary>
         public static async Task BatchGetTargetOutputBus(IEnumerable<string> targetIds)
         {
-            var idsToFetch = targetIds.Where(id => !WwiseCache.outputBusCache.ContainsKey(id)).Distinct().ToList();
-            if (idsToFetch.Count == 0) return;
+            List<string> idsToFetch = targetIds.Where(id => !WwiseCache.outputBusCache.ContainsKey(id)).Distinct().ToList();
+            if (idsToFetch.Count == 0)
+            {
+                return;
+            }
 
             try
             {
-                var query = new JObject(
+                JObject query = new JObject(
                     new JProperty("from", new JObject(
                         new JProperty("id", new JArray(idsToFetch))
                     ))
                 );
 
-                var options = new JObject(
+                JObject options = new JObject(
                     new JProperty("return", new JArray("id", "OutputBus"))
                 );
 
-                var result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
 
-                foreach (var obj in result["return"]!)
+                foreach (JToken obj in result["return"]!)
                 {
-                    var id = obj["id"]?.ToString();
-                    var busId = obj["OutputBus"]?["id"]?.ToString();
+                    string? id = obj["id"]?.ToString();
+                    string? busId = obj["OutputBus"]?["id"]?.ToString();
                     if (id != null)
+                    {
                         WwiseCache.outputBusCache[id] = busId;
+                    }
                 }
 
                 // For any ids not returned by WAAPI, set null to avoid refetching later
-                foreach (var id in idsToFetch)
+                foreach (string? id in idsToFetch)
                 {
                     WwiseCache.outputBusCache.TryAdd(id, WwiseCache.outputBusCache.ContainsKey(id) ? WwiseCache.outputBusCache[id] : null);
                 }
@@ -296,7 +270,10 @@ namespace WwiseHDRTool
                 EnqueueErrorMessage("Error", $"BatchGetTargetOutputBus failed: {ex.Message}");
                 Console.WriteLine($"[Warning] BatchGetTargetOutputBus failed: {ex.Message}");
                 // Ensure we don't re-request infinitely: mark them as null
-                foreach (var id in idsToFetch) WwiseCache.outputBusCache.TryAdd(id, null);
+                foreach (string? id in idsToFetch)
+                {
+                    WwiseCache.outputBusCache.TryAdd(id, null);
+                }
             }
         }
 
@@ -305,38 +282,45 @@ namespace WwiseHDRTool
         /// </summary>
         public static async Task BatchGetVolumes(IEnumerable<string> targetIds)
         {
-            var idsToFetch = targetIds.Where(id => !WwiseCache.volumeCache.ContainsKey(id)).Distinct().ToList();
-            if (idsToFetch.Count == 0) return;
+            List<string> idsToFetch = targetIds.Where(id => !WwiseCache.volumeCache.ContainsKey(id)).Distinct().ToList();
+            if (idsToFetch.Count == 0)
+            {
+                return;
+            }
 
             try
             {
-                var query = new JObject(
+                JObject query = new JObject(
                     new JProperty("from", new JObject(
                         new JProperty("id", new JArray(idsToFetch))
                     ))
                 );
 
-                var options = new JObject(
+                JObject options = new JObject(
                     new JProperty("return", new JArray("id", "Volume"))
                 );
 
-                var result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
 
-                foreach (var obj in result["return"]!)
+                foreach (JToken obj in result["return"]!)
                 {
-                    var id = obj["id"]?.ToString();
-                    var volStr = obj["Volume"]?.ToString();
+                    string? id = obj["id"]?.ToString();
+                    string? volStr = obj["Volume"]?.ToString();
                     if (id != null)
                     {
-                        if (float.TryParse(volStr, out var v))
+                        if (float.TryParse(volStr, out float v))
+                        {
                             WwiseCache.volumeCache[id] = v;
+                        }
                         else
+                        {
                             WwiseCache.volumeCache[id] = null;
+                        }
                     }
                 }
 
                 // Mark missing ids with null to avoid refetch
-                foreach (var id in idsToFetch)
+                foreach (string? id in idsToFetch)
                 {
                     WwiseCache.volumeCache.TryAdd(id, WwiseCache.volumeCache.ContainsKey(id) ? WwiseCache.volumeCache[id] : null);
                 }
@@ -345,7 +329,10 @@ namespace WwiseHDRTool
             {
                 EnqueueErrorMessage("Error", $"BatchGetVolumes failed: {ex.Message}");
                 Console.WriteLine($"[Warning] BatchGetVolumes failed: {ex.Message}");
-                foreach (var id in idsToFetch) WwiseCache.volumeCache.TryAdd(id, null);
+                foreach (string? id in idsToFetch)
+                {
+                    WwiseCache.volumeCache.TryAdd(id, null);
+                }
             }
         }
 
@@ -375,7 +362,7 @@ namespace WwiseHDRTool
 
             try
             {
-                var args = new JObject
+                JObject args = new JObject
                 {
                     ["command"] = "Inspect",
                     ["objects"] = new JArray(objectId)
@@ -401,7 +388,7 @@ namespace WwiseHDRTool
             }
             try
             {
-                var args = new JObject
+                JObject args = new JObject
                 {
                     ["command"] = "FindInProjectExplorerSelectionChannel1",
                     ["objects"] = new JArray(objectId)
@@ -418,7 +405,8 @@ namespace WwiseHDRTool
 
         static async void EnqueueErrorMessage(string type, string message)
         {
-            MainWindow.Instance.DispatcherQueue.TryEnqueue(async () => {
+            MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
+            {
                 await MainWindow.Instance.ShowMessageAsync(type, $"Error during connection: {message}");
             });
         }

@@ -49,11 +49,11 @@ namespace WwiseHDRTool
 
             MainDispatcherQueue = this.DispatcherQueue;
 
-            var xAxis = new Axis
+            Axis xAxis = new Axis
             {
                 IsVisible = false
             };
-            var yAxis = new Axis
+            Axis yAxis = new Axis
             {
                 Name = "HDR Priority",
                 NameTextSize = 14,
@@ -87,15 +87,17 @@ namespace WwiseHDRTool
 
             // Only open Wwise element if Ctrl is pressed
             if (!isCtrlDown || chartPointUnderCursor == null || chartPointUnderCursor.Count() == 0)
+            {
                 return;
+            }
 
             if (chartPointUnderCursor.Count() == 1)
             {
-                var point = chartPointUnderCursor.Single();
+                ChartPoint point = chartPointUnderCursor.Single();
 
                 if (point.Context.DataSource is ErrorPoint errorPoint)
                 {
-                    var meta = errorPoint.MetaData as PointMetaData;
+                    PointMetaData? meta = errorPoint.MetaData as PointMetaData;
                     string name = meta?.Name ?? "Unknown";
                     string wwiseID = meta?.WwiseID ?? "Unknown";
 
@@ -142,10 +144,10 @@ namespace WwiseHDRTool
 
             if (isCtrlDown)
             {
-                var chartPoint = chartPointUnderCursor.FirstOrDefault();
+                ChartPoint? chartPoint = chartPointUnderCursor.FirstOrDefault();
                 if (chartPoint?.Context.DataSource is ErrorPoint ep)
                 {
-                    var pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
+                    string? pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
                     if (!string.IsNullOrEmpty(pointName))
                     {
                         // Only redo if the point has changed
@@ -171,15 +173,18 @@ namespace WwiseHDRTool
 
         private bool IsSameAsLast(IEnumerable<ChartPoint> newPoints)
         {
-            if (lastNewItems == null) return false;
+            if (lastNewItems == null)
+            {
+                return false;
+            }
 
-            var newCoords = newPoints
+            List<(double PrimaryValue, double SecondaryValue)> newCoords = newPoints
                 .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
                 .OrderBy(t => t.PrimaryValue)
                 .ThenBy(t => t.SecondaryValue)
                 .ToList();
 
-            var lastCoords = lastNewItems
+            List<(double PrimaryValue, double SecondaryValue)> lastCoords = lastNewItems
                 .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
                 .OrderBy(t => t.PrimaryValue)
                 .ThenBy(t => t.SecondaryValue)
@@ -264,12 +269,14 @@ namespace WwiseHDRTool
         public async Task ShowMessageAsync(string title, string message)
         {
             if (isDialogOpen)
+            {
                 return;
+            }
 
             isDialogOpen = true;
             _message = message;
 
-            var stackPanel = new StackPanel();
+            StackPanel stackPanel = new StackPanel();
             stackPanel.Children.Add(new TextBlock
             {
                 Text = message,
@@ -286,13 +293,13 @@ namespace WwiseHDRTool
                 XamlRoot = this.Content.XamlRoot
             };
 
-            var result = await _dialog.ShowAsync();
+            ContentDialogResult result = await _dialog.ShowAsync();
 
             if (result == ContentDialogResult.Primary)
             {
                 isDialogOpen = false;
                 // Copy to clipboard
-                var dataPackage = new DataPackage();
+                DataPackage dataPackage = new DataPackage();
                 dataPackage.SetText(message);
                 Clipboard.SetContent(dataPackage);
             }
@@ -343,7 +350,9 @@ namespace WwiseHDRTool
         private void RootGrid_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
             if (SuggestionsPopup.IsOpen)
+            {
                 SuggestionsPopup.IsOpen = false;
+            }
         }
 
         private void SearchSuggestionSelected(object sender, SelectionChangedEventArgs e)
@@ -372,15 +381,17 @@ namespace WwiseHDRTool
                 {
                     tb.DispatcherQueue.TryEnqueue(() =>
                     {
-                        var transform = tb.TransformToVisual(RootGrid);
-                        var position = transform.TransformPoint(new Windows.Foundation.Point(0, tb.ActualHeight));
+                        Microsoft.UI.Xaml.Media.GeneralTransform transform = tb.TransformToVisual(RootGrid);
+                        Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(0, tb.ActualHeight));
 
-                        var padding = RootGrid.Padding;
+                        Thickness padding = RootGrid.Padding;
                         SuggestionsPopup.HorizontalOffset = position.X - padding.Left;
                         SuggestionsPopup.VerticalOffset = position.Y - padding.Top;
 
                         if (SuggestionsPopup.Child is FrameworkElement popupChild)
+                        {
                             popupChild.Width = tb.ActualWidth;
+                        }
 
                         SuggestionsPopup.IsOpen = true;
                     });

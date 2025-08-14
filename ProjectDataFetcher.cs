@@ -1,7 +1,5 @@
-﻿using AK.Wwise.Waapi;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,48 +13,56 @@ namespace WwiseHDRTool
         public static (float min, float max)? ParseVolumeRTPCMinMaxFromWwu(string targetId, string audioObjWWUFolderPathParam)
         {
             if (string.IsNullOrEmpty(targetId))
+            {
                 return null;
+            }
 
-            if (WwiseCache.volumeRangeCache.TryGetValue(targetId, out var range))
+            if (WwiseCache.volumeRangeCache.TryGetValue(targetId, out (float min, float max)? range))
+            {
                 return range;
+            }
 
             // Fallback: if not preloaded for some reason, run a quick per-id scan (less efficient)
             try
             {
-                var wwuFiles = Directory.GetFiles(audioObjWWUFolderPathParam, "*.wwu", SearchOption.AllDirectories);
+                string[] wwuFiles = Directory.GetFiles(audioObjWWUFolderPathParam, "*.wwu", SearchOption.AllDirectories);
                 float globalMin = float.MaxValue;
                 float globalMax = float.MinValue;
                 bool found = false;
 
-                foreach (var file in wwuFiles)
+                foreach (string file in wwuFiles)
                 {
-                    var doc = XDocument.Load(file);
+                    XDocument doc = XDocument.Load(file);
 
-                    var objectsWithRtpc = doc.Descendants()
+                    IEnumerable<XElement> objectsWithRtpc = doc.Descendants()
                         .Where(e => e.Name == "ActorMixer" || e.Name == "Sound" || e.Name == "RandomSequenceContainer" || e.Name == "BlendContainer")
                         .Where(obj => obj.Attribute("ID")?.Value?.Equals(targetId, StringComparison.OrdinalIgnoreCase) == true);
 
-                    foreach (var obj in objectsWithRtpc)
+                    foreach (XElement? obj in objectsWithRtpc)
                     {
-                        var rtpcs = obj.Descendants("RTPC")
+                        IEnumerable<XElement> rtpcs = obj.Descendants("RTPC")
                             .Where(rtpc =>
                                 rtpc.Element("PropertyList")?.Elements("Property")
                                     .Any(p => p.Attribute("Name")?.Value == "PropertyName" &&
                                               p.Attribute("Value")?.Value == "Volume") == true
                             );
 
-                        foreach (var rtpc in rtpcs)
+                        foreach (XElement? rtpc in rtpcs)
                         {
-                            var yPositions = rtpc
+                            List<float> yPositions = rtpc
                                 .Descendants("Point")
                                 .Select(p => p.Element("YPos")?.Value)
                                 .Where(y => !string.IsNullOrWhiteSpace(y))
                                 .Select(y =>
                                 {
                                     if (float.TryParse(y.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float value))
+                                    {
                                         return value;
+                                    }
                                     else
+                                    {
                                         return float.NaN;
+                                    }
                                 })
                                 .Where(v => !float.IsNaN(v))
                                 .ToList();
@@ -67,8 +73,15 @@ namespace WwiseHDRTool
                                 float min = yPositions.Min();
                                 float max = yPositions.Max();
 
-                                if (min < globalMin) globalMin = min;
-                                if (max > globalMax) globalMax = max;
+                                if (min < globalMin)
+                                {
+                                    globalMin = min;
+                                }
+
+                                if (max > globalMax)
+                                {
+                                    globalMax = max;
+                                }
                             }
                         }
                     }
@@ -92,27 +105,31 @@ namespace WwiseHDRTool
         public static async Task<float?> GetVolume(string targetId)
         {
             if (string.IsNullOrEmpty(targetId))
+            {
                 return null;
+            }
 
             // Prefer cached value
-            if (WwiseCache.volumeCache.TryGetValue(targetId, out var cached) && cached.HasValue)
+            if (WwiseCache.volumeCache.TryGetValue(targetId, out float? cached) && cached.HasValue)
+            {
                 return cached;
+            }
 
             try
             {
-                var query = new JObject(
+                JObject query = new JObject(
                     new JProperty("from", new JObject(
                         new JProperty("id", new JArray(targetId))
                     ))
                 );
 
-                var options = new JObject(
+                JObject options = new JObject(
                     new JProperty("return", new JArray("Volume"))
                 );
 
-                var result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
 
-                var volume = result["return"]?.First?["Volume"]?.ToString();
+                string? volume = result["return"]?.First?["Volume"]?.ToString();
 
                 if (int.TryParse(volume, out int vol))
                 {
@@ -134,26 +151,30 @@ namespace WwiseHDRTool
         public static async Task<string?> GetTargetOutputBus(string targetId)
         {
             if (string.IsNullOrEmpty(targetId))
+            {
                 return null;
+            }
 
             // Prefer cache
-            if (WwiseCache.outputBusCache.TryGetValue(targetId, out var cachedBus) && !string.IsNullOrEmpty(cachedBus))
+            if (WwiseCache.outputBusCache.TryGetValue(targetId, out string? cachedBus) && !string.IsNullOrEmpty(cachedBus))
+            {
                 return cachedBus;
+            }
 
             try
             {
-                var query = new JObject(
+                JObject query = new JObject(
                     new JProperty("from", new JObject(
                         new JProperty("id", new JArray(targetId))
                     ))
                 );
-                var options = new JObject(
+                JObject options = new JObject(
                     new JProperty("return", new JArray("OutputBus"))
                 );
 
-                var result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
 
-                var busId = result["return"]?.First?["OutputBus"]?["id"]?.ToString();
+                string? busId = result["return"]?.First?["OutputBus"]?["id"]?.ToString();
 
                 WwiseCache.outputBusCache[targetId] = busId;
                 Console.WriteLine($"[Info] OutputBus ID for target {targetId}: {busId}");

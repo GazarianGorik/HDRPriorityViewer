@@ -1,9 +1,5 @@
 ﻿using SkiaSharp;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WwiseHDRTool
 {
@@ -27,9 +23,9 @@ namespace WwiseHDRTool
             }
 
             // Apply lightening
-            byte r = (byte)(color.Red + (255 - color.Red) * vanished);
-            byte g = (byte)(color.Green + (255 - color.Green) * vanished);
-            byte b = (byte)(color.Blue + (255 - color.Blue) * vanished);
+            byte r = (byte)(color.Red + ((255 - color.Red) * vanished));
+            byte g = (byte)(color.Green + ((255 - color.Green) * vanished));
+            byte b = (byte)(color.Blue + ((255 - color.Blue) * vanished));
             byte a = (byte)(255 * transparency);
 
             return new SKColor(r, g, b, a);
@@ -38,10 +34,10 @@ namespace WwiseHDRTool
         public static SKColor OpaqueColor(SKColor color)
         {
             // Force full opacity
-            byte r = (byte)(color.Red);
-            byte g = (byte)(color.Green);
-            byte b = (byte)(color.Blue);
-            byte a = (byte)(255);
+            byte r = color.Red;
+            byte g = color.Green;
+            byte b = color.Blue;
+            byte a = 255;
 
             return new SKColor(r, g, b, a);
         }

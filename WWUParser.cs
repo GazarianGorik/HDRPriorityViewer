@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using SkiaSharp;
 
-
 namespace WwiseHDRTool
 {
     public static class WWUParser
@@ -17,32 +16,32 @@ namespace WwiseHDRTool
         private static readonly SKColor[] WwisePalette = {
             /*  0 */ new SKColor(100,110,120),  // a
             /*  1 */ new SKColor(104,107,230),  // b
-            /*  2 */ new SKColor(55,129,243),  // c
-            /*  3 */ new SKColor(2,169,185),  // d
-            /*  4 */ new SKColor(0,185,18),  // e
-            /*  5 */ new SKColor(131,185,18),  // f
-            /*  6 */ new SKColor(190, 174, 17),  // g
-            /*  7 */ new SKColor(226, 159, 25),  // h
-            /*  8 */ new SKColor(234, 123, 20),  // i
-            /*  9 */ new SKColor(217, 77, 47),  // j
-            /* 10 */ new SKColor(215, 59, 58),  // k
-            /* 11 */ new SKColor(231, 22, 229),  // l (ajouté en bleu clair)
-            /* 12 */ new SKColor(174, 27, 248),  // m
-            /* 13 */ new SKColor(145, 72, 253),  // n
-            /* 14 */ new SKColor(150, 152, 229),  // p (cyan très clair)
-            /* 15 */ new SKColor(121, 154, 217),  // q
-            /* 16 */ new SKColor(82, 181, 181),  // r
-            /* 17 */ new SKColor(102, 181, 105),  // s
-            /* 18 */ new SKColor(162, 190, 81),  // t
-            /* 19 */ new SKColor(210, 199, 53),  // u
-            /* 20 */ new SKColor(202, 164, 89),  // v
-            /* 21 */ new SKColor(201, 149, 95),  // w (garde le même si tu veux)
-            /* 22 */ new SKColor(197, 133, 120),  // x
-            /* 23 */ new SKColor(203, 125, 125),  // y
-            /* 24 */ new SKColor(207, 113, 181),  // z
-            /* 25 */ new SKColor(190, 108, 215),  // é (rose vif)
-            /* 26 */ new SKColor(172, 147, 232),  // è (magenta doux)
-            /* 27 */ new SKColor(129, 140, 150)   // o
+            /*  2 */ new SKColor(55,129,243),   // c
+            /*  3 */ new SKColor(2,169,185),    // d
+            /*  4 */ new SKColor(0,185,18),     // e
+            /*  5 */ new SKColor(131,185,18),   // f
+            /*  6 */ new SKColor(190,174,17),   // g
+            /*  7 */ new SKColor(226,159,25),   // h
+            /*  8 */ new SKColor(234,123,20),   // i
+            /*  9 */ new SKColor(217,77,47),    // j
+            /* 10 */ new SKColor(215,59,58),    // k
+            /* 11 */ new SKColor(231,22,229),   // l (light blue addition)
+            /* 12 */ new SKColor(174,27,248),   // m
+            /* 13 */ new SKColor(145,72,253),   // n
+            /* 14 */ new SKColor(150,152,229),  // p (very light cyan)
+            /* 15 */ new SKColor(121,154,217),  // q
+            /* 16 */ new SKColor(82,181,181),   // r
+            /* 17 */ new SKColor(102,181,105),  // s
+            /* 18 */ new SKColor(162,190,81),   // t
+            /* 19 */ new SKColor(210,199,53),   // u
+            /* 20 */ new SKColor(202,164,89),   // v
+            /* 21 */ new SKColor(201,149,95),   // w (same color kept intentionally)
+            /* 22 */ new SKColor(197,133,120),  // x
+            /* 23 */ new SKColor(203,125,125),  // y
+            /* 24 */ new SKColor(207,113,181),  // z
+            /* 25 */ new SKColor(190,108,215),  // é (bright pink)
+            /* 26 */ new SKColor(172,147,232),  // è (soft magenta)
+            /* 27 */ new SKColor(129,140,150)   // o
         };
 
         public static void SetProjectFolderPathes(string _eventsWWUFolderPath, string _audioObjWWUFolderPath)
@@ -55,7 +54,7 @@ namespace WwiseHDRTool
 
         /// <summary>
         /// Parse events' actions from WWU files (events workunits).
-        /// This remains single-pass over events WWU files.
+        /// Single pass over events WWU files.
         /// </summary>
         public static List<WwiseAction> ParseEventActionsFromWorkUnits()
         {
@@ -69,7 +68,7 @@ namespace WwiseHDRTool
             var wwuFiles = Directory.GetFiles(eventsWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
             Console.WriteLine($"[Info] Found {wwuFiles.Length} .wwu event files.");
 
-            var IDsAddedToChart = new List<String>();
+            var IDsAddedToChart = new List<string>();
 
             foreach (var wwuFile in wwuFiles)
             {
@@ -135,7 +134,7 @@ namespace WwiseHDRTool
         {
             if (index >= 0 && index < WwisePalette.Length)
                 return WwisePalette[index];
-            return new SKColor(200, 200, 200); // défaut
+            return new SKColor(200, 200, 200); // default color
         }
 
         private static ParentData GetInheritedParentData(XElement element)
@@ -165,15 +164,15 @@ namespace WwiseHDRTool
                     {
                         if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Retourne la couleur + nom du parent qui a override
+                            // Return parent color + name if override is enabled
                             var nameAttr = current.Attribute("Name")?.Value;
 
                             parentData.Color = GetSkColorFromWwiseCode(colorCode);
                             parentData.Name = nameAttr ?? "[NONE]";
-                            
+
                             return parentData;
                         }
-                        // Si pas override, on garde la couleur mais pas le nom
+                        // If no override, keep the color but reset the name
                         parentData.Color = GetSkColorFromWwiseCode(colorCode);
                         parentData.Name = "[NONE]";
                         return parentData;
@@ -187,7 +186,7 @@ namespace WwiseHDRTool
 
         /// <summary>
         /// Scans audio object WWU files once and fills volumeRangeCache with RTPC min/max for each object ID found.
-        /// Uses ConcurrentDictionary for safety.
+        /// Uses ConcurrentDictionary for thread safety.
         /// </summary>
         public static void PreloadVolumeRanges()
         {

@@ -26,7 +26,7 @@ namespace WwiseHDRTool
 {
     public sealed partial class MainWindow : Window
     {
-        public static MainWindow Instance { get; private set; } // Permet d'accéder à MainWindow depuis ailleurs
+        public static MainWindow Instance { get; private set; } // Allows accessing MainWindow from other classes
         public MainViewModel MainViewModel { get; } = new MainViewModel();
         public IntPtr WindowHandle => WindowNative.GetWindowHandle(this);
         public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue { get; private set; }
@@ -99,7 +99,7 @@ namespace WwiseHDRTool
                     string name = meta?.Name ?? "Unknown";
                     string wwiseID = meta?.WwiseID ?? "Unknown";
 
-                    Console.WriteLine($"Point cliqué : {name} ({wwiseID})");
+                    Console.WriteLine($"Point clicked: {name} ({wwiseID})");
 
                     await WaapiBridge.FocusWwiseWindow();
                     await WaapiBridge.FindObjectInProjectExplorer(wwiseID);
@@ -123,7 +123,7 @@ namespace WwiseHDRTool
 
             Console.WriteLine($"Hovered points changed: {chartPointUnderCursor?.Count() ?? 0} points under cursor.");
 
-            // Toujours tenter de mettre à jour si Ctrl est enfoncé
+            // Always try to update if Ctrl is pressed
             UpdateClickablePoint();
         }
 
@@ -148,7 +148,7 @@ namespace WwiseHDRTool
                     var pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
                     if (!string.IsNullOrEmpty(pointName))
                     {
-                        // Ne refaire que si le point a changé
+                        // Only redo if the point has changed
                         if (!isPointClickable || !IsSameAsLast(chartPointUnderCursor))
                         {
                             MainViewModel.ChartViewModel.MakeClickablePointByName(ep);
@@ -194,10 +194,9 @@ namespace WwiseHDRTool
                    ).All(equal => equal);
         }
 
-
         private void UpdateAppFocused(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
-            // UNFOCUSED
+            // Window lost focus
             if (args.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
             {
                 chart.ZoomMode = ZoomAndPanMode.Both;
@@ -206,7 +205,7 @@ namespace WwiseHDRTool
 
                 chartPointUnderCursor = null;
             }
-            else // FOCUSED
+            else // Window gained focus
             {
             }
         }
@@ -258,7 +257,6 @@ namespace WwiseHDRTool
             }).Start();
         }
 
-
         private ContentDialog _dialog;
         private string _message;
         private bool isDialogOpen = false;
@@ -270,7 +268,6 @@ namespace WwiseHDRTool
 
             isDialogOpen = true;
             _message = message;
-
 
             var stackPanel = new StackPanel();
             stackPanel.Children.Add(new TextBlock
@@ -294,7 +291,7 @@ namespace WwiseHDRTool
             if (result == ContentDialogResult.Primary)
             {
                 isDialogOpen = false;
-                // Copier dans le presse-papier
+                // Copy to clipboard
                 var dataPackage = new DataPackage();
                 dataPackage.SetText(message);
                 Clipboard.SetContent(dataPackage);
@@ -353,13 +350,13 @@ namespace WwiseHDRTool
         {
             if (sender is ListBox lb && lb.SelectedItem is string selected && _lastFocusedItem != null)
             {
-                // Mettre la suggestion dans le champ actif
+                // Put the suggestion in the active search field
                 _lastFocusedItem.Text = selected;
 
-                // Valider l'élément (ce qui créera un nouveau champ si besoin)
+                // Validate the item (which may create a new field if needed)
                 MainViewModel.ValidateSearchItem(_lastFocusedItem);
 
-                // Fermer le popup
+                // Close the popup
                 lb.SelectedItem = null;
                 SuggestionsPopup.IsOpen = false;
             }

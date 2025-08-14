@@ -50,7 +50,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
             float xOffsetStep = 0.04f;
             double totalXOffset = 0 + pointOffset * xOffsetStep;
 
-            // Si on n’a pas encore une série pour cette couleur, on la crée
+            // If we don't have a series for this color yet, create it
             if (!_seriesByParentData.TryGetValue(parentData, out var series))
             {
                 series = new ScatterSeries<ErrorPoint>
@@ -89,21 +89,21 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 }
             };
 
-            // Ajoute le point à la bonne série
+            // Add the point to the correct series
             ((ObservableCollection<ErrorPoint>)series.Values).Add(pointToAdd);
             WwiseCache.chartDefaultPoints.Add(pointToAdd);
         });
     }
 
 
-    // Ajoute dans ta classe un dictionnaire pour gérer les highlights par nom
+    // Add in your class a dictionary to manage highlights by name
     private readonly Dictionary<string, ScatterSeries<ErrorPoint>> _highlightSeriesByName = new();
 
     public void HighlightPointByName(string pointName)
     {
         Console.WriteLine($"[Info] Highlighting {pointName}...");
 
-        // Si on a déjà highlight ce pointName, on ne fait rien pour éviter doublons
+        // If we already highlighted this pointName, do nothing to avoid duplicates
         if (_highlightSeriesByName.ContainsKey(pointName))
         {
             Console.WriteLine($"[Info] Point '{pointName}' already highlighted.");
@@ -112,7 +112,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
         var pointsToHighlight = new List<ErrorPoint>();
 
-        // Parcourir toutes les séries (y compris les highlights déjà ajoutés)
+        // Go through all series (including highlights already added)
         var baseSeries = Series.ToList();
 
         SKColor matchedPointSerrieColor = SKColors.Red;
@@ -158,7 +158,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
         // If we found points to highlight, create a new series and add it to the chart
         if (pointsToHighlight.Count > 0)
         {
-            // If its the firs highlight, we dim the default points
+            // If it's the first highlight, we dim the default points
             if (pointsToHighlight.Count == 1)
                 DimDefaultChartPoints();
 
@@ -185,14 +185,14 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
             Series.Add(highlightSeries);
 
-            // Stock the highlight series by pointName to avoid duplicates
+            // Store the highlight series by pointName to avoid duplicates
             _highlightSeriesByName[pointName] = highlightSeries;
 
             Console.WriteLine($"[Info] Point '{pointName}' highlighted with {pointsToHighlight.Count} points.");
         }
         else
         {
-            Console.WriteLine($"[Info] Aucun point trouvé avec le nom '{pointName}'.");
+            Console.WriteLine($"[Info] No point found with the name '{pointName}'.");
         }
     }
 
@@ -204,7 +204,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 if (scatterSeries.Fill is SolidColorPaint solidColor)
                 {
-                    // If it's the first highlight, make original serie a bit transparent
+                    // If it's the first highlight, make original series a bit transparent
                     if (_highlightSeriesByName.Count == 0)
                     {
                         scatterSeries.Fill = AppSettings.chartPointFillDimed(solidColor.Color);
@@ -223,7 +223,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 if (scatterSeries.Fill is SolidColorPaint solidColor)
                 {
-                    // If it's the first highlight, make original serie a bit transparent
+                    // If it's the first highlight, make original series a bit transparent
                     if (_highlightSeriesByName.Count == 0)
                     {
                         scatterSeries.Fill = AppSettings.chartPointFill(Utility.OpaqueColor(solidColor.Color));
@@ -238,16 +238,16 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         Console.WriteLine($"[Info] Dehighlighting {pointName}...");
 
-        // On va chercher les séries highlight associées au pointName
+        // Look for highlight series associated with pointName
         if (_highlightSeriesByName.TryGetValue(pointName, out var highlightSeries))
         {
-            // Retirer la série du chart et de la collection
+            // Remove the series from the chart and collection
             Series.Remove(highlightSeries);
             _highlightSeriesByName.Remove(pointName);
 
             Console.WriteLine($"[Info] Highlight removed for point '{pointName}'.");
 
-            // Si plus de highlights, on restaure les couleurs d'origine
+            // If there are no more highlights, restore original colors
             if (_highlightSeriesByName.Count == 0)
             {
                 UnDimDefaultChartPoints();
@@ -259,7 +259,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
         }
     }
 
-    // Ajoute dans ta classe un dictionnaire pour gérer les highlights par nom
+    // Add in your class a dictionary to manage clickable points by name
     private ScatterSeries<ErrorPoint> _clickableSerieByName = new();
 
     public void MakeClickablePointByName(ErrorPoint point)
@@ -272,7 +272,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
         var pointsToHighlight = new List<ErrorPoint>();
 
-        // Parcourir toutes les séries (y compris les highlights déjà ajoutés)
+        // Go through all series (including highlights already added)
         var baseSeries = Series.ToList();
 
         foreach (var s in baseSeries)
@@ -281,7 +281,6 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 foreach (var pt in scatterSeries.Values)
                 {
-                    string ptNameWithoutOtherData = "";
                     PointMetaData md = new PointMetaData();
 
                     if (pt == point)
@@ -291,8 +290,8 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         if (scatterSeries.Fill is SolidColorPaint solidColorPaint)
                         {
                             color = solidColorPaint.Color;
-                            // Tu peux utiliser color ici
-                            Console.WriteLine($"Couleur: {color}");
+                            // You can use color here
+                            Console.WriteLine($"Color: {color}");
                         }
 
                         pointsToHighlight.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
@@ -325,14 +324,14 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
             Series.Add(clickableSeries);
 
-            // Stocker la série par nom pour éviter doublons
+            // Store the series by name to avoid duplicates
             _clickableSerieByName = clickableSeries;
 
             Console.WriteLine($"[Info] Point '{pointName}' Clickable with {pointsToHighlight.Count} points.");
         }
         else
         {
-            Console.WriteLine($"[Info] Aucun point trouvé avec le nom '{pointName}'.");
+            Console.WriteLine($"[Info] No point found with the name '{pointName}'.");
         }
     }
 
@@ -341,10 +340,10 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         Console.WriteLine($"[Info] UnmakeClickable...");
 
-        // On va chercher les séries highlight associées au pointName
+        // Look for clickable series associated with the pointName
         if (_clickableSerieByName != null)
         {
-            // Retirer la série du chart et de la collection
+            // Remove the series from the chart and collection
             Series.Remove(_clickableSerieByName);
             _clickableSerieByName = null;
 
@@ -406,10 +405,10 @@ public partial class ChartViewModel : INotifyPropertyChanged
         Console.WriteLine("[Info] Chart borders updated!");
     }
 
-    // --- Nouvelle méthode à appeler pour repositionner les points (sans chevauchement)
+    // --- New method to call to reposition points (without overlap)
     public void RepositionPointsWithoutOverlap()
     {
-        // Exemple simplifié, à adapter selon ta logique d'origine :
+        // Simplified example, adapt according to your original logic:
         var yMinMaxList = new List<(double?, double?)>();
         int xOffsetDirection = 1;
 
@@ -432,7 +431,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
             float xOffset = occurrence * xOffsetDirection;
 
-            // Update point position dans le graphique
+            // Update point position in the chart
             point.X = xOffset;
         }
     }
@@ -463,25 +462,25 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
 public class NoTooltip : IChartTooltip, IDisposable
 {
-    // Cette méthode est appelée pour afficher le tooltip
+    // This method is called to display the tooltip
     public void Show(IEnumerable<ChartPoint> points, Chart chart)
     {
-        // Ne rien faire, donc tooltip invisible
+        // Do nothing, tooltip invisible
     }
 
-    // Cette méthode est appelée pour cacher le tooltip
+    // This method is called to hide the tooltip
     public void Hide(Chart chart)
     {
-        // Ne rien faire
+        // Do nothing
     }
 
-    // Dispose si besoin (ici rien à nettoyer)
+    // Dispose if necessary (nothing to clean here)
     public void Dispose()
     {
     }
 
-    // On doit aussi implémenter cette propriété (pas obligatoire, mais recommandée)
-    public TooltipFindingStrategy TooltipFindingStrategy { get; set; } = TooltipFindingStrategy.Automatic;
+    // We must also implement this property (not mandatory, but recommended)
+    public FindingStrategy TooltipFindingStrategy { get; set; } = FindingStrategy.Automatic;
 }
 
 public class PointMetaData : ChartEntityMetaData
@@ -496,7 +495,7 @@ public class ParentDataEqualityComparer : IEqualityComparer<ParentData>
 {
     public bool Equals(ParentData x, ParentData y)
     {
-        if (ReferenceEquals(x, y)) return true;    // même objet
+        if (ReferenceEquals(x, y)) return true;    // same object
         if (x is null || y is null) return false; // null safety
 
         return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) &&

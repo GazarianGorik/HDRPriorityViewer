@@ -42,7 +42,6 @@ namespace WwiseHDRTool
     {
         static AK.Wwise.Waapi.JsonClient client = new AK.Wwise.Waapi.JsonClient();
         public static bool ConnectedToWwise { get; private set; } = false;
-        public static bool UpdateMeters;
 
         public static async Task ConnectToWwise()
         {
@@ -51,10 +50,7 @@ namespace WwiseHDRTool
                 await client.Connect();
                 ConnectedToWwise = true;
 
-                Console.WriteLine("[Info] Connected to Wwise !");
-
-                MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
-                MainWindow.Instance.MainViewModel.IsButtonEnabled = true);
+                Console.WriteLine("[Info] Connected to Wwise!");
 
                 await GetProjectInfos();
 
@@ -62,15 +58,12 @@ namespace WwiseHDRTool
                 {
                     Console.Error.WriteLine("Lost connection to Wwise!");
                     ConnectedToWwise = false;
-
-                    MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
-                    MainWindow.Instance.MainViewModel.IsButtonEnabled = false);
                 };
             }
             catch (Exception ex)
             {
-                EnqueueErrorMessage("Error", $"Erreur lors de la connexion : {ex.Message}");
-                Console.WriteLine($"Erreur lors de la connexion : {ex.Message}");
+                EnqueueErrorMessage("Error", $"{ex.Message}");
+                Console.WriteLine($"{ex.Message}");
             }
         }
 
@@ -83,7 +76,7 @@ namespace WwiseHDRTool
             }
             else
             {
-                Console.WriteLine("La connexion est déjà fermée.");
+                Console.WriteLine("The connection is already closed.");
             }
         }
 
@@ -102,8 +95,8 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                EnqueueErrorMessage("Error", "Erreur récupération infos Wwise : " + e.Message);
-                Console.Error.WriteLine("Erreur récupération infos Wwise : " + e.Message);
+                EnqueueErrorMessage("Error", "Error retrieving Wwise info: " + e.Message);
+                Console.Error.WriteLine("Error retrieving Wwise info: " + e.Message);
                 throw;
             }
         }
@@ -113,7 +106,8 @@ namespace WwiseHDRTool
             try
             {
                 var projectInfo = await GenericClienCall(ak.wwise.core.getProjectInfo, null, null);
-                // Extraction de la version Wwise depuis le champ displayTitle
+
+                // Extract Wwise version from the displayTitle field
                 string displayTitle = projectInfo["displayTitle"]?.ToString() ?? "";
                 string wwiseVersion = "unknown";
 
@@ -123,21 +117,21 @@ namespace WwiseHDRTool
                     wwiseVersion = match.Groups[1].Value;
                 }
 
-                // Récupération du chemin complet du projet (fichier .wproj)
+                // Get the full path of the project (.wproj file)
                 string projectFullPath = projectInfo["path"]?.ToString() ?? "";
 
-                // Récupération du dossier parent du projet (le dossier du projet audio)
+                // Get the parent folder of the project (the audio project folder)
                 string projectFolder = "";
                 if (!string.IsNullOrEmpty(projectFullPath))
                 {
                     projectFolder = System.IO.Path.GetDirectoryName(projectFullPath) ?? "";
                 }
 
-                // Détermination du dossier racine à utiliser selon la version
-                string audioObjFodlerName = wwiseVersion.StartsWith("2025") ? "Containers" : "Actor-Mixer Hierarchy";
+                // Determine the root folder to use depending on the version
+                string audioObjFolderName = wwiseVersion.StartsWith("2025") ? "Containers" : "Actor-Mixer Hierarchy";
 
-                // Construction du chemin complet du dossier Audio object
-                string audioObjWWUFolderPath = System.IO.Path.Combine(projectFolder, audioObjFodlerName);
+                // Build the full path of the Audio object folder
+                string audioObjWWUFolderPath = System.IO.Path.Combine(projectFolder, audioObjFolderName);
 
                 string eventsWWUFolderPath = System.IO.Path.Combine(projectFolder, "Events");
 
@@ -150,8 +144,8 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                EnqueueErrorMessage("Error", "Erreur récupération infos projet : " + e.Message);
-                Console.Error.WriteLine("Erreur récupération infos projet : " + e.Message);
+                EnqueueErrorMessage("Error", "Error retrieving project info: " + e.Message);
+                Console.Error.WriteLine("Error retrieving project info: " + e.Message);
                 throw;
             }
         }
@@ -425,7 +419,7 @@ namespace WwiseHDRTool
         static async void EnqueueErrorMessage(string type, string message)
         {
             MainWindow.Instance.DispatcherQueue.TryEnqueue(async () => {
-                await MainWindow.Instance.ShowMessageAsync(type, $"Erreur lors de la connexion : {message}");
+                await MainWindow.Instance.ShowMessageAsync(type, $"Error during connection: {message}");
             });
         }
     }

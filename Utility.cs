@@ -11,22 +11,22 @@ namespace WwiseHDRTool
     {
         public static SKColor LightenColor(SKColor color, float vanished = 0.3f, float transparency = 0f, bool invert = false)
         {
-            // Clamp des valeurs pour éviter les débordements
+            // Clamp values to avoid overflow
             vanished = Math.Clamp(vanished, 0f, 1f);
             transparency = Math.Clamp(Math.Abs(1 - transparency), 0f, 1f);
 
-            // Inversion des couleurs si demandé
+            // Invert colors if requested
             if (invert)
             {
                 color = new SKColor(
                     (byte)(255 - color.Red),
                     (byte)(255 - color.Green),
                     (byte)(255 - color.Blue),
-                    color.Alpha // On garde l'alpha original ici
+                    color.Alpha // Keep original alpha here
                 );
             }
 
-            // Application de l'éclaircissement
+            // Apply lightening
             byte r = (byte)(color.Red + (255 - color.Red) * vanished);
             byte g = (byte)(color.Green + (255 - color.Green) * vanished);
             byte b = (byte)(color.Blue + (255 - color.Blue) * vanished);
@@ -37,7 +37,7 @@ namespace WwiseHDRTool
 
         public static SKColor OpaqueColor(SKColor color)
         {
-            // Application de l'éclaircissement
+            // Force full opacity
             byte r = (byte)(color.Red);
             byte g = (byte)(color.Green);
             byte b = (byte)(color.Blue);

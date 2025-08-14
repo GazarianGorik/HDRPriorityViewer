@@ -46,9 +46,6 @@ public partial class MainViewModel : ObservableObject
     public ChartViewModel ChartViewModel { get; }
 
     [ObservableProperty]
-    private bool isButtonEnabled = false;
-
-    [ObservableProperty]
     private string searchText = string.Empty;
 
     public ObservableCollection<string> SearchSuggestions { get; } = new();
@@ -58,10 +55,6 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<SearchItemViewModel> SearchItems { get; } = new();
 
     public IRelayCommand<SearchItemViewModel> RemoveSearchItemCommand { get; }
-
-    public event PropertyChangedEventHandler PropertyChanged;
-    private void OnPropertyChanged(string propertyName)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     public List<string> Searches = new List<string>();
 
@@ -91,17 +84,17 @@ public partial class MainViewModel : ObservableObject
 
     private void AddSearchItem(SearchItemViewModel item)
     {
-        // 1. Déhighlight si ce SearchItem avait déjà un point
+        // 1. Dehighlight if this SearchItem already had a point
         if (!string.IsNullOrEmpty(item.PreviousValideText))
             ChartViewModel.DehighlightPointByName(item.PreviousValideText);
 
         var trimmedText = item.Text.Trim();
 
-        // 2. Toujours highlight le nouveau point pour ce SearchItem
+        // 2. Always highlight the new point for this SearchItem
         ChartViewModel.HighlightPointByName(trimmedText);
         item.PreviousValideText = trimmedText;
 
-        // 3. Ajouter à la liste globale si c’est un nouveau terme
+        // 3. Add to the global list if it’s a new term
         if (!Searches.Contains(trimmedText))
         {
             if (item == SearchItems.Last())
@@ -153,7 +146,7 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await MainWindow.Instance.ShowMessageAsync("Erreur", ex.Message);
+            await MainWindow.Instance.ShowMessageAsync("Error", ex.Message);
         }
     }
 
@@ -181,7 +174,7 @@ public partial class MainViewModel : ObservableObject
         ChartViewModel.RepositionPointsWithoutOverlap();
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecuteValider))]
+    [RelayCommand]
     private void ListSoundObjectsRoutedToHDR()
     {
         new Thread(() =>
@@ -199,23 +192,13 @@ public partial class MainViewModel : ObservableObject
             Background = new SolidColorBrush(Colors.LightGreen)
         };
 
-        // Maintenant on peut utiliser btnData dans la lambda sans problème
+        // Now we can use btnData in the lambda without any problem
         btnData.ParentData = parentData;
         btnData.Command = new RelayCommand(() => HideShowSeries(btnData));
 
         btnData.Label = $"{char.ToUpper(parentData.Name[0]) + parentData.Name.Substring(1)}";
 
         CategorieFilterButtons.Add(btnData);
-    }
-
-    private bool CanExecuteValider()
-    {
-        return isButtonEnabled;
-    }
-
-    partial void OnIsButtonEnabledChanged(bool oldValue, bool newValue)
-    {
-        ListSoundObjectsRoutedToHDRCommand.NotifyCanExecuteChanged();
     }
 }
 

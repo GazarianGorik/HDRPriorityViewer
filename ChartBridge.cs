@@ -28,6 +28,7 @@ namespace WwiseHDRTool
                 PlotEvents(eventsWithActions);
 
                 MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
+                
             }
             catch (Exception ex)
             {
@@ -164,7 +165,7 @@ namespace WwiseHDRTool
 
                     Console.WriteLine($"  => Action: {action.Name} (ID: {action.Id}) => OutputBus: {busId}");
 
-                    // Récupérer volume arrondi
+                    // Get rounded volume
                     float volume = 0;
                     if (WwiseCache.volumeCache.TryGetValue(action.TargetId!, out var volVal) && volVal.HasValue)
                         volume = (float)Math.Round(volVal.Value, 2);

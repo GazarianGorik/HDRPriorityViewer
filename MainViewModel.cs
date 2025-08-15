@@ -98,9 +98,9 @@ public partial class MainViewModel : ObservableObject
         // 3. Add to the global list if it’s a new term
         if (!Searches.Contains(trimmedText))
         {
-            if (item == SearchItems.Last())
+            if (item == SearchItems.First())
             {
-                SearchItems.Add(new SearchItemViewModel());
+                SearchItems.Insert(0, new SearchItemViewModel());
             }
 
             Searches.Add(trimmedText);
@@ -159,7 +159,7 @@ public partial class MainViewModel : ObservableObject
                 Utility.LightenColor(btnData.ParentData.Color, 0.1f, 0.6f)
             )
             { StrokeThickness = 2 };
-            btnData.Background = new SolidColorBrush(Colors.White);
+            btnData.Background = new SolidColorBrush(Colors.LightBlue);
         }
 
         ChartViewModel.RepositionPointsWithoutOverlap();
@@ -171,7 +171,7 @@ public partial class MainViewModel : ObservableObject
 
         ButtonData btnData = new ButtonData
         {
-            Background = new SolidColorBrush(Colors.White)
+            Background = new SolidColorBrush(Colors.LightBlue)
         };
 
         // Now we can use btnData in the lambda without any problem

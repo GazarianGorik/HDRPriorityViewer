@@ -11,7 +11,7 @@ namespace WwiseHDRTool;
 public static class Log
 {
     // Active/désactive tous les logs
-    public static bool Enabled { get; set; } = true;
+    public static bool Enabled { get; set; } = false;
 
     public static void Info(string message)
     {

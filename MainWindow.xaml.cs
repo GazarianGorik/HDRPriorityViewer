@@ -125,6 +125,7 @@ namespace WwiseHDRTool
         private async void AnalyzeButton_Click(object sender, RoutedEventArgs e)
         {
             AnalyzeButton.IsEnabled = false;
+            FirstAnalyzePanel.Visibility = Visibility.Collapsed;
 
             _loadingDialog = new LoadingDialog
             {
@@ -157,9 +158,7 @@ namespace WwiseHDRTool
 
             hasAnalyzedOnce = true;
 
-            AnalyzeButton.Visibility = Visibility.Collapsed;
             Stats.Visibility = Visibility.Visible;
-            ChartControls.Visibility = Visibility.Visible;
             Chart.IsEnabled = true;
 
             MainWindow.MainDispatcherQueue.TryEnqueue(() =>

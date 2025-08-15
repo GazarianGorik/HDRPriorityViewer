@@ -8,123 +8,207 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Title="WwiseHDRTool">
+    
+    
+    
+    <Grid x:Name="RootGrid" Padding="10
+          " MinWidth="800" MinHeight="500"
+          Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid x:Name="RootGrid" Padding="24" MinWidth="600" MinHeight="400" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid>
+            <!-- Layout global : 1) bandeau (auto)  2) zone principale (s'étire) -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <!-- Déclaration des lignes -->
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Pour les contrôles -->
-            <RowDefinition Height="*"/>    <!-- Pour le graphique -->
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0"
-                Background="#1E1E1E"
-                CornerRadius="8"
-                Padding="12"
-                Margin="50,0,0,0"
-                BorderBrush="#333"
-                BorderThickness="1">
-                <!-- First Analyze button -->
-            <StackPanel Grid.Row="0" x:Name="ButtonContainer" HorizontalAlignment="Center" Margin="0,12,0,12">
-                <Button x:Name="AnalyzeButton"
-                Content="Analyze Wwise project"
-                Click="AnalyzeButton_Click"
-                Width="300"
-                Height="50"/>
-            </StackPanel>
-
-            <Grid>
+            <!-- Zone principale : colonne gauche (panneau filtres), colonne droite (graph) -->
+            <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250"/>
+                    <!-- panneau de filtres -->
+                    <ColumnDefinition Width="12"/>
+                    <!-- gouttière -->
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <!-- graphique -->
                 </Grid.ColumnDefinitions>
-                <!-- Section UI : boutons, textbox, etc. -->
-                <StackPanel Grid.Row="0" Orientation="Vertical" Padding="10">
 
-                    <!-- Filtres et champs de recherche -->
-                    <StackPanel x:Name="ChartControls" Orientation="Vertical" HorizontalAlignment="Left" Visibility="Collapsed" Spacing="10">
-                        <TextBlock Text="Search / Filters"
+                <!-- PANNEAU FILTRES (il s’étire en hauteur car on est en Row="1" Height="*") -->
+                <Border
+                    Grid.Column="0"
+                    Background="#1E1E1E"
+                    CornerRadius="8"
+                    Padding="12"
+                    BorderBrush="#333"
+                    BorderThickness="1">
+
+                    <!-- Séparer haut (titre+recherche) et bas (catégories) : Auto / * / Auto -->
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <!-- Titre -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Zone recherche -->
+                            <RowDefinition Height="Auto"/>
+
+                            <!-- Titre -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Catégories en bas -->
+                            <RowDefinition Height="Auto"/>
+
+                            <!-- Titre -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Catégories en bas -->
+                            <RowDefinition Height="Auto"/>
+
+                            <!-- espace extensible -->
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+
+                        <!-- Titre -->
+                        <Grid HorizontalAlignment="Stretch" Padding="0,5,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <!-- Colonne texte : prend tout l'espace dispo -->
+                                <ColumnDefinition Width="Auto"/>
+                                <!-- Colonne bouton : prend juste ce qu'il faut -->
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                   HorizontalAlignment="Left"
+                                   Text="Project Infos"
                                    FontSize="18"
                                    FontWeight="SemiBold"
                                    Foreground="White"
-                                   VerticalAlignment="Center"/>
+                                   Margin="0,0,0,8"/>
+                            <Button Grid.Row="2" 
+                                x:Name="ReAnalyzeButton"
+                                HorizontalAlignment="Right"
+                                Content="Re-analyse"
+                                FontSize="12"
+                                Click="AnalyzeButton_Click"
+                                Width="90"
+                                Height="30"/>
+                        </Grid>
 
+                        <!-- Stats overlay en haut à droite du graphique -->
+                        <StackPanel Grid.Row="1" x:Name="Stats"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,12,0,0"
+                                Visibility="Collapsed">
+                            <Border Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="#333" BorderThickness="1" Margin="0,0,0,40">
+                                <StackPanel Orientation="Vertical" Spacing="6" HorizontalAlignment="Right">
+                                    <TextBlock FontSize="13" Text="{Binding WwiseVersion}" Foreground="LightGray"/>
+                                    <TextBlock FontSize="13" Text="{Binding WwiseProjectName}" Foreground="LightGray"/>
+                                    <TextBlock FontSize="13" Text="{Binding TotalChartPoints}" Foreground="LightGray"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
 
-                            <!--  Search fields -->
-                        <ItemsControl ItemsSource="{Binding SearchItems}" x:Name="SearchFields">
+                        <!-- Titre -->
+                        <TextBlock Grid.Row="2"
+                               Text="Search"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               Margin="0,0,0,16"/>
+
+                        <!-- RECHERCHE (en haut) -->
+                        <ItemsControl Grid.Row="3"
+                                  ItemsSource="{Binding SearchItems}"
+                                  x:Name="SearchFields"
+                                  Margin="0,0,0,40">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                    <StackPanel Orientation="Vertical" Spacing="8"/>
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="4">
+                                    <StackPanel Orientation="Vertical" VerticalAlignment="Top" Spacing="4">
                                         <TextBox Width="200"
-                                                    Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    PlaceholderText="Search..."
-                                                    KeyDown="SearchField_KeyDown"
-                                                    FontSize="13"
-                                                    TextChanged="SearchField_TextChanged"
-                                                    GotFocus="SearchField_GotFocus"
-                                                    LostFocus ="SehField_LostFocus"/>
+                                             Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             PlaceholderText="Search..."
+                                             FontSize="13"
+                                             KeyDown="SearchField_KeyDown"
+                                             TextChanged="SearchField_TextChanged"
+                                             GotFocus="SearchField_GotFocus"
+                                             LostFocus="SehField_LostFocus"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <StackPanel Orientation="Horizontal">
+                        <!-- Titre -->
+                        <TextBlock Grid.Row="4"
+                               Text="Filters"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               Margin="0,0,0,8"/>
+
+                        <StackPanel Grid.Row="5" VerticalAlignment="Top" HorizontalAlignment="Stretch" Orientation="Vertical" Margin="0,0,0,0">
                             <ItemsControl ItemsSource="{Binding CategorieFilterButtons}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" Spacing="6"/>
+                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Spacing="10"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button Content="{Binding Label}" 
-                                                    Command="{Binding Command}"
-                                                    FontSize="12"
-                                                    Foreground="{Binding Background}"/>
+                                        <Button Content="{Binding Label}" Command="{Binding Command}" FontSize="14"  Foreground="{Binding Background}"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
-                    </StackPanel>
-                </StackPanel>
+                    </Grid>
+                </Border>
 
-                <!-- Zone infos Wwise en haut à droite -->
-                <StackPanel Grid.Column="1" x:Name="Stats" Orientation ="Vertical" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,0" Visibility="Collapsed">
-                    <StackPanel Grid.Row="0" HorizontalAlignment="Right" Margin="0,12,0,12">
-                        <Button x:Name="ReAnalyzeButton"
-                                Content="Re-analyse"
-                                Click="AnalyzeButton_Click"
-                                Width="120"
-                                Height="36"/>
-                    </StackPanel>
-                    <Border Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="#333" BorderThickness="1">
-                        <StackPanel Orientation="Vertical" Spacing="6" HorizontalAlignment="Right">
-                            <TextBlock FontSize="12" Text="{Binding WwiseVersion}" Foreground="LightGray"/>
-                            <TextBlock FontSize="12" Text="{Binding WwiseProjectName}" Foreground="LightGray"/>
-                            <TextBlock FontSize="12" Text="{Binding TotalChartPoints}" Foreground="LightGray"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+                <!-- GRAPHIQUE -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <!-- CATÉGORIES (collées en bas du panneau) -->
+                    <Grid Grid.Row="1">
+                        <lvc:CartesianChart x:Name="Chart"
+                        Series="{Binding ChartViewModel.Series}"/>
+
+
+                    </Grid>
+                </Grid>
             </Grid>
         </Grid>
-        <!-- Popup de suggestions -->
+        <!-- Bandeau haut : bouton d’analyse centré -->
+        <Grid x:Name="FirstAnalyzePanel" Background="#CC000000">
+            <Button x:Name="AnalyzeButton"
+            Content="Analyze Wwise project"
+            Click="AnalyzeButton_Click"
+            Width="250"
+            Height="70"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontSize="18"
+            FontWeight="SemiBold"
+            Foreground="White"
+            Background="#7044E9"
+            BorderBrush="#4216BB"
+            BorderThickness="1"
+            CornerRadius="12"/>
+        </Grid>
+
+
+        <!-- Popup de suggestions (inchangé) -->
         <Popup x:Name="SuggestionsPopup">
             <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="Gray" BorderThickness="1">
                 <ListBox ItemsSource="{Binding SearchSuggestions}"
-                        SelectionChanged="SearchSuggestionSelected"
-                        MaxHeight="200"/>
+                         SelectionChanged="SearchSuggestionSelected"
+                         MaxHeight="200"/>
             </Border>
         </Popup>
-
-        <!-- Section graphique -->
-        <lvc:CartesianChart x:Name="Chart"
-                            Grid.Row="1"
-                            IsEnabled="False"
-                            Series="{Binding ChartViewModel.Series}"/>
 
     </Grid>
 </Window>

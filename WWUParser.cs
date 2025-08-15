@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using System.Diagnostics;
 
 namespace WwiseHDRTool
 {
@@ -47,7 +48,7 @@ namespace WwiseHDRTool
             eventsWWUFolderPath = _eventsWWUFolderPath;
             audioObjWWUFolderPath = _audioObjWWUFolderPath;
 
-            Console.WriteLine($"[Info] Working with the following folders : \n{eventsWWUFolderPath}\n{audioObjWWUFolderPath}\n");
+            Log.Info($"[Info] Working with the following folders : \n{eventsWWUFolderPath}\n{audioObjWWUFolderPath}\n");
         }
 
         /// <summary>
@@ -59,12 +60,12 @@ namespace WwiseHDRTool
             List<WwiseAction> actionsWithTargets = new List<WwiseAction>();
             if (string.IsNullOrEmpty(eventsWWUFolderPath) || !Directory.Exists(eventsWWUFolderPath))
             {
-                Console.WriteLine($"[Warning] Events WWU folder path is not set or doesn't exist: {eventsWWUFolderPath}");
+                Log.Warning($"Events WWU folder path is not set or doesn't exist: {eventsWWUFolderPath}");
                 return actionsWithTargets;
             }
 
             string[] wwuFiles = Directory.GetFiles(eventsWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
-            Console.WriteLine($"[Info] Found {wwuFiles.Length} .wwu event files.");
+            Log.Info($"[Info] Found {wwuFiles.Length} .wwu event files.");
 
             List<string> IDsAddedToChart = new List<string>();
 
@@ -110,7 +111,7 @@ namespace WwiseHDRTool
                                         ParentData = parentData
                                     });
 
-                                    Console.WriteLine($"[Info] Found target '{objectRef.Attribute("Name")?.Value}' (Parent: {parentData.Name} with color {parentData.Color}");
+                                    //Log.Info($"[Info] Found target '{objectRef.Attribute("Name")?.Value}' (Parent: {parentData.Name} with color {parentData.Color}");
                                 }
                             }
                         }
@@ -118,11 +119,11 @@ namespace WwiseHDRTool
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Warning] Failed parsing WWU '{wwuFile}': {ex.Message}");
+                    Log.Warning($"Failed parsing WWU '{wwuFile}': {ex.ToString()}");
                 }
             }
 
-            Console.WriteLine($"[Info] Extracted {actionsWithTargets.Count} actions with targets.");
+            Log.Info($"[Info] Extracted {actionsWithTargets.Count} actions with targets.");
             return actionsWithTargets;
         }
 
@@ -195,12 +196,12 @@ namespace WwiseHDRTool
             {
                 if (string.IsNullOrEmpty(audioObjWWUFolderPath) || !Directory.Exists(audioObjWWUFolderPath))
                 {
-                    Console.WriteLine($"[Warning] audioObjWWUFolderPath is not set or doesn't exist: {audioObjWWUFolderPath}");
+                    Log.Warning($"audioObjWWUFolderPath is not set or doesn't exist: {audioObjWWUFolderPath}");
                     return;
                 }
 
                 string[] wwuFiles = Directory.GetFiles(audioObjWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
-                Console.WriteLine($"[Info] {wwuFiles.Length} .wwu files found in {audioObjWWUFolderPath}");
+                Log.Info($"[Info] {wwuFiles.Length} .wwu files found in {audioObjWWUFolderPath}");
 
                 foreach (string file in wwuFiles)
                 {
@@ -255,15 +256,15 @@ namespace WwiseHDRTool
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[Warning] Failed parsing audioObj WWU '{file}': {ex.Message}");
+                        Log.Warning($"Failed parsing audioObj WWU '{file}': {ex.ToString()}");
                     }
                 }
 
-                Console.WriteLine($"[Info] Preloaded RTPC ranges for {WwiseCache.volumeRangeCache.Count} audio objects.");
+                Log.Info($"[Info] Preloaded RTPC ranges for {WwiseCache.volumeRangeCache.Count} audio objects.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Error] PreloadVolumeRanges failed: {ex.Message}");
+                Log.Info($"[Error] PreloadVolumeRanges failed: {ex.ToString()}");
             }
         }
         #endregion

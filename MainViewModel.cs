@@ -1,4 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
@@ -7,13 +15,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Input;
+using WwiseHDRTool.Views;
 
 namespace WwiseHDRTool;
 
@@ -34,13 +36,32 @@ public partial class MainViewModel : ObservableObject
 
     public List<string> Searches = new List<string>();
 
+    private string _wwiseVersion;
+    public string WwiseVersion
+    {
+        get => _wwiseVersion;
+        set => SetProperty(ref _wwiseVersion, "Version: " + value); // si tu as BaseViewModel avec INotifyPropertyChanged
+    }
+
+    private string _wwiseProjectName;
+    public string WwiseProjectName
+    {
+        get => _wwiseProjectName;
+        set => SetProperty(ref _wwiseProjectName, "Project: " + value);
+    }
+
+    private string _totalChartPoints;
+    public string TotalChartPoints
+    {
+        get => _totalChartPoints;
+        set => SetProperty(ref _totalChartPoints, "Scanned: " + value);
+    }
+
     public MainViewModel()
     {
-        Console.WriteLine("[Info] Initializing MainViewModel...");
+        Log.Info("[Info] Initializing MainViewModel...");
         ChartViewModel = new ChartViewModel();
         RemoveSearchItemCommand = new RelayCommand<SearchItemViewModel>(RemoveSearchItem);
-
-        SearchItems.Add(new SearchItemViewModel());
     }
 
     private void RemoveSearchItem(SearchItemViewModel item)
@@ -121,20 +142,6 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ConnectToWwise()
-    {
-        Console.WriteLine("[Info] Attempting to connect to Wwise...");
-        try
-        {
-            await WaapiBridge.ConnectToWwise();
-        }
-        catch (Exception ex)
-        {
-            await MainWindow.Instance.ShowMessageAsync("Error", ex.Message);
-        }
-    }
-
-    [RelayCommand]
     public void HideShowSeries(ButtonData btnData)
     {
         ChartViewModel._seriesByParentData.TryGetValue(btnData.ParentData, out ScatterSeries<ErrorPoint>? selectedSeries);
@@ -152,28 +159,19 @@ public partial class MainViewModel : ObservableObject
                 Utility.LightenColor(btnData.ParentData.Color, 0.1f, 0.6f)
             )
             { StrokeThickness = 2 };
-            btnData.Background = new SolidColorBrush(Colors.LightGreen);
+            btnData.Background = new SolidColorBrush(Colors.White);
         }
 
         ChartViewModel.RepositionPointsWithoutOverlap();
     }
 
-    [RelayCommand]
-    private void ListSoundObjectsRoutedToHDR()
-    {
-        new Thread(() =>
-        {
-            ChartBridge.ListSoundObjectsRoutedToHDR().Wait();
-        }).Start();
-    }
-
     public void AddCategorieFilterButton(ParentData parentData)
     {
-        Console.WriteLine($"[Info] Adding dynamic button: {parentData.Name}");
+        Log.Info($"[Info] Adding dynamic button: {parentData.Name}");
 
         ButtonData btnData = new ButtonData
         {
-            Background = new SolidColorBrush(Colors.LightGreen)
+            Background = new SolidColorBrush(Colors.White)
         };
 
         // Now we can use btnData in the lambda without any problem

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>WwiseHDRTool</RootNamespace>
@@ -12,6 +12,9 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="LoadingDialog.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -49,6 +52,11 @@
     <ProjectReference Include="..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientJson\WaapiClientJson.csproj" />
     <ProjectReference Include="..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientCore\WaapiClientCore.csproj" />
     <ProjectReference Include="..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientJson\WaapiClientJson.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="LoadingDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <!--

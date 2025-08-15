@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
@@ -10,14 +16,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using WinRT.Interop;
+using WwiseHDRTool.Views;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -31,6 +33,7 @@ namespace WwiseHDRTool
         public IntPtr WindowHandle => WindowNative.GetWindowHandle(this);
         public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue { get; private set; }
         IEnumerable<ChartPoint>? chartPointUnderCursor;
+        private LoadingDialog? _loadingDialog;
 
         private bool isCtrlDown = false;
         private bool isMenuDown = false;
@@ -64,13 +67,13 @@ namespace WwiseHDRTool
                 NamePaint = new SolidColorPaint(SKColors.LightYellow, 1),
                 LabelsPaint = new SolidColorPaint(SKColors.LightYellow, 1)
             };
-            chart.XAxes = new List<Axis> { xAxis };
-            chart.YAxes = new List<Axis> { yAxis };
+            Chart.XAxes = new List<Axis> { xAxis };
+            Chart.YAxes = new List<Axis> { yAxis };
 
-            chart.ZoomMode = ZoomAndPanMode.Both;
+            Chart.ZoomMode = ZoomAndPanMode.Both;
 
-            chart.HoveredPointsChanged += HoveredPointsChanged;
-            chart.PointerPressed += ChartPointerPressed;
+            Chart.HoveredPointsChanged += HoveredPointsChanged;
+            Chart.PointerPressed += ChartPointerPressed;
 
             RootGrid.KeyDown += KeyDown;
             RootGrid.KeyUp += KeyUp;
@@ -83,7 +86,7 @@ namespace WwiseHDRTool
 
         private async void ChartPointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            Console.WriteLine($"Point clicked!");
+            Log.Info($"Point clicked!");
 
             // Only open Wwise element if Ctrl is pressed
             if (!isCtrlDown || chartPointUnderCursor == null || chartPointUnderCursor.Count() == 0)
@@ -101,7 +104,7 @@ namespace WwiseHDRTool
                     string name = meta?.Name ?? "Unknown";
                     string wwiseID = meta?.WwiseID ?? "Unknown";
 
-                    Console.WriteLine($"Point clicked: {name} ({wwiseID})");
+                    Log.Info($"Point clicked: {name} ({wwiseID})");
 
                     await WaapiBridge.FocusWwiseWindow();
                     await WaapiBridge.FindObjectInProjectExplorer(wwiseID);
@@ -112,9 +115,57 @@ namespace WwiseHDRTool
             {
                 MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
                 {
-                    MainWindow.Instance.ShowMessageAsync("Warning", $"Can't open multiple Wwise objects at once. Please zoom in to select only one.");
+                    Log.Error($"Can't open multiple Wwise objects at once. Please zoom in to select only one.");
                 });
             }
+        }
+
+        private bool hasAnalyzedOnce = false;
+
+        private async void AnalyzeButton_Click(object sender, RoutedEventArgs e)
+        {
+            AnalyzeButton.IsEnabled = false;
+
+            _loadingDialog = new LoadingDialog
+            {
+                XamlRoot = MainWindow.Instance.Content.XamlRoot
+            };
+
+            // Affiche le dialogue sans bloquer le UI
+            var dialogTask = _loadingDialog.ShowAsync();
+
+
+            // Faire l'analyse en background
+            await Task.Run(async () =>
+            {
+                Log.Info("[Info] Attempting to connect to Wwise...");
+                await WaapiBridge.ConnectToWwise();
+
+                Log.Info("[Info] Fetching Wwise project data...");
+                await ChartBridge.ListSoundObjectsRoutedToHDR();
+            });
+
+            // Mettre à jour l'UI après l'analyse
+            MainViewModel.SearchItems.Add(new SearchItemViewModel());
+
+            // Window can be closed if there is an error dialog
+            if(_loadingDialog != null)
+            {
+                // If not, close the loading dialog
+                _loadingDialog.Hide();
+            }
+
+            hasAnalyzedOnce = true;
+
+            AnalyzeButton.Visibility = Visibility.Collapsed;
+            Stats.Visibility = Visibility.Visible;
+            ChartControls.Visibility = Visibility.Visible;
+            Chart.IsEnabled = true;
+
+            MainWindow.MainDispatcherQueue.TryEnqueue(() =>
+            {
+                MainViewModel.TotalChartPoints = $"{MainViewModel.ChartViewModel.GetAllPoints().Count()}";
+            });
         }
 
         private IEnumerable<ChartPoint>? lastNewItems = null;
@@ -123,7 +174,7 @@ namespace WwiseHDRTool
         {
             chartPointUnderCursor = newItems?.ToList();
 
-            Console.WriteLine($"Hovered points changed: {chartPointUnderCursor?.Count() ?? 0} points under cursor.");
+            Log.Info($"Hovered points changed: {chartPointUnderCursor?.Count() ?? 0} points under cursor.");
 
             // Always try to update if Ctrl is pressed
             UpdateClickablePoint();
@@ -204,7 +255,7 @@ namespace WwiseHDRTool
             // Window lost focus
             if (args.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
             {
-                chart.ZoomMode = ZoomAndPanMode.Both;
+                Chart.ZoomMode = ZoomAndPanMode.Both;
                 isMenuDown = false;
                 isCtrlDown = false;
 
@@ -220,14 +271,14 @@ namespace WwiseHDRTool
             if (e.Key == VirtualKey.Control && !isCtrlDown)
             {
                 isCtrlDown = true;
-                chart.ZoomMode = ZoomAndPanMode.Y;
+                Chart.ZoomMode = ZoomAndPanMode.Y;
                 UpdateClickablePoint();
             }
 
             if (e.Key == VirtualKey.Menu && !isMenuDown)
             {
                 isMenuDown = true;
-                chart.ZoomMode = ZoomAndPanMode.X;
+                Chart.ZoomMode = ZoomAndPanMode.X;
             }
         }
 
@@ -236,14 +287,14 @@ namespace WwiseHDRTool
             if (e.Key == VirtualKey.Control && isCtrlDown)
             {
                 isCtrlDown = false;
-                chart.ZoomMode = isMenuDown ? ZoomAndPanMode.X : ZoomAndPanMode.Both;
+                Chart.ZoomMode = isMenuDown ? ZoomAndPanMode.X : ZoomAndPanMode.Both;
                 UpdateClickablePoint();
             }
 
             if (e.Key == VirtualKey.Menu && isMenuDown)
             {
                 isMenuDown = false;
-                chart.ZoomMode = isCtrlDown ? ZoomAndPanMode.Y : ZoomAndPanMode.Both;
+                Chart.ZoomMode = isCtrlDown ? ZoomAndPanMode.Y : ZoomAndPanMode.Both;
             }
         }
 
@@ -257,7 +308,7 @@ namespace WwiseHDRTool
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine(e.Message);
+                    Log.Error(e.ToString());
                 }
             }).Start();
         }
@@ -271,6 +322,12 @@ namespace WwiseHDRTool
             if (isDialogOpen)
             {
                 return;
+            }
+
+            if (_loadingDialog.Visibility == Visibility.Visible)
+            {
+                _loadingDialog.Hide();
+                _loadingDialog = null;
             }
 
             isDialogOpen = true;
@@ -311,7 +368,7 @@ namespace WwiseHDRTool
 
         public CartesianChart GetChart()
         {
-            return chart;
+            return Chart;
         }
         public bool IsCtrlDown()
         {

@@ -12,6 +12,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace WwiseHDRTool;
 
@@ -101,12 +102,12 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     public void HighlightPointByName(string pointName)
     {
-        Console.WriteLine($"[Info] Highlighting {pointName}...");
+        Log.Info($"[Info] Highlighting {pointName}...");
 
         // If we already highlighted this pointName, do nothing to avoid duplicates
         if (_highlightSeriesByName.ContainsKey(pointName))
         {
-            Console.WriteLine($"[Info] Point '{pointName}' already highlighted.");
+            Log.Info($"[Info] Point '{pointName}' already highlighted.");
             return;
         }
 
@@ -193,11 +194,11 @@ public partial class ChartViewModel : INotifyPropertyChanged
             // Store the highlight series by pointName to avoid duplicates
             _highlightSeriesByName[pointName] = highlightSeries;
 
-            Console.WriteLine($"[Info] Point '{pointName}' highlighted with {pointsToHighlight.Count} points.");
+            Log.Info($"[Info] Point '{pointName}' highlighted with {pointsToHighlight.Count} points.");
         }
         else
         {
-            Console.WriteLine($"[Info] No point found with the name '{pointName}'.");
+            Log.Info($"[Info] No point found with the name '{pointName}'.");
         }
     }
 
@@ -241,7 +242,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     public void DehighlightPointByName(string pointName)
     {
-        Console.WriteLine($"[Info] Dehighlighting {pointName}...");
+        Log.Info($"[Info] Dehighlighting {pointName}...");
 
         // Look for highlight series associated with pointName
         if (_highlightSeriesByName.TryGetValue(pointName, out ScatterSeries<ErrorPoint>? highlightSeries))
@@ -250,7 +251,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
             Series.Remove(highlightSeries);
             _highlightSeriesByName.Remove(pointName);
 
-            Console.WriteLine($"[Info] Highlight removed for point '{pointName}'.");
+            Log.Info($"[Info] Highlight removed for point '{pointName}'.");
 
             // If there are no more highlights, restore original colors
             if (_highlightSeriesByName.Count == 0)
@@ -260,7 +261,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
         }
         else
         {
-            Console.WriteLine($"[Info] No highlight found for point '{pointName}'.");
+            Log.Info($"[Info] No highlight found for point '{pointName}'.");
         }
     }
 
@@ -273,7 +274,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
         UnmakeClickablePointByName();
 
-        Console.WriteLine($"[Info] Making clickable '{pointName}'...");
+        Log.Info($"[Info] Making clickable '{pointName}'...");
 
         List<ErrorPoint> pointsToHighlight = new List<ErrorPoint>();
 
@@ -296,7 +297,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         {
                             color = solidColorPaint.Color;
                             // You can use color here
-                            Console.WriteLine($"Color: {color}");
+                            Log.Info($"Color: {color}");
                         }
 
                         pointsToHighlight.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
@@ -332,18 +333,18 @@ public partial class ChartViewModel : INotifyPropertyChanged
             // Store the series by name to avoid duplicates
             _clickableSerieByName = clickableSeries;
 
-            Console.WriteLine($"[Info] Point '{pointName}' Clickable with {pointsToHighlight.Count} points.");
+            Log.Info($"[Info] Point '{pointName}' Clickable with {pointsToHighlight.Count} points.");
         }
         else
         {
-            Console.WriteLine($"[Info] No point found with the name '{pointName}'.");
+            Log.Info($"[Info] No point found with the name '{pointName}'.");
         }
     }
 
 
     public void UnmakeClickablePointByName()
     {
-        Console.WriteLine($"[Info] UnmakeClickable...");
+        Log.Info($"[Info] UnmakeClickable...");
 
         // Look for clickable series associated with the pointName
         if (_clickableSerieByName != null)
@@ -352,20 +353,22 @@ public partial class ChartViewModel : INotifyPropertyChanged
             Series.Remove(_clickableSerieByName);
             _clickableSerieByName = null;
 
-            Console.WriteLine($"[Info] Clickable removed for point.");
+            Log.Info($"[Info] Clickable removed for point.");
         }
         else
         {
-            Console.WriteLine($"[Info] No Clickable found for point.");
+            Log.Info($"[Info] No Clickable found for point.");
         }
     }
 
     public void UpdateBorders()
     {
-        Console.WriteLine("[Info] Updating chart borders...");
+        Log.Info("[Info] Updating chart borders...");
         double maxY = double.MinValue;
         double maxX = double.MinValue;
         double minX = double.MaxValue;
+
+        int pointsCount = 0;
 
         foreach (ISeries s in Series)
         {
@@ -375,6 +378,8 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 {
                     double yVal = p.Y ?? double.MinValue;
                     double xVal = p.X ?? double.MinValue;
+
+                    pointsCount++;
 
                     if (yVal > maxY)
                     {
@@ -415,7 +420,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
             };
             Series.Add(_borderSerie);
         });
-        Console.WriteLine("[Info] Chart borders updated!");
+        Log.Info($"[Info] Chart borders updated! ({pointsCount})");
     }
 
     // --- New method to call to reposition points (without overlap)

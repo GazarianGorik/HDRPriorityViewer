@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using System.Diagnostics;
 
 namespace WwiseHDRTool
 {
@@ -142,7 +143,7 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                Console.WriteLine($"[Warning] Failed to get volume for {targetId}: {e.Message}");
+                Log.Warning($"Failed to get volume for {targetId}: {e.ToString()}");
                 WwiseCache.volumeCache[targetId] = null;
                 return null;
             }
@@ -177,12 +178,12 @@ namespace WwiseHDRTool
                 string? busId = result["return"]?.First?["OutputBus"]?["id"]?.ToString();
 
                 WwiseCache.outputBusCache[targetId] = busId;
-                Console.WriteLine($"[Info] OutputBus ID for target {targetId}: {busId}");
+                Log.Info($"[Info] OutputBus ID for target {targetId}: {busId}");
                 return busId;
             }
             catch (Exception e)
             {
-                Console.WriteLine($"[Warning] Failed to get OutputBus for target {targetId}: {e.Message}");
+                Log.Warning($"Failed to get OutputBus for target {targetId}: {e.ToString()}");
                 WwiseCache.outputBusCache[targetId] = null;
                 return null;
             }

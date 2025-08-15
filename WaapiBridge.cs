@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace WwiseHDRTool
 {
@@ -19,20 +20,19 @@ namespace WwiseHDRTool
                 await client.Connect();
                 ConnectedToWwise = true;
 
-                Console.WriteLine("[Info] Connected to Wwise!");
+                Log.Info("[Info] Connected to Wwise!");
 
                 await GetProjectInfos();
 
                 client.Disconnected += () =>
                 {
-                    Console.Error.WriteLine("Lost connection to Wwise!");
+                    Log.Error("Lost connection to Wwise!");
                     ConnectedToWwise = false;
                 };
             }
             catch (Exception ex)
             {
-                EnqueueErrorMessage("Error", $"{ex.Message}");
-                Console.WriteLine($"{ex.Message}");
+                Log.Info($"{ex.ToString()}");
             }
         }
 
@@ -45,7 +45,7 @@ namespace WwiseHDRTool
             }
             else
             {
-                Console.WriteLine("The connection is already closed.");
+                Log.Info("The connection is already closed.");
             }
         }
 
@@ -59,13 +59,12 @@ namespace WwiseHDRTool
             try
             {
                 JObject response = await GenericClienCall(ak.wwise.core.getInfo, null, null);
-                Console.WriteLine(response);
+                Debug.WriteLine(response);
                 return response;
             }
             catch (Exception e)
             {
-                EnqueueErrorMessage("Error", "Error retrieving Wwise info: " + e.Message);
-                Console.Error.WriteLine("Error retrieving Wwise info: " + e.Message);
+                Log.Error("Error retrieving Wwise info: " + e.ToString());
                 throw;
             }
         }
@@ -76,8 +75,9 @@ namespace WwiseHDRTool
             {
                 JObject projectInfo = await GenericClienCall(ak.wwise.core.getProjectInfo, null, null);
 
-                // Extract Wwise version from the displayTitle field
+                // Get the project name
                 string displayTitle = projectInfo["displayTitle"]?.ToString() ?? "";
+
                 string wwiseVersion = "unknown";
 
                 System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(displayTitle, @"Wwise (\d+\.\d+\.\d+)");
@@ -104,19 +104,32 @@ namespace WwiseHDRTool
 
                 string eventsWWUFolderPath = System.IO.Path.Combine(projectFolder, "Events");
 
-                Console.WriteLine($"Wwise version: {wwiseVersion}");
-                Console.WriteLine($"Project folder path: {projectFolder}");
-                Console.WriteLine($"Events folder path: {eventsWWUFolderPath}");
-                Console.WriteLine($"Audio object folder path: {audioObjWWUFolderPath}");
+                Log.Info($"Wwise version: {wwiseVersion}");
+                Log.Info($"Project folder path: {projectFolder}");
+                Log.Info($"Events folder path: {eventsWWUFolderPath}");
+                Log.Info($"Audio object folder path: {audioObjWWUFolderPath}");
 
                 WWUParser.SetProjectFolderPathes(eventsWWUFolderPath, audioObjWWUFolderPath);
+
+                WriteDataToUI(wwiseVersion, displayTitle);
             }
             catch (Exception e)
             {
-                EnqueueErrorMessage("Error", "Error retrieving project info: " + e.Message);
-                Console.Error.WriteLine("Error retrieving project info: " + e.Message);
+                Log.Error(e.ToString());
                 throw;
             }
+        }
+
+        static void WriteDataToUI(string wwiseVersion, string projectName)
+        {
+            MainWindow.MainDispatcherQueue.TryEnqueue(() =>
+            {
+                MainWindow.Instance.MainViewModel.WwiseVersion = wwiseVersion;
+                Log.Info($"Wwise version set to {wwiseVersion}");
+                MainWindow.Instance.MainViewModel.WwiseProjectName = projectName;
+                Log.Info($"Wwise project name set to {projectName}");
+            });
+
         }
 
         #region WAAPI Helpers (unchanged behaviour but batched + cached)
@@ -176,8 +189,7 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                EnqueueErrorMessage("Error", $"[Error] Failed to retrieve AudioBuses: {e.Message}");
-                Console.Error.WriteLine($"[Error] Failed to retrieve AudioBuses: {e.Message}");
+                Log.Error("Failed to retrieve AudioBuses: {e.ToString()}");
                 return buses;
             }
         }
@@ -214,8 +226,7 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                EnqueueErrorMessage("Error", $"[Error] Failed to retrieve Events: {e.Message}");
-                Console.Error.WriteLine($"[Error] Failed to retrieve Events: {e.Message}");
+                Log.Error("Failed to retrieve Events: {e.ToString()}");
                 return events;
             }
         }
@@ -267,8 +278,7 @@ namespace WwiseHDRTool
             }
             catch (Exception ex)
             {
-                EnqueueErrorMessage("Error", $"BatchGetTargetOutputBus failed: {ex.Message}");
-                Console.WriteLine($"[Warning] BatchGetTargetOutputBus failed: {ex.Message}");
+                Log.Warning($"BatchGetTargetOutputBus failed: {ex.ToString()}");
                 // Ensure we don't re-request infinitely: mark them as null
                 foreach (string? id in idsToFetch)
                 {
@@ -327,8 +337,7 @@ namespace WwiseHDRTool
             }
             catch (Exception ex)
             {
-                EnqueueErrorMessage("Error", $"BatchGetVolumes failed: {ex.Message}");
-                Console.WriteLine($"[Warning] BatchGetVolumes failed: {ex.Message}");
+                Log.Warning($"BatchGetVolumes failed: {ex.ToString()}");
                 foreach (string? id in idsToFetch)
                 {
                     WwiseCache.volumeCache.TryAdd(id, null);
@@ -343,12 +352,11 @@ namespace WwiseHDRTool
             try
             {
                 await GenericClienCall("ak.wwise.ui.bringToForeground", null, null);
-                Console.WriteLine("Wwise window brought to foreground.");
+                Log.Info("Wwise window brought to foreground.");
             }
             catch (Exception ex)
             {
-                EnqueueErrorMessage("Error", $"Failed to bring Wwise to foreground: {ex.Message}");
-                Console.Error.WriteLine($"[Error] Failed to bring Wwise to foreground: {ex.Message}");
+                Log.Error($"Failed to bring Wwise to foreground: {ex.ToString()}");
             }
         }
 
@@ -356,7 +364,7 @@ namespace WwiseHDRTool
         {
             if (string.IsNullOrWhiteSpace(objectId))
             {
-                Console.Error.WriteLine("[Error] objectId is null or empty.");
+                Log.Error("ObjectId is null or empty.");
                 return;
             }
 
@@ -369,12 +377,11 @@ namespace WwiseHDRTool
                 };
 
                 await GenericClienCall("ak.wwise.ui.commands.execute", args, null);
-                Console.WriteLine($"Object {objectId} inspected in Wwise.");
+                Log.Info($"Object {objectId} inspected in Wwise.");
             }
             catch (Exception ex)
             {
-                EnqueueErrorMessage("Error", $"Failed to inspect object {objectId}: {ex.Message}");
-                Console.Error.WriteLine($"[Error] Failed to inspect object {objectId}: {ex.Message}");
+                Log.Error($"Failed to inspect object {objectId}: {ex.ToString()}");
             }
         }
 
@@ -382,8 +389,7 @@ namespace WwiseHDRTool
         {
             if (string.IsNullOrWhiteSpace(objectId))
             {
-                EnqueueErrorMessage("Error", $"ObjectId is null or empty.");
-                Console.Error.WriteLine("[Error] objectId is null or empty.");
+                Log.Error("ObjectId is null or empty.");
                 return;
             }
             try
@@ -394,21 +400,12 @@ namespace WwiseHDRTool
                     ["objects"] = new JArray(objectId)
                 };
                 await GenericClienCall("ak.wwise.ui.commands.execute", args, null);
-                Console.WriteLine($"Object {objectId} found in Project Explorer.");
+                Log.Info($"Object {objectId} found in Project Explorer.");
             }
             catch (Exception ex)
             {
-                EnqueueErrorMessage("Error", $"Failed to find object {objectId} in Project Explorer: {ex.Message}");
-                Console.Error.WriteLine($"[Error] Failed to find object {objectId} in Project Explorer: {ex.Message}");
+                Log.Error("Failed to find object {objectId} in Project Explorer: {ex.ToString()}");
             }
-        }
-
-        static async void EnqueueErrorMessage(string type, string message)
-        {
-            MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
-            {
-                await MainWindow.Instance.ShowMessageAsync(type, $"Error during connection: {message}");
-            });
         }
     }
 }

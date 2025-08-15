@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace WwiseHDRTool
 {
@@ -11,6 +12,7 @@ namespace WwiseHDRTool
         {
             try
             {
+                // === 1. Fetching data on default thread ===
                 List<AudioBus> allBusses = await GetRelevantAudioBuses();
                 List<WwiseEvent> allEvents = await GetAllEvents();
                 List<WwiseAction> allActionsWithTargets = ParseActionsFromWWU();
@@ -21,29 +23,42 @@ namespace WwiseHDRTool
 
                 await BatchRequestTargetData(uniqueTargetIds);
 
-                List<(WwiseAction action, string outputBusId)> routedActions = FilterActionsRoutedToHDR(allActionsWithTargets, allBusses);
+                List<(WwiseAction action, string outputBusId)> routedActions =
+                    FilterActionsRoutedToHDR(allActionsWithTargets, allBusses);
 
-                List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions = GroupActionsByEvent(routedActions, allEvents);
+                List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions =
+                    GroupActionsByEvent(routedActions, allEvents);
 
-                PlotEvents(eventsWithActions);
+                // === 2. Adding chart points on UI thread ===
+                await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
+                {
+                    Log.Info("[Info] Plotting events on UI thread...");
+                    PlotEvents(eventsWithActions);
+                });
 
-                MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
+                // === 3. Updating borders on UI thread ===
+                await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
+                {
+                    Log.Info("[Info] Updating chart borders on UI thread...");
+                    MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
+                });
 
+                Log.Info("[Info] Chart update complete!");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("[Error] Final error: " + ex.Message);
+                Log.Info("[Error] Final error: " + ex);
             }
         }
 
         private static async Task<List<AudioBus>> GetRelevantAudioBuses()
         {
-            Console.WriteLine("[Info] Requesting Audio Buses...");
+            Log.Info("[Info] Requesting Audio Buses...");
             List<AudioBus> allBusses = await WaapiBridge.GetAudioBuses();
 
             if (allBusses == null || allBusses.Count == 0)
             {
-                Console.WriteLine("[Warning] No AudioBus found.");
+                Log.Info("[Warning] No AudioBus found.");
                 return new List<AudioBus>();
             }
 
@@ -52,27 +67,27 @@ namespace WwiseHDRTool
 
         private static async Task<List<WwiseEvent>> GetAllEvents()
         {
-            Console.WriteLine("[Info] Requesting Events...");
+            Log.Info("[Info] Requesting Events...");
             List<WwiseEvent> allEvents = await WaapiBridge.GetEvents();
 
             if (allEvents == null || allEvents.Count == 0)
             {
-                Console.WriteLine("[Warning] No Event found.");
+                Log.Info("[Warning] No Event found.");
                 return new List<WwiseEvent>();
             }
 
-            Console.WriteLine($"[Info] {allEvents.Count} Events retrieved.");
+            Log.Info($"[Info] {allEvents.Count} Events retrieved.");
             return allEvents;
         }
 
         private static List<WwiseAction> ParseActionsFromWWU()
         {
-            Console.WriteLine("[Info] Parsing Actions and Targets from WWU files...");
+            Log.Info("[Info] Parsing Actions and Targets from WWU files...");
             List<WwiseAction> actions = WWUParser.ParseEventActionsFromWorkUnits();
 
             if (actions.Count == 0)
             {
-                Console.WriteLine("[Info] No actions with targets found in events WWU.");
+                Log.Info("[Info] No actions with targets found in events WWU.");
             }
 
             return actions;
@@ -86,22 +101,22 @@ namespace WwiseHDRTool
                 .Distinct()
                 .ToList();
 
-            Console.WriteLine($"[Info] {uniqueTargetIds.Count} unique TargetIds to query (batch).");
+            Log.Info($"[Info] {uniqueTargetIds.Count} unique TargetIds to query (batch).");
             return uniqueTargetIds;
         }
 
         private static void PreloadVolumeRanges()
         {
-            Console.WriteLine("[Info] Preloading volume RTPC ranges from audio object WWU files...");
+            Log.Info("[Info] Preloading volume RTPC ranges from audio object WWU files...");
             WWUParser.PreloadVolumeRanges();
         }
 
         private static async Task BatchRequestTargetData(List<string> targetIds)
         {
-            Console.WriteLine("[Info] Batch requesting OutputBus for targets...");
+            Log.Info("[Info] Batch requesting OutputBus for targets...");
             await WaapiBridge.BatchGetTargetOutputBus(targetIds);
 
-            Console.WriteLine("[Info] Batch requesting Volume for targets...");
+            Log.Info("[Info] Batch requesting Volume for targets...");
             await WaapiBridge.BatchGetVolumes(targetIds);
         }
 
@@ -128,7 +143,7 @@ namespace WwiseHDRTool
                 }
             }
 
-            Console.WriteLine($"[Info] Found {routedActions.Count} actions routed to HDR buses via their targets.");
+            Log.Info($"[Info] Found {routedActions.Count} actions routed to HDR buses via their targets.");
 
             return routedActions;
         }
@@ -148,7 +163,7 @@ namespace WwiseHDRTool
                 .Where(x => x.actions.Count > 0)
                 .ToList();
 
-            Console.WriteLine($"[Info] {grouped.Count} Events have Actions routed to HDR.");
+            Log.Info($"[Info] {grouped.Count} Events have Actions routed to HDR.");
             return grouped;
         }
 
@@ -160,12 +175,12 @@ namespace WwiseHDRTool
 
             foreach ((WwiseEvent evt, List<(WwiseAction action, string busId)> actionsList) in eventsWithActions)
             {
-                Console.WriteLine($"Event: {evt.Name} (ID: {evt.Id}) has {actionsList.Count} HDR routed action(s).");
+                //Log.Info($"Event: {evt.Name} (ID: {evt.Id}) has {actionsList.Count} HDR routed action(s).");
                 foreach ((WwiseAction action, string busId) in actionsList)
                 {
                     index++;
 
-                    Console.WriteLine($"  => Action: {action.Name} (ID: {action.Id}) => OutputBus: {busId}");
+                    //Log.Info($"  => Action: {action.Name} (ID: {action.Id}) => OutputBus: {busId}");
 
                     // Get rounded volume
                     float volume = 0;
@@ -191,7 +206,7 @@ namespace WwiseHDRTool
 
                     float xOffset = occurrence * xOffsetDirection;
 
-                    Console.WriteLine($"    Volume: {volume} | Range: [{volumeRange.Value.min}, {volumeRange.Value.max}] | XOffset: {xOffset}");
+                    //Log.Info($"    Volume: {volume} | Range: [{volumeRange.Value.min}, {volumeRange.Value.max}] | XOffset: {xOffset}");
 
                     try
                     {
@@ -208,10 +223,10 @@ namespace WwiseHDRTool
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[Warning] Failed to add point to graph: {ex.Message}");
+                        Log.Warning($"Failed to add point to graph: {ex.ToString()}");
                     }
                 }
-                Console.WriteLine();
+                //Log.Info("");
             }
         }
     }

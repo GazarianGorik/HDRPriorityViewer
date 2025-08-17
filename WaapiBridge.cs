@@ -13,26 +13,29 @@ namespace WwiseHDRTool
         static AK.Wwise.Waapi.JsonClient client = new AK.Wwise.Waapi.JsonClient();
         public static bool ConnectedToWwise { get; private set; } = false;
 
-        public static async Task ConnectToWwise()
+        public static async Task<bool> ConnectToWwise()
         {
             try
             {
-                await client.Connect();
+                await client.Connect($"ws://{WwiseCache.wampIP}:{WwiseCache.wampPort}/waapi", 10000);
                 ConnectedToWwise = true;
 
                 Log.Info("[Info] Connected to Wwise!");
-
-                await GetProjectInfos();
 
                 client.Disconnected += () =>
                 {
                     Log.Error("Lost connection to Wwise!");
                     ConnectedToWwise = false;
                 };
+
+                return true;
             }
             catch (Exception ex)
             {
-                Log.Info($"{ex.ToString()}");
+                Log.Error($"{ex.ToString()}");
+                // Force reset the client if it was partially connected
+                client = new AK.Wwise.Waapi.JsonClient();
+                return false;
             }
         }
 
@@ -64,7 +67,7 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                Log.Error("Error retrieving Wwise info: " + e.ToString());
+                Log.Error(e);
                 throw;
             }
         }
@@ -115,7 +118,7 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                Log.Error(e.ToString());
+                Log.Error(e);
                 throw;
             }
         }
@@ -189,7 +192,7 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                Log.Error("Failed to retrieve AudioBuses: {e.ToString()}");
+                Log.Error(e);
                 return buses;
             }
         }
@@ -226,7 +229,7 @@ namespace WwiseHDRTool
             }
             catch (Exception e)
             {
-                Log.Error("Failed to retrieve Events: {e.ToString()}");
+                Log.Error(e);
                 return events;
             }
         }
@@ -356,7 +359,7 @@ namespace WwiseHDRTool
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to bring Wwise to foreground: {ex.ToString()}");
+                Log.Error(ex);
             }
         }
 
@@ -381,7 +384,7 @@ namespace WwiseHDRTool
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to inspect object {objectId}: {ex.ToString()}");
+                Log.Error(ex);
             }
         }
 
@@ -404,7 +407,7 @@ namespace WwiseHDRTool
             }
             catch (Exception ex)
             {
-                Log.Error("Failed to find object {objectId} in Project Explorer: {ex.ToString()}");
+                Log.Error(ex);
             }
         }
     }

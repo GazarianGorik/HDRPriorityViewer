@@ -8,6 +8,12 @@ namespace WwiseHDRTool.Views
         {
             this.InitializeComponent();
         }
+
+        public void SetLoadingText(string text)
+        {
+            LoadingMessage.Text = text;
+        }
+
         /*
         // Si tu veux un bouton Cancel plus tard
         private void PrimaryButton_Click(ContentDialog sender, ContentDialogButtonClickEventArgs args)

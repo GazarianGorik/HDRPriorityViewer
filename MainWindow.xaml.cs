@@ -20,6 +20,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using WinRT.Interop;
 using WwiseHDRTool.Views;
+using System.Collections.Concurrent;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -124,40 +125,95 @@ namespace WwiseHDRTool
 
         private async void AnalyzeButton_Click(object sender, RoutedEventArgs e)
         {
-            AnalyzeButton.IsEnabled = false;
-            FirstAnalyzePanel.Visibility = Visibility.Collapsed;
+            if (hasAnalyzedOnce)
+            {
+                MainWindow.MainDispatcherQueue.TryEnqueue(() =>
+                {
+                    MainViewModel.ChartViewModel.ClearChart();
+                    MainViewModel.SearchItems.Clear();
+                    MainViewModel.CategorieFilterButtons.Clear();
+                });
+            }
 
+            if(!WaapiBridge.ConnectedToWwise)
+                await WwiseConnexionProcess();
+
+            if (!WaapiBridge.ConnectedToWwise)
+            {
+                AnalyzeButton.IsEnabled = true;
+                Log.Error("Failed to connect to Wwise.\nPlease ensure Wwise is running, Waapi is correctly set, and User Preference window is closed.");
+                return;
+            }
+
+            await AnalyzeProcess();
+
+            UpdateUIAfterAnalyze();
+        }
+
+        private async Task WwiseConnexionProcess()
+        {
+            AnalyzeButton.IsEnabled = false;
+
+            // --- DIALOG 1: Connecting ---
             _loadingDialog = new LoadingDialog
             {
                 XamlRoot = MainWindow.Instance.Content.XamlRoot
             };
+            _loadingDialog.SetLoadingText("Connecting to Wwise...");
 
-            // Affiche le dialogue sans bloquer le UI
-            var dialogTask = _loadingDialog.ShowAsync();
+            // Lancer le dialog sans bloquer
+            var connectDialogTask = _loadingDialog.ShowAsync();
 
-
-            // Faire l'analyse en background
+            // Connexion (tâche lourde)
             await Task.Run(async () =>
             {
                 Log.Info("[Info] Attempting to connect to Wwise...");
                 await WaapiBridge.ConnectToWwise();
+            });
 
+            // Fermer le dialog
+            if (_loadingDialog != null)
+                _loadingDialog.Hide();
+            await connectDialogTask; // attendre la fin du ShowAsync
+        }
+
+        private async Task AnalyzeProcess()
+        {
+            FirstAnalyzePanel.Visibility = Visibility.Collapsed;
+
+            // --- DIALOG 2: Analysing ---
+            _loadingDialog = new LoadingDialog
+            {
+                XamlRoot = MainWindow.Instance.Content.XamlRoot
+            };
+            _loadingDialog.SetLoadingText("Analysing Wwise project...");
+
+            var analyseDialogTask = _loadingDialog.ShowAsync();
+            
+            await Task.Run(async () =>
+            {
+                Log.Info("[Info] Fetching Wwise project data...");
+                await WaapiBridge.GetProjectInfos();
+
+                Log.Info("[Info] Project infos gathered");
+            });
+
+            await Task.Run(async () =>
+            {
                 Log.Info("[Info] Fetching Wwise project data...");
                 await ChartBridge.ListSoundObjectsRoutedToHDR();
             });
 
-            // Mettre à jour l'UI après l'analyse
-            MainViewModel.SearchItems.Add(new SearchItemViewModel());
-
-            // Window can be closed if there is an error dialog
             if(_loadingDialog != null)
-            {
-                // If not, close the loading dialog
                 _loadingDialog.Hide();
-            }
+            await analyseDialogTask;
+        }
 
+        private void UpdateUIAfterAnalyze()
+        {
+            // --- MAJ UI ---
+            MainViewModel.SearchItems.Add(new SearchItemViewModel());
             hasAnalyzedOnce = true;
-
             Stats.Visibility = Visibility.Visible;
             Chart.IsEnabled = true;
 
@@ -307,62 +363,64 @@ namespace WwiseHDRTool
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e.ToString());
+                    Log.Error(e);
                 }
             }).Start();
         }
 
-        private ContentDialog _dialog;
-        private string _message;
-        private bool isDialogOpen = false;
+        private readonly ConcurrentQueue<(string Title, string Message)> _messageQueue = new();
+        private bool _isShowingDialog = false;
 
-        public async Task ShowMessageAsync(string title, string message)
+        public void EnqueueMessage(string title, string message)
         {
-            if (isDialogOpen)
+            _messageQueue.Enqueue((title, message));
+            _ = ProcessQueueAsync(); // fire & forget
+        }
+
+        private async Task ProcessQueueAsync()
+        {
+            if (_isShowingDialog)
+                return; // déjà en cours
+
+            _isShowingDialog = true;
+
+            while (_messageQueue.TryDequeue(out var item))
             {
-                return;
+                // Si tu as un _loadingDialog encore visible
+                if (_loadingDialog != null && _loadingDialog.Visibility == Visibility.Visible)
+                {
+                    _loadingDialog.Hide();
+                    _loadingDialog = null;
+                }
+
+                StackPanel stackPanel = new StackPanel();
+                stackPanel.Children.Add(new TextBlock
+                {
+                    Text = item.Message,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 12)
+                });
+
+                var dialog = new ContentDialog
+                {
+                    Title = item.Title,
+                    Content = stackPanel,
+                    PrimaryButtonText = "Copy",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.Content.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+
+                if (result == ContentDialogResult.Primary)
+                {
+                    var dataPackage = new DataPackage();
+                    dataPackage.SetText(item.Message);
+                    Clipboard.SetContent(dataPackage);
+                }
             }
 
-            if (_loadingDialog.Visibility == Visibility.Visible)
-            {
-                _loadingDialog.Hide();
-                _loadingDialog = null;
-            }
-
-            isDialogOpen = true;
-            _message = message;
-
-            StackPanel stackPanel = new StackPanel();
-            stackPanel.Children.Add(new TextBlock
-            {
-                Text = message,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 12)
-            });
-
-            _dialog = new ContentDialog
-            {
-                Title = title,
-                Content = stackPanel,
-                PrimaryButtonText = "Copy",
-                CloseButtonText = "OK",
-                XamlRoot = this.Content.XamlRoot
-            };
-
-            ContentDialogResult result = await _dialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary)
-            {
-                isDialogOpen = false;
-                // Copy to clipboard
-                DataPackage dataPackage = new DataPackage();
-                dataPackage.SetText(message);
-                Clipboard.SetContent(dataPackage);
-            }
-            else
-            {
-                isDialogOpen = false;
-            }
+            _isShowingDialog = false;
         }
 
         public CartesianChart GetChart()

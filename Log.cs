@@ -11,7 +11,7 @@ namespace WwiseHDRTool;
 public static class Log
 {
     // Active/désactive tous les logs
-    public static bool Enabled { get; set; } = false;
+    public static bool Enabled { get; set; } = true;
 
     public static void Info(string message)
     {
@@ -22,14 +22,24 @@ public static class Log
     {
         if (Enabled) Debug.WriteLine("[Warning] " + message);
     }
-
+    
     public static void Error(string message)
     {
         if (Enabled) Debug.WriteLine("[Error] " + message);
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
         {
-            await MainWindow.Instance.ShowMessageAsync("Error", $"{message}");
+            MainWindow.Instance.EnqueueMessage("Error", $"{message}");
+        });
+    }
+
+    public static void Error(Exception ex)
+    {
+        if (Enabled) Debug.WriteLine($"[Error] {ex.Message}\n{ex.ToString()}");
+
+        MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
+        {
+            MainWindow.Instance.EnqueueMessage("Error", $"{ex.Message}\n{ex.ToString()}");
         });
     }
 }

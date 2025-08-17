@@ -361,6 +361,28 @@ public partial class ChartViewModel : INotifyPropertyChanged
         }
     }
 
+    public void ClearChart()
+    {
+        Log.Info("[Info] Clearing chart...");
+
+        // 1. Remove all series from the chart
+        Series.Clear();
+
+        // 2. Clear internal dictionaries
+        _seriesByParentData.Clear();
+        _highlightSeriesByName.Clear();
+        _clickableSerieByName = null;
+
+        // 3. Reset border series
+        _borderSerie.Values = new ObservableCollection<ObservablePoint>();
+
+        // 4. Optionally reset Wwise cache if needed
+        WwiseCache.chartDefaultPoints.Clear();
+
+        Log.Info("[Info] Chart cleared successfully.");
+    }
+
+
     public void UpdateBorders()
     {
         Log.Info("[Info] Updating chart borders...");

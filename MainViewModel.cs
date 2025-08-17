@@ -129,17 +129,33 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(item.Text))
         {
-            IEnumerable<ErrorPoint> matches = WwiseCache.chartDefaultPoints
-                .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
-                .Where(n => (n.MetaData as PointMetaData).Name.Split(':')[0].Contains(item.Text, StringComparison.OrdinalIgnoreCase) &&
-                    !(n.MetaData as PointMetaData).Name.Split(':')[0].Equals(item.Text, StringComparison.OrdinalIgnoreCase));
+            // Split des mots tapés
+            var queryWords = item.Text
+                .ToLowerInvariant()
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            foreach (ErrorPoint? m in matches)
+            var matches = WwiseCache.chartDefaultPoints
+                .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
+                .Where(n =>
+                {
+                    // Normaliser le nom : underscore → espace, minuscule
+                    var name = (n.MetaData as PointMetaData).Name.Split(':')[0]
+                                .Replace("_", " ")
+                                .ToLowerInvariant();
+
+                    // Chaque mot de la recherche doit apparaître dans le nom
+                    var nameWords = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    return queryWords.All(q => nameWords.Any(nw => nw.StartsWith(q, StringComparison.OrdinalIgnoreCase)));
+
+                });
+
+            foreach (var m in matches)
             {
                 SearchSuggestions.Add((m.MetaData as PointMetaData).Name.Split(':')[0]);
             }
         }
     }
+
 
     [RelayCommand]
     public void HideShowSeries(ButtonData btnData)

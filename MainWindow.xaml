@@ -182,23 +182,104 @@
                 </Grid>
             </Grid>
         </Grid>
-        <!-- Bandeau haut : bouton d’analyse centré -->
-        <Grid x:Name="FirstAnalyzePanel" Background="#CC000000">
-            <Button x:Name="AnalyzeButton"
-            Content="Analyze Wwise project"
-            Click="AnalyzeButton_Click"
-            Width="250"
-            Height="70"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            FontSize="18"
-            FontWeight="SemiBold"
-            Foreground="White"
-            Background="#7044E9"
-            BorderBrush="#4216BB"
-            BorderThickness="1"
-            CornerRadius="12"/>
+
+
+        <!-- Connexion -->
+        <Grid x:Name="FirstAnalyzePanel" VerticalAlignment="Stretch" Background="#FF1E1E1E">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="2" Orientation="Vertical" HorizontalAlignment="Center">
+
+                <!-- Titre -->
+                <TextBlock HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Text="WAAPI Connexion Settings"
+                   FontSize="25"
+                   FontWeight="SemiBold"
+                   Foreground="#E0E0E0"
+                   Margin="0,0,0,35"/>
+
+                <!-- IP -->
+                <StackPanel Orientation="Horizontal" 
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Spacing="15">
+                    <TextBlock Text="IP Address:"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="#C8C8C8"
+                               Margin="0,0,0,25"/>
+                    <TextBox x:Name="WampIP_TextBox"
+                             Width="180"
+                             PlaceholderText="(ex: localhost)"
+                             Text="localhost"
+                             VerticalAlignment="Center"
+                             Background="#3A3F4B"
+                             Foreground="#F0F0F0"
+                             BorderBrush="#5A5F6B"
+                             Margin="0,0,0,25"/>
+                </StackPanel>
+
+                <!-- Port -->
+                <StackPanel Orientation="Horizontal" 
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Spacing="15">
+                    <TextBlock Text="Port:"
+                               VerticalAlignment="Center"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="#C8C8C8"
+                               Margin="0,0,0,25"/>
+                    <TextBox x:Name="WampHost_TextBox"
+                            Width="220"
+                            PlaceholderText="(ex: 8080)"
+                            Text="8080"
+                            VerticalAlignment="Center"
+                            Background="#3A3F4B"
+                            Foreground="#F0F0F0"
+                            BorderBrush="#5A5F6B"
+                            Margin="0,0,0,30"/>
+                </StackPanel>
+
+                <!-- Bouton principal -->
+                <Button x:Name="AnalyzeButton"
+                Content="Connect and Analyze Wwise project"
+                Click="AnalyzeButton_Click"
+                Width="300"
+                Height="40"
+                FontSize="16"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontWeight="SemiBold"
+                Foreground="White"
+                Background="#4086C7"
+                BorderBrush="#3A77B0"
+                BorderThickness="1"
+                CornerRadius="12"
+                Margin="0,0,0,30">
+                    <Button.Resources>
+                        <!-- Style hover/pressed -->
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#4DA6FF"/>
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#2E6CA3"/>
+                    </Button.Resources>
+                </Button>
+
+                <!-- Lien -->
+                <HyperlinkButton Content="Error troubleshooting" 
+                         NavigateUri="https://www.audiokinetic.com/fr/public-library/2024.1.7_8863/?source=SDK&amp;id=waapi_prepare.html"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Foreground="#4DA6FF"/>
+            </StackPanel>
         </Grid>
+
 
 
         <!-- Popup de suggestions (inchangé) -->

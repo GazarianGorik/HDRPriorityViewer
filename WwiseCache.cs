@@ -38,6 +38,8 @@ namespace WwiseHDRTool
         public static ConcurrentDictionary<string, float?> volumeCache = new();
         public static ConcurrentDictionary<string, (float min, float max)?> volumeRangeCache = new();
         public static List<ErrorPoint> chartDefaultPoints = new List<ErrorPoint>();
+        public static string wampPort = "8080";
+        public static string wampIP = "localhost";
     }
 
     public class ParentData()

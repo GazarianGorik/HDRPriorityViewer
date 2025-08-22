@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using CSharpMarkup.WinUI;
 
 
 namespace WwiseHDRTool;
@@ -11,7 +12,17 @@ namespace WwiseHDRTool;
 public static class Log
 {
     // Active/désactive tous les logs
-    public static bool Enabled { get; set; } = true;
+    public static bool Enabled { get; set; } = false;
+
+    public static void AddSpace()
+    {
+        if (Enabled) Debug.WriteLine(string.Empty);
+    }
+
+    public static void Separator()
+    {
+        if (Enabled) Debug.WriteLine(new string('-', 50));
+    }
 
     public static void Info(string message)
     {

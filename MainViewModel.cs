@@ -59,7 +59,7 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        Log.Info("[Info] Initializing MainViewModel...");
+        Log.Info("Initializing MainViewModel...");
         ChartViewModel = new ChartViewModel();
         RemoveSearchItemCommand = new RelayCommand<SearchItemViewModel>(RemoveSearchItem);
     }
@@ -183,7 +183,7 @@ public partial class MainViewModel : ObservableObject
 
     public void AddCategorieFilterButton(ParentData parentData)
     {
-        Log.Info($"[Info] Adding dynamic button: {parentData.Name}");
+        Log.Info($"Adding dynamic button: {parentData.Name}");
 
         ButtonData btnData = new ButtonData
         {

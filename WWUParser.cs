@@ -1,10 +1,10 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using System.Diagnostics;
+using SkiaSharp;
 
 namespace WwiseHDRTool
 {
@@ -12,43 +12,141 @@ namespace WwiseHDRTool
     {
         private static string eventsWWUFolderPath = "";
         private static string audioObjWWUFolderPath = "";
+        private static string busWWUFolderPath = "";
+
         private static readonly SKColor[] WwisePalette = {
-            /*  0 */ new SKColor(100,110,120),  // a
-            /*  1 */ new SKColor(104,107,230),  // b
-            /*  2 */ new SKColor(55,129,243),   // c
-            /*  3 */ new SKColor(2,169,185),    // d
-            /*  4 */ new SKColor(0,185,18),     // e
-            /*  5 */ new SKColor(131,185,18),   // f
-            /*  6 */ new SKColor(190,174,17),   // g
-            /*  7 */ new SKColor(226,159,25),   // h
-            /*  8 */ new SKColor(234,123,20),   // i
-            /*  9 */ new SKColor(217,77,47),    // j
-            /* 10 */ new SKColor(215,59,58),    // k
-            /* 11 */ new SKColor(231,22,229),   // l (light blue addition)
-            /* 12 */ new SKColor(174,27,248),   // m
-            /* 13 */ new SKColor(145,72,253),   // n
-            /* 14 */ new SKColor(150,152,229),  // p (very light cyan)
-            /* 15 */ new SKColor(121,154,217),  // q
-            /* 16 */ new SKColor(82,181,181),   // r
-            /* 17 */ new SKColor(102,181,105),  // s
-            /* 18 */ new SKColor(162,190,81),   // t
-            /* 19 */ new SKColor(210,199,53),   // u
-            /* 20 */ new SKColor(202,164,89),   // v
-            /* 21 */ new SKColor(201,149,95),   // w (same color kept intentionally)
-            /* 22 */ new SKColor(197,133,120),  // x
-            /* 23 */ new SKColor(203,125,125),  // y
-            /* 24 */ new SKColor(207,113,181),  // z
-            /* 25 */ new SKColor(190,108,215),  // é (bright pink)
-            /* 26 */ new SKColor(172,147,232),  // è (soft magenta)
-            /* 27 */ new SKColor(129,140,150)   // o
+            /*  0 */ new SKColor(100,110,120),
+            /*  1 */ new SKColor(104,107,230),
+            /*  2 */ new SKColor(55,129,243),
+            /*  3 */ new SKColor(2,169,185),
+            /*  4 */ new SKColor(0,185,18),
+            /*  5 */ new SKColor(131,185,18),
+            /*  6 */ new SKColor(190,174,17),
+            /*  7 */ new SKColor(226,159,25),
+            /*  8 */ new SKColor(234,123,20),
+            /*  9 */ new SKColor(217,77,47),
+            /* 10 */ new SKColor(215,59,58),
+            /* 11 */ new SKColor(231,22,229),
+            /* 12 */ new SKColor(174,27,248),
+            /* 13 */ new SKColor(145,72,253),
+            /* 14 */ new SKColor(150,152,229),
+            /* 15 */ new SKColor(121,154,217),
+            /* 16 */ new SKColor(82,181,181),
+            /* 17 */ new SKColor(102,181,105),
+            /* 18 */ new SKColor(162,190,81),
+            /* 19 */ new SKColor(210,199,53),
+            /* 20 */ new SKColor(202,164,89),
+            /* 21 */ new SKColor(201,149,95),
+            /* 22 */ new SKColor(197,133,120),
+            /* 23 */ new SKColor(203,125,125),
+            /* 24 */ new SKColor(207,113,181),
+            /* 25 */ new SKColor(190,108,215),
+            /* 26 */ new SKColor(172,147,232),
+            /* 27 */ new SKColor(129,140,150)
         };
 
-        public static void SetProjectFolderPathes(string _eventsWWUFolderPath, string _audioObjWWUFolderPath)
+        public static void ResetForRescan()
+        {
+            try
+            {
+                // Reset des chemins
+                eventsWWUFolderPath = string.Empty;
+                audioObjWWUFolderPath = string.Empty;
+                busWWUFolderPath = string.Empty;
+
+                // Reset des caches
+                WwiseCache.audioObjectsByIdCache.Clear();
+                WwiseCache.busesByIdCache.Clear();
+                WwiseCache.volumeRangeCache.Clear();
+                WwiseCache.outputBusCache.Clear();
+
+                // Si tu as d'autres caches ou structures statiques, les vider aussi ici
+                // ex: WwiseCache.someOtherCache.Clear();
+
+                Log.Info("All caches and folder paths have been reset. Ready for fresh rescan.");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"ResetForRescan failed: {ex}");
+            }
+        }
+
+
+        public static void SetProjectFolderPaths(string _eventsWWUFolderPath, string _audioObjWWUFolderPath, string _busWWUFolderPath)
         {
             eventsWWUFolderPath = _eventsWWUFolderPath;
             audioObjWWUFolderPath = _audioObjWWUFolderPath;
+            busWWUFolderPath = _busWWUFolderPath;
 
-            Log.Info($"[Info] Working with the following folders : \n{eventsWWUFolderPath}\n{audioObjWWUFolderPath}\n");
+            Log.Info($"Working with the following folders : \n{eventsWWUFolderPath}\n{audioObjWWUFolderPath}\n{busWWUFolderPath}\n");
+        }
+
+        /// <summary>
+        /// Charge tous les Bus des WWU et les met en cache (par ID).
+        /// </summary>
+        public static void PreloadBusData()
+        {
+            if (string.IsNullOrEmpty(busWWUFolderPath) || !Directory.Exists(busWWUFolderPath))
+            {
+                Log.Warning($"busWWUFolderPath is not set or doesn't exist: {busWWUFolderPath}");
+                return;
+            }
+
+            var wwuFiles = Directory.GetFiles(busWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
+            Log.Info($"{wwuFiles.Length} bus .wwu files found in {busWWUFolderPath}");
+
+            foreach (var file in wwuFiles)
+            {
+                try
+                {
+                    var doc = XDocument.Load(file);
+                    var buses = doc.Descendants("Bus");
+                    foreach (var bus in buses)
+                    {
+                        var id = bus.Attribute("ID")?.Value;
+                        if (string.IsNullOrEmpty(id))
+                            continue;
+
+                        // Cache complet des bus XML
+                        WwiseCache.busesByIdCache[id] = bus;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"Failed parsing bus WWU '{file}': {ex}");
+                }
+            }
+
+            Log.Info($"Cached {WwiseCache.busesByIdCache.Count} buses.");
+        }
+
+
+        /// <summary>
+        /// Remonte la hiérarchie des Bus (OutputBus → parent → root HDR)
+        /// et retourne le cumul de leurs contributions Volume.
+        /// </summary>
+        private static (float value, float min, float max) GetCumulativeBusVolume(string? busId)
+        {
+            float totalValue = 0f, totalMin = 0f, totalMax = 0f;
+
+            while (!string.IsNullOrEmpty(busId) && WwiseCache.busesByIdCache.TryGetValue(busId, out var bus))
+            {
+                Log.Info($"Extracting volume contribution of: {bus.Attribute("Name")?.Value} ({busId})");
+                var contrib = ExtractVolumeContributions(bus, false);
+                totalValue += contrib.value;
+                totalMin += contrib.min;
+                totalMax += contrib.max;
+
+                Log.Info($"\t found: {contrib.value}, {contrib.min}, {contrib.max}");
+
+                // remonter via busParentCache
+                if (bus.Parent?.Parent == null)
+                    break;
+
+                busId = bus.Parent?.Parent.Attribute("ID")?.Value;
+            }
+
+            return (totalValue, totalMin, totalMax);
         }
 
         /// <summary>
@@ -57,61 +155,77 @@ namespace WwiseHDRTool
         /// </summary>
         public static List<WwiseAction> ParseEventActionsFromWorkUnits()
         {
-            List<WwiseAction> actionsWithTargets = new List<WwiseAction>();
+            Log.Info("Parsing Actions and Targets from WWU files...");
+
+            var actionsWithTargets = new List<WwiseAction>();
             if (string.IsNullOrEmpty(eventsWWUFolderPath) || !Directory.Exists(eventsWWUFolderPath))
             {
                 Log.Warning($"Events WWU folder path is not set or doesn't exist: {eventsWWUFolderPath}");
                 return actionsWithTargets;
             }
 
-            string[] wwuFiles = Directory.GetFiles(eventsWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
-            Log.Info($"[Info] Found {wwuFiles.Length} .wwu event files.");
+            var wwuFiles = Directory.GetFiles(eventsWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
+            Log.Info($"Found {wwuFiles.Length} .wwu event files.");
 
-            List<string> IDsAddedToChart = new List<string>();
+            var IDsAddedToChart = new HashSet<string>();
 
-            foreach (string wwuFile in wwuFiles)
+            foreach (var wwuFile in wwuFiles)
             {
                 try
                 {
-                    XDocument doc = XDocument.Load(wwuFile);
-                    IEnumerable<XElement> events = doc.Descendants("Event");
+                    var doc = XDocument.Load(wwuFile);
+                    var events = doc.Descendants("Event");
 
-                    foreach (XElement evt in events)
+                    foreach (var evt in events)
                     {
-                        string eventPath = evt.Attribute("Name")?.Value ?? "";
+                        var eventPath = evt.Attribute("Name")?.Value ?? "";
 
-                        foreach (XElement action in evt.Descendants("Action"))
+                        foreach (var action in evt.Element("ChildrenList")?.Elements("Action") ?? Enumerable.Empty<XElement>())
                         {
-                            string? actionId = action.Attribute("ID")?.Value;
-                            string actionName = action.Attribute("Name")?.Value ?? "";
+                            var actionId = action.Attribute("ID")?.Value;
+                            var actionName = action.Attribute("Name")?.Value ?? "";
 
-                            XElement? targetRef = action.Descendants("Reference")
-                                .FirstOrDefault(r => r.Attribute("Name")?.Value == "Target");
+                            var targetRef = action
+                                                .Element("ReferenceList")?
+                                                .Elements("Reference")
+                                                .FirstOrDefault(r => r.Attribute("Name")?.Value == "Target");
 
-                            XElement? objectRef = targetRef?.Element("ObjectRef");
+                            var objectRef = targetRef?.Element("ObjectRef");
 
                             if (objectRef != null)
                             {
-                                string? targetId = objectRef.Attribute("ID")?.Value;
+                                var targetId = objectRef.Attribute("ID")?.Value;
 
-                                if (!IDsAddedToChart.Contains(targetId))
+                                var audioObj = ResolveAudioObjectById(targetId);
+
+                                if (audioObj != null)
                                 {
-                                    IDsAddedToChart.Add(targetId);
+                                    // Nouvelle logique : applique l'algorigramme optimisé
+                                    var finalTargets = GetHDRTargetsWithFlowchartLogic(audioObj);
 
-                                    string? targetName = objectRef.Attribute("Name")?.Value;
-                                    ParentData parentData = GetInheritedParentData(objectRef);
-
-                                    actionsWithTargets.Add(new WwiseAction
+                                    foreach (var target in finalTargets)
                                     {
-                                        Id = actionId,
-                                        Name = actionName,
-                                        Path = eventPath,
-                                        TargetId = targetId,
-                                        TargetName = targetName,
-                                        ParentData = parentData
-                                    });
+                                        var childID = target.Attribute("ID")?.Value;
+                                        if (string.IsNullOrEmpty(childID) || IDsAddedToChart.Contains(childID))
+                                        {
+                                            continue;
+                                        }
 
-                                    //Log.Info($"[Info] Found target '{objectRef.Attribute("Name")?.Value}' (Parent: {parentData.Name} with color {parentData.Color}");
+                                        IDsAddedToChart.Add(childID);
+
+                                        var targetName = target.Attribute("Name")?.Value;
+                                        var parentData = GetInheritedParentData(target);
+
+                                        actionsWithTargets.Add(new WwiseAction
+                                        {
+                                            Id = actionId,
+                                            Name = actionName,
+                                            Path = eventPath,
+                                            TargetId = childID,
+                                            TargetName = targetName,
+                                            ParentData = parentData
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -123,9 +237,234 @@ namespace WwiseHDRTool
                 }
             }
 
-            Log.Info($"[Info] Extracted {actionsWithTargets.Count} actions with targets.");
+            Log.Info($"Extracted {actionsWithTargets.Count} actions with targets.");
             return actionsWithTargets;
         }
+
+        #region Algorithme optimisé (flowchart)
+
+        private static List<XElement> GetHDRTargetsWithFlowchartLogic(XElement root)
+        {
+            var result = new List<XElement>();
+            var visibleTags = new HashSet<string>(); // IDs marqués comme "visible"
+            var addedIds = new HashSet<string>();    // IDs déjà ajoutés
+            var cache = new Dictionary<string, bool>();
+
+            var audioObjName = root.Attribute("Name")?.Value ?? "Unknown";
+
+            MainWindow.Instance.loadingDialog?.SetDetailsText($"Processing {audioObjName}...");
+
+            // 🔹 Récupérer TOUS les leafs valides
+            var validLeafs = FindAllValidLeafs(root, cache);
+
+            if (!validLeafs.Any())
+            {
+                var rid = root.Attribute("ID")?.Value;
+                if (!string.IsNullOrEmpty(rid))
+                {
+                    result.Add(root);
+                }
+
+                Log.Info("No valid leafs found, returning root only.");
+                return result;
+            }
+
+            Log.Info($"Found {validLeafs.Count} valid leafs.");
+
+            void ProcessParent(XElement parent)
+            {
+                Log.Separator();
+                Log.Info($"Processing parent: {parent.Attribute("Name")?.Value} ({parent.Attribute("ID")?.Value})");
+
+                var children = GetImmediateChildren(parent).ToList();
+                var anyChildValid = children.Any(c => HasSpecificVoiceVolumeSetupCached(c, cache));
+                var anyChildVisible = children.Any(c => visibleTags.Contains(c.Attribute("ID")?.Value));
+
+                if (anyChildValid || anyChildVisible)
+                {
+                    foreach (var child in children)
+                    {
+                        var cid = child.Attribute("ID")?.Value;
+                        if (!string.IsNullOrEmpty(cid) && addedIds.Add(cid) && !visibleTags.Contains(cid))
+                        {
+                            result.Add(child);
+                            Log.Info($"Added child: {child.Attribute("Name")?.Value} ({cid})");
+                        }
+                    }
+
+                    var pid = parent.Attribute("ID")?.Value;
+                    if (!string.IsNullOrEmpty(pid))
+                    {
+                        visibleTags.Add(pid);
+                        var toRemove = result.FirstOrDefault(e => e.Attribute("ID")?.Value == pid);
+                        if (toRemove != null)
+                        {
+                            result.Remove(toRemove);
+                            addedIds.Remove(pid); // pour que l’ID puisse resservir si besoin
+                            Log.Info($"Removed parent from result: {parent.Attribute("Name")?.Value} ({pid})");
+                        }
+                        Log.Info($"Parent tagged visible: {parent.Attribute("Name")?.Value} ({pid})");
+                    }
+                }
+
+                if (parent.Parent?.Parent != null && parent != root)
+                {
+                    ProcessParent(parent.Parent.Parent);
+                }
+            }
+
+
+            foreach (var leaf in validLeafs)
+            {
+                Log.Info($"Processing branch from leaf: {leaf.Attribute("Name")?.Value} ({leaf.Attribute("ID")?.Value})");
+                if (leaf.Parent?.Parent != null)
+                {
+                    ProcessParent(leaf.Parent.Parent);
+                }
+                else
+                {
+                    Log.Error("Leaf parent structure is invalid, skipping.");
+                }
+            }
+
+            Log.AddSpace();
+            return result;
+        }
+
+        /// <summary>
+        /// Trouve tous les leafs qui ont un setup volume spécifique.
+        /// </summary>
+        private static List<XElement> FindAllValidLeafs(XElement root, Dictionary<string, bool> cache)
+        {
+            var validLeafs = new List<XElement>();
+            var stack = new Stack<(XElement node, int depth)>();
+            stack.Push((root, 0));
+
+            while (stack.Count > 0)
+            {
+                var (node, depth) = stack.Pop();
+
+                if (node != root && HasSpecificVoiceVolumeSetupCached(node, cache))
+                {
+                    validLeafs.Add(node);
+                }
+
+                foreach (var child in GetImmediateChildren(node))
+                {
+                    stack.Push((child, depth + 1)); // ici on utilise "depth"
+                }
+            }
+
+            return validLeafs;
+        }
+
+        private static bool HasSpecificVoiceVolumeSetupCached(XElement e, Dictionary<string, bool> cache)
+        {
+            var id = e.Attribute("ID")?.Value ?? e.GetHashCode().ToString();
+            if (cache.TryGetValue(id, out var cached))
+            {
+                return cached;
+            }
+
+            var r = HasSpecificVoiceVolumeSetup(e);
+            cache[id] = r;
+            return r;
+        }
+
+        /// <summary>
+        /// Renvoie les enfants immédiats (dans &lt;ChildrenList&gt;) ayant un ID.
+        /// </summary>
+        private static IEnumerable<XElement> GetImmediateChildren(XElement node)
+        {
+            return node.Element("ChildrenList")?.Elements()
+                       .Where(e => e.Attribute("ID") != null)
+                   ?? Enumerable.Empty<XElement>();
+        }
+
+        /// <summary>
+        /// true si l'objet a un Volume != 0 (Value ou ValueList), un RTPC/automation Volume, un state volume ou des override de bus/aux.
+        /// </summary>
+        private static bool HasSpecificVoiceVolumeSetup(XElement obj)
+        {
+            // On ne quitte pas trop tôt : propertyList peut être absent mais RTPC/State peuvent exister ailleurs
+            var propertyList = obj.Element("PropertyList");
+
+            // --- Cas 1 et 2 : Volume direct ou ValueList (si PropertyList présent) ---
+            var volumeProperty = propertyList?.Elements("Property")
+                .FirstOrDefault(p => (string)p.Attribute("Name") == "Volume");
+
+            if (volumeProperty != null)
+            {
+                // Value direct (attribut Value)
+                var valAttr = volumeProperty.Attribute("Value")?.Value;
+                if (!string.IsNullOrWhiteSpace(valAttr)
+                    && double.TryParse(valAttr.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var val)
+                    && Math.Abs(val) > double.Epsilon)
+                {
+                    return true;
+                }
+
+                // ValueList
+                var values = volumeProperty.Element("ValueList")?.Elements("Value");
+                if (values != null)
+                {
+                    foreach (var v in values)
+                    {
+                        var s = v.Value;
+                        if (!string.IsNullOrWhiteSpace(s)
+                            && double.TryParse(s.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var vv)
+                            && Math.Abs(vv) > double.Epsilon)
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                // RTPC/automation (ModifierList attaché à la propriété Volume)
+                if (volumeProperty.Element("ModifierList") != null)
+                {
+                    return true;
+                }
+            }
+
+            // --- Cas 3 : CustomState qui contient une propriété Volume (n'importe où sous l'élément) ---
+            var customStates = obj.Descendants("CustomState");
+            if (customStates.Any(cs => cs.Element("PropertyList")?.Elements("Property")
+                    .Any(p => (string)p.Attribute("Name") == "Volume") == true))
+            {
+                return true;
+            }
+
+            // --- Cas 4 : RTPC ---
+            var rtpcs = obj.Element("ObjectLists")?
+                           .Elements("ObjectList")
+                           .Where(ol => (string)ol.Attribute("Name") == "RTPC")
+                           .Elements("RTPC");
+
+            if (rtpcs != null)
+            {
+                if (rtpcs.Any(r => (string?)r.Element("PropertyList")?.Elements("Property")
+                        .FirstOrDefault(p => (string)p.Attribute("Name") == "PropertyName")
+                        ?.Attribute("Value") == "Volume"))
+                {
+                    Log.Info($"RTPC Volume detected on {obj.Attribute("Name")?.Value} ({obj.Attribute("ID")?.Value})");
+                    return true;
+                }
+            }
+
+            // --- Cas 5 : Overrides Output / Aux bus (si PropertyList présent) ---
+            string[] overrideProps = { "OverrideOutput"/*, "OverrideGameAuxSends", "OverrideUserAuxSends" */};
+            if (propertyList?.Elements("Property")
+                .Any(p => overrideProps.Contains((string)p.Attribute("Name")) &&
+                          string.Equals((string?)p.Attribute("Value"), "True", StringComparison.OrdinalIgnoreCase)) == true)
+            {
+                return true;
+            }
+
+            Log.Info($"No specific volume setup found for {obj.Attribute("Name")?.Value ?? "Unknown"}");
+            return false;
+        }
+        #endregion
 
         #region RTPC Preloading (parse audio object WWU once)
 
@@ -139,35 +478,51 @@ namespace WwiseHDRTool
             return new SKColor(200, 200, 200); // default color
         }
 
+        private static XElement? ResolveAudioObjectById(string targetId)
+        {
+            if (string.IsNullOrEmpty(targetId))
+            {
+                return null;
+            }
+
+            // Regarde si déjà en cache
+            if (WwiseCache.audioObjectsByIdCache.TryGetValue(targetId, out var cachedObj))
+            {
+                return cachedObj;
+            }
+
+            return null; // pas trouvé
+        }
+
         private static ParentData GetInheritedParentData(XElement element)
         {
-            ParentData parentData = new ParentData
+            var parentData = new ParentData
             {
                 Name = "[NONE]",
                 Color = new SKColor(200, 200, 200)
             };
 
-            XElement current = element;
+            var current = element;
 
             while (current != null)
             {
-                XElement? propertyList = current.Element("PropertyList");
+                var propertyList = current.Element("PropertyList");
                 if (propertyList != null)
                 {
-                    string? overrideColor = propertyList.Elements("Property")
+                    var overrideColor = propertyList.Elements("Property")
                         .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideColor")
                         ?.Attribute("Value")?.Value;
 
-                    string? colorProp = propertyList.Elements("Property")
+                    var colorProp = propertyList.Elements("Property")
                         .FirstOrDefault(p => p.Attribute("Name")?.Value == "Color")
                         ?.Attribute("Value")?.Value;
 
-                    if (colorProp != null && int.TryParse(colorProp, out int colorCode))
+                    if (colorProp != null && int.TryParse(colorProp, out var colorCode))
                     {
                         if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
                         {
                             // Return parent color + name if override is enabled
-                            string? nameAttr = current.Attribute("Name")?.Value;
+                            var nameAttr = current.Attribute("Name")?.Value;
 
                             parentData.Color = GetSkColorFromWwiseCode(colorCode);
                             parentData.Name = nameAttr ?? "[NONE]";
@@ -187,8 +542,8 @@ namespace WwiseHDRTool
         }
 
         /// <summary>
-        /// Scans audio object WWU files once and fills volumeRangeCache with RTPC min/max for each object ID found.
-        /// Uses ConcurrentDictionary for thread safety.
+        /// Scans audio object WWU files once and fills volumeRangeCache with cumulative VoiceVolume value/min/max
+        /// (including contributions from parents). Uses ConcurrentDictionary for thread safety.
         /// </summary>
         public static void PreloadVolumeRanges()
         {
@@ -200,73 +555,243 @@ namespace WwiseHDRTool
                     return;
                 }
 
-                string[] wwuFiles = Directory.GetFiles(audioObjWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
-                Log.Info($"[Info] {wwuFiles.Length} .wwu files found in {audioObjWWUFolderPath}");
+                var wwuFiles = Directory.GetFiles(audioObjWWUFolderPath, "*.wwu", SearchOption.AllDirectories);
+                Log.Info($"{wwuFiles.Length} .wwu files found in {audioObjWWUFolderPath}");
 
-                foreach (string file in wwuFiles)
+                foreach (var file in wwuFiles)
                 {
                     try
                     {
-                        XDocument doc = XDocument.Load(file);
-                        IEnumerable<XElement> objects = doc.Descendants()
-                            .Where(e => e.Name == "ActorMixer" || e.Name == "Sound" || e.Name == "RandomSequenceContainer" || e.Name == "BlendContainer");
+                        var doc = XDocument.Load(file);
+                        var objects = doc.Descendants()
+                            .Where(e => e.Name == "ActorMixer" || e.Name == "Sound" ||
+                                        e.Name == "RandomSequenceContainer" || e.Name == "BlendContainer" ||
+                                        e.Name == "SwitchContainer");
 
-                        foreach (XElement? obj in objects)
+                        foreach (var obj in objects)
                         {
-                            string? id = obj.Attribute("ID")?.Value;
+                            var id = obj.Attribute("ID")?.Value;
                             if (string.IsNullOrEmpty(id))
                             {
                                 continue;
                             }
 
-                            IEnumerable<XElement> rtpcs = obj.Descendants("RTPC")
-                                .Where(rtpc =>
-                                    rtpc.Element("PropertyList")?.Elements("Property")
-                                        .Any(p => p.Attribute("Name")?.Value == "PropertyName" &&
-                                                  p.Attribute("Value")?.Value == "Volume") == true);
+                            // Ajouter au cache brut des objets
+                            WwiseCache.audioObjectsByIdCache[id] = obj;
 
-                            if (!rtpcs.Any())
-                            {
-                                continue;
-                            }
-
-                            List<float> yValues = rtpcs
-                                .SelectMany(rtpc => rtpc.Descendants("Point")
-                                    .Select(p => p.Element("YPos")?.Value)
-                                    .Where(y => !string.IsNullOrWhiteSpace(y))
-                                    .Select(y =>
-                                    {
-                                        if (float.TryParse(y.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v))
-                                        {
-                                            return v;
-                                        }
-
-                                        return float.NaN;
-                                    })
-                                    .Where(v => !float.IsNaN(v)))
-                                .ToList();
-
-                            if (yValues.Count > 0)
-                            {
-                                float min = yValues.Min();
-                                float max = yValues.Max();
-                                WwiseCache.volumeRangeCache[id] = (min, max);
-                            }
+                            // Ajouter lien objet audio => bus
+                            WwiseCache.outputBusCache.TryAdd(id, ResolveEffectiveOutputBus(obj));
                         }
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning($"Failed parsing audioObj WWU '{file}': {ex.ToString()}");
+                        Log.Warning($"Failed parsing audioObj WWU '{file}': {ex}");
                     }
                 }
 
-                Log.Info($"[Info] Preloaded RTPC ranges for {WwiseCache.volumeRangeCache.Count} audio objects.");
+                // Une fois tous les objets chargés, calculer les ranges cumulés
+                foreach (var kvp in WwiseCache.audioObjectsByIdCache)
+                {
+                    var id = kvp.Key;
+                    if (!WwiseCache.volumeRangeCache.ContainsKey(id))
+                    {
+                        var cumulative = GetCumulativeVolumeRange(id);
+                        if (cumulative != null)
+                        {
+                            WwiseCache.volumeRangeCache[id] = cumulative.Value;
+                            Log.AddSpace();
+                            Log.Info($"Volume data of {WwiseCache.audioObjectsByIdCache[id].Attribute("Name")?.Value}: {cumulative.Value.value} ({cumulative.Value.min}|{cumulative.Value.max})");
+                        }
+                    }
+                }
+
+                Log.Info($"Preloaded cumulative volume ranges for {WwiseCache.volumeRangeCache.Count} audio objects.");
+                Log.Info($"Cached {WwiseCache.audioObjectsByIdCache.Count} audio objects by ID.");
             }
             catch (Exception ex)
             {
-                Log.Info($"[Error] PreloadVolumeRanges failed: {ex.ToString()}");
+                Log.Info($"[Error] PreloadVolumeRanges failed: {ex}");
             }
         }
+
+        /// <summary>
+        /// Résout le OutputBus effectif d’un objet audio en tenant compte
+        /// des OverrideOutput et de l’héritage parent.
+        /// </summary>
+        private static string? ResolveEffectiveOutputBus(XElement audioObj)
+        {
+            XElement? current = audioObj;
+
+            while (current != null)
+            {
+                // Vérifie OverrideOutput
+                var overrideProp = current.Element("PropertyList")
+                    ?.Elements("Property")
+                    .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideOutput");
+
+                bool overrideOutput = overrideProp?.Attribute("Value")?.Value == "True";
+
+                if (overrideOutput || current.Name == "ActorMixer" || current.Name == "Bus")
+                {
+                    // Si override, ou si on est à la racine (ActorMixer/Bus),
+                    // on prend le OutputBus de ce niveau
+                    var outputBusRef = current.Element("ReferenceList")
+                        ?.Elements("Reference")
+                        .FirstOrDefault(r => r.Attribute("Name")?.Value == "OutputBus")
+                        ?.Element("ObjectRef");
+
+                    if (outputBusRef != null)
+                    {
+                        return outputBusRef.Attribute("ID")?.Value;
+                    }
+                }
+
+                // remonter à l’ancêtre (ChildrenList → Parent)
+                current = current.Parent?.Parent;
+            }
+
+            return null; // pas trouvé (rare)
+        }
+
+
+        /// <summary>
+        /// Remonte la hiérarchie et cumule :
+        /// - VoiceVolume de l'objet et ses parents jusqu'au HDR bus
+        /// - Randoms de VoiceVolume
+        /// - RTPC min/max de VoiceVolume
+        /// - States affectant le VoiceVolume
+        /// </summary>
+        private static (float value, float min, float max)? GetCumulativeVolumeRange(string id)
+        {
+            var totalValue = 0f;
+            var totalMin = 0f;
+            var totalMax = 0f;
+
+            var currentId = id;
+            while (!string.IsNullOrEmpty(currentId) && WwiseCache.audioObjectsByIdCache.TryGetValue(currentId, out var obj))
+            {
+                var contrib = ExtractVolumeContributions(obj, true);
+                totalValue += contrib.value;
+                totalMin += contrib.min;
+                totalMax += contrib.max;
+
+                // remonter au parent
+                currentId = obj.Parent?.Parent?.Attribute("ID")?.Value;
+            }
+
+            if (WwiseCache.outputBusCache.TryGetValue(id, out string? outputBusId))
+            {
+                var busContrib = GetCumulativeBusVolume(outputBusId);
+                totalValue += busContrib.value;
+                totalMin += busContrib.min;
+                totalMax += busContrib.max;
+            }
+
+            return (totalValue, totalMin, totalMax);
+        }
+
+        /// <summary>
+        /// Extrait toutes les contributions volume (VoiceVolume, Random, RTPC min/max, States)
+        /// pour un seul objet.
+        /// </summary>
+        public static (float value, float min, float max) ExtractVolumeContributions(XElement obj, bool xtractFromRTPC)
+        {
+            var value = 0f;
+            var min = 0f;
+            var max = 0f;
+
+            // Volume direct (Property "Volume")
+            var volProp = obj.Element("PropertyList")?
+                .Elements("Property")
+                .FirstOrDefault(p => (string)p.Attribute("Name") == "Volume");
+
+            if (volProp != null)
+            {
+                var valNode = volProp.Element("ValueList")?.Element("Value")?.Value
+                           ?? volProp.Attribute("Value")?.Value;
+
+                if (!string.IsNullOrWhiteSpace(valNode) &&
+                    float.TryParse(valNode.Replace(',', '.'),
+                                   NumberStyles.Float,
+                                   CultureInfo.InvariantCulture,
+                                   out var baseVol))
+                {
+                    value += baseVol;
+                }
+
+                // Min/Max (random ranges, automation)
+                foreach (var prop in volProp.Descendants("Property"))
+                {
+                    if (prop.Attribute("Name")?.Value == "Min" &&
+                        float.TryParse(prop.Attribute("Value")?.Value?.Replace(',', '.'),
+                            NumberStyles.Float, CultureInfo.InvariantCulture, out var minVal))
+                    {
+                        min += minVal;
+                    }
+
+                    if (prop.Attribute("Name")?.Value == "Max" &&
+                        float.TryParse(prop.Attribute("Value")?.Value?.Replace(',', '.'),
+                            NumberStyles.Float, CultureInfo.InvariantCulture, out var maxVal))
+                    {
+                        max += maxVal;
+                    }
+                }
+            }
+
+            // RTPC → min/max YPos (uniquement ceux définis directement sur l'objet)
+            if (xtractFromRTPC)
+            {
+                var rtpcs = obj.Element("ObjectLists")?
+                               .Elements("ObjectList")
+                               .Where(ol => (string)ol.Attribute("Name") == "RTPC")
+                               .Elements("RTPC");
+
+                if (rtpcs != null)
+                {
+                    foreach (var rtpc in rtpcs)
+                    {
+                        var propertyName = rtpc.Element("PropertyList")?
+                            .Elements("Property")
+                            .FirstOrDefault(p => (string)p.Attribute("Name") == "PropertyName")
+                            ?.Attribute("Value")?.Value;
+
+                        if (propertyName == "Volume")
+                        {
+                            var yValues = rtpc.Descendants("Point")
+                                              .Select(p => p.Element("YPos")?.Value)
+                                              .Where(s => !string.IsNullOrWhiteSpace(s))
+                                              .Select(s => float.TryParse(s.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var y) ? y : 0f)
+                                              .ToList();
+
+                            if (yValues.Count > 0)
+                            {
+                                min += yValues.Min();
+                                max += yValues.Max();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // States Volume
+            var stateProps = obj.Element("StateInfo")?
+                                 .Element("CustomStateList")?
+                                 .Descendants("Property")
+                                 .Where(p => p.Attribute("Name")?.Value == "Volume" && p.Attribute("Value") != null)
+                             ?? Enumerable.Empty<XElement>();
+
+            foreach (var sp in stateProps)
+            {
+                if (float.TryParse(sp.Attribute("Value")?.Value?.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var sVal))
+                {
+                    min += sVal < 0 ? sVal : 0;
+                    max += sVal > 0 ? sVal : 0;
+                }
+            }
+
+            return (value, min, max);
+        }
+
         #endregion
     }
 }

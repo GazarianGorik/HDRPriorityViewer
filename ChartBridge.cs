@@ -15,11 +15,14 @@ namespace WwiseHDRTool
                 // === 1. Fetching data on default thread ===
                 List<AudioBus> allBusses = await GetRelevantAudioBuses();
                 List<WwiseEvent> allEvents = await GetAllEvents();
-                List<WwiseAction> allActionsWithTargets = ParseActionsFromWWU();
+
+                WWUParser.PreloadBusData();
+                WWUParser.PreloadVolumeRanges();
+
+                List<WwiseAction> allActionsWithTargets = WWUParser.ParseEventActionsFromWorkUnits();
 
                 List<string> uniqueTargetIds = ExtractUniqueTargetIds(allActionsWithTargets);
 
-                PreloadVolumeRanges();
 
                 await BatchRequestTargetData(uniqueTargetIds);
 
@@ -32,18 +35,18 @@ namespace WwiseHDRTool
                 // === 2. Adding chart points on UI thread ===
                 await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
                 {
-                    Log.Info("[Info] Plotting events on UI thread...");
+                    Log.Info("Plotting events on UI thread...");
                     PlotEvents(eventsWithActions);
                 });
 
                 // === 3. Updating borders on UI thread ===
                 await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
                 {
-                    Log.Info("[Info] Updating chart borders on UI thread...");
+                    Log.Info("Updating chart borders on UI thread...");
                     MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
                 });
 
-                Log.Info("[Info] Chart update complete!");
+                Log.Info("Chart update complete!");
             }
             catch (Exception ex)
             {
@@ -53,7 +56,7 @@ namespace WwiseHDRTool
 
         private static async Task<List<AudioBus>> GetRelevantAudioBuses()
         {
-            Log.Info("[Info] Requesting Audio Buses...");
+            Log.Info("Requesting Audio Buses...");
             List<AudioBus> allBusses = await WaapiBridge.GetAudioBuses();
 
             if (allBusses == null || allBusses.Count == 0)
@@ -67,7 +70,7 @@ namespace WwiseHDRTool
 
         private static async Task<List<WwiseEvent>> GetAllEvents()
         {
-            Log.Info("[Info] Requesting Events...");
+            Log.Info("Requesting Events...");
             List<WwiseEvent> allEvents = await WaapiBridge.GetEvents();
 
             if (allEvents == null || allEvents.Count == 0)
@@ -76,21 +79,8 @@ namespace WwiseHDRTool
                 return new List<WwiseEvent>();
             }
 
-            Log.Info($"[Info] {allEvents.Count} Events retrieved.");
+            Log.Info($"{allEvents.Count} Events retrieved.");
             return allEvents;
-        }
-
-        private static List<WwiseAction> ParseActionsFromWWU()
-        {
-            Log.Info("[Info] Parsing Actions and Targets from WWU files...");
-            List<WwiseAction> actions = WWUParser.ParseEventActionsFromWorkUnits();
-
-            if (actions.Count == 0)
-            {
-                Log.Info("[Info] No actions with targets found in events WWU.");
-            }
-
-            return actions;
         }
 
         private static List<string> ExtractUniqueTargetIds(List<WwiseAction> actions)
@@ -101,23 +91,14 @@ namespace WwiseHDRTool
                 .Distinct()
                 .ToList();
 
-            Log.Info($"[Info] {uniqueTargetIds.Count} unique TargetIds to query (batch).");
+            Log.Info($"{uniqueTargetIds.Count} unique TargetIds to query (batch).");
             return uniqueTargetIds;
-        }
-
-        private static void PreloadVolumeRanges()
-        {
-            Log.Info("[Info] Preloading volume RTPC ranges from audio object WWU files...");
-            WWUParser.PreloadVolumeRanges();
         }
 
         private static async Task BatchRequestTargetData(List<string> targetIds)
         {
-            Log.Info("[Info] Batch requesting OutputBus for targets...");
+            Log.Info("Batch requesting OutputBus for targets...");
             await WaapiBridge.BatchGetTargetOutputBus(targetIds);
-
-            Log.Info("[Info] Batch requesting Volume for targets...");
-            await WaapiBridge.BatchGetVolumes(targetIds);
         }
 
         private static List<(WwiseAction action, string outputBusId)> FilterActionsRoutedToHDR(
@@ -143,7 +124,7 @@ namespace WwiseHDRTool
                 }
             }
 
-            Log.Info($"[Info] Found {routedActions.Count} actions routed to HDR buses via their targets.");
+            Log.Info($"Found {routedActions.Count} actions routed to HDR buses via their targets.");
 
             return routedActions;
         }
@@ -163,7 +144,7 @@ namespace WwiseHDRTool
                 .Where(x => x.actions.Count > 0)
                 .ToList();
 
-            Log.Info($"[Info] {grouped.Count} Events have Actions routed to HDR.");
+            Log.Info($"{grouped.Count} Events have Actions routed to HDR.");
             return grouped;
         }
 
@@ -183,15 +164,12 @@ namespace WwiseHDRTool
                     //Log.Info($"  => Action: {action.Name} (ID: {action.Id}) => OutputBus: {busId}");
 
                     // Get rounded volume
-                    float volume = 0;
-                    if (WwiseCache.volumeCache.TryGetValue(action.TargetId!, out float? volVal) && volVal.HasValue)
-                    {
-                        volume = (float)Math.Round(volVal.Value, 2);
-                    }
 
-                    (float min, float max)? volumeRange = WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out (float min, float max)? vr) ? vr : (0, 0);
+                    (float value, float min, float max)? volumes = WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out (float value, float min, float max)? vr) ? vr : (0, 0, 0);
 
-                    (float, float) yMinMax = (volumeRange.Value.min + volume, volumeRange.Value.max + volume);
+                    float volume = volumes.Value.value;
+
+                    (float, float) yMinMax = (Math.Max(volumes.Value.min, -96), volumes.Value.max);
 
                     int occurrence = 0;
                     foreach ((float, float) range in yMinMaxList)
@@ -214,8 +192,8 @@ namespace WwiseHDRTool
                             action.TargetName,
                             index,
                             volume,
-                            volumeRange.Value.min,
-                            volumeRange.Value.max,
+                            yMinMax.Item1,
+                            yMinMax.Item2,
                             xOffset,
                             action.ParentData,
                             action.TargetId

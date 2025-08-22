@@ -20,7 +20,7 @@ namespace WwiseHDRTool
                 await client.Connect($"ws://{WwiseCache.wampIP}:{WwiseCache.wampPort}/waapi", 10000);
                 ConnectedToWwise = true;
 
-                Log.Info("[Info] Connected to Wwise!");
+                Log.Info("Connected to Wwise!");
 
                 client.Disconnected += () =>
                 {
@@ -101,9 +101,12 @@ namespace WwiseHDRTool
 
                 // Determine the root folder to use depending on the version
                 string audioObjFolderName = wwiseVersion.StartsWith("2025") ? "Containers" : "Actor-Mixer Hierarchy";
+                string busFolderName = wwiseVersion.StartsWith("2025") ? "Busses" : "Master-Mixer Hierarchy";
 
                 // Build the full path of the Audio object folder
                 string audioObjWWUFolderPath = System.IO.Path.Combine(projectFolder, audioObjFolderName);
+                // Build the full path of the bus folder
+                string busWWUFolderPath = System.IO.Path.Combine(projectFolder, busFolderName);
 
                 string eventsWWUFolderPath = System.IO.Path.Combine(projectFolder, "Events");
 
@@ -111,8 +114,9 @@ namespace WwiseHDRTool
                 Log.Info($"Project folder path: {projectFolder}");
                 Log.Info($"Events folder path: {eventsWWUFolderPath}");
                 Log.Info($"Audio object folder path: {audioObjWWUFolderPath}");
+                Log.Info($"Bus folder path: {busWWUFolderPath}");
 
-                WWUParser.SetProjectFolderPathes(eventsWWUFolderPath, audioObjWWUFolderPath);
+                WWUParser.SetProjectFolderPaths(eventsWWUFolderPath, audioObjWWUFolderPath, busWWUFolderPath);
 
                 WriteDataToUI(wwiseVersion, displayTitle);
             }
@@ -289,65 +293,6 @@ namespace WwiseHDRTool
                 }
             }
         }
-
-        /// <summary>
-        /// Batch fetch Volume for a list of target IDs and cache results in volumeCache.
-        /// </summary>
-        public static async Task BatchGetVolumes(IEnumerable<string> targetIds)
-        {
-            List<string> idsToFetch = targetIds.Where(id => !WwiseCache.volumeCache.ContainsKey(id)).Distinct().ToList();
-            if (idsToFetch.Count == 0)
-            {
-                return;
-            }
-
-            try
-            {
-                JObject query = new JObject(
-                    new JProperty("from", new JObject(
-                        new JProperty("id", new JArray(idsToFetch))
-                    ))
-                );
-
-                JObject options = new JObject(
-                    new JProperty("return", new JArray("id", "Volume"))
-                );
-
-                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
-
-                foreach (JToken obj in result["return"]!)
-                {
-                    string? id = obj["id"]?.ToString();
-                    string? volStr = obj["Volume"]?.ToString();
-                    if (id != null)
-                    {
-                        if (float.TryParse(volStr, out float v))
-                        {
-                            WwiseCache.volumeCache[id] = v;
-                        }
-                        else
-                        {
-                            WwiseCache.volumeCache[id] = null;
-                        }
-                    }
-                }
-
-                // Mark missing ids with null to avoid refetch
-                foreach (string? id in idsToFetch)
-                {
-                    WwiseCache.volumeCache.TryAdd(id, WwiseCache.volumeCache.ContainsKey(id) ? WwiseCache.volumeCache[id] : null);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"BatchGetVolumes failed: {ex.ToString()}");
-                foreach (string? id in idsToFetch)
-                {
-                    WwiseCache.volumeCache.TryAdd(id, null);
-                }
-            }
-        }
-
         #endregion
 
         public static async Task FocusWwiseWindow()

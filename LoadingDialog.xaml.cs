@@ -11,7 +11,18 @@ namespace WwiseHDRTool.Views
 
         public void SetLoadingText(string text)
         {
-            LoadingMessage.Text = text;
+            MainWindow.MainDispatcherQueue.TryEnqueue(() =>
+            {
+                LoadingMessage.Text = text;
+            });
+        }
+
+        public void SetDetailsText(string text)
+        {
+            MainWindow.MainDispatcherQueue.TryEnqueue(() =>
+            {
+                DetailsMessage.Text = text;
+            });
         }
 
         /*

@@ -12,5 +12,10 @@
                    FontSize="16"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"/>
+        <TextBlock x:Name="DetailsMessage"
+           Text=""
+           FontSize="14"
+           HorizontalAlignment="Center"
+           VerticalAlignment="Center"/>
     </StackPanel>
 </ContentDialog>

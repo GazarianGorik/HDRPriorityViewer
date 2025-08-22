@@ -1,7 +1,8 @@
-﻿using LiveChartsCore.Defaults;
-using SkiaSharp;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Xml.Linq;
+using LiveChartsCore.Defaults;
+using SkiaSharp;
 
 namespace WwiseHDRTool
 {
@@ -34,9 +35,11 @@ namespace WwiseHDRTool
     public static class WwiseCache
     {
         // Caches & stores
-        public static ConcurrentDictionary<string, string?> outputBusCache = new();
-        public static ConcurrentDictionary<string, float?> volumeCache = new();
-        public static ConcurrentDictionary<string, (float min, float max)?> volumeRangeCache = new();
+
+        public static ConcurrentDictionary<string, string?> outputBusCache = new(); // A link between AudioOjbId and OutputBusId
+        public static ConcurrentDictionary<string, (float value, float min, float max)?> volumeRangeCache = new();
+        public static readonly ConcurrentDictionary<string, XElement> audioObjectsByIdCache= new ConcurrentDictionary<string, XElement>();
+        public static readonly ConcurrentDictionary<string, XElement> busesByIdCache = new ConcurrentDictionary<string, XElement>();
         public static List<ErrorPoint> chartDefaultPoints = new List<ErrorPoint>();
         public static string wampPort = "8080";
         public static string wampIP = "localhost";

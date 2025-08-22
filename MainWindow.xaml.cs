@@ -34,7 +34,7 @@ namespace WwiseHDRTool
         public IntPtr WindowHandle => WindowNative.GetWindowHandle(this);
         public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue { get; private set; }
         IEnumerable<ChartPoint>? chartPointUnderCursor;
-        private LoadingDialog? _loadingDialog;
+        public LoadingDialog? loadingDialog;
 
         private bool isCtrlDown = false;
         private bool isMenuDown = false;
@@ -129,9 +129,7 @@ namespace WwiseHDRTool
             {
                 MainWindow.MainDispatcherQueue.TryEnqueue(() =>
                 {
-                    MainViewModel.ChartViewModel.ClearChart();
-                    MainViewModel.SearchItems.Clear();
-                    MainViewModel.CategorieFilterButtons.Clear();
+                    ResetScanData();
                 });
             }
 
@@ -150,30 +148,59 @@ namespace WwiseHDRTool
             UpdateUIAfterAnalyze();
         }
 
+        void ResetScanData()
+        {
+            // Reset WWUParser static paths
+            WWUParser.ResetForRescan();
+
+            // Reset WwiseCache static caches
+            WwiseCache.audioObjectsByIdCache.Clear();
+            WwiseCache.volumeRangeCache.Clear();
+            WwiseCache.outputBusCache.Clear();
+            WwiseCache.chartDefaultPoints.Clear();
+
+            // If you have other caches or static lists, clear them here as well
+            // e.g., WwiseCache.someOtherCache.Clear();
+
+            // Optionally, reset any static state in view models or chart data
+            if (MainWindow.Instance != null)
+            {
+                var vm = MainWindow.Instance.MainViewModel;
+                vm.ChartViewModel.ClearChart();
+                vm.SearchItems.Clear();
+                vm.CategorieFilterButtons.Clear();
+                vm.Searches.Clear();
+                // Reset other viewmodel state if needed
+            }
+
+            // Log for debugging
+            Log.Info("All caches and state have been reset for a fresh rescan.");
+        }
+
         private async Task WwiseConnexionProcess()
         {
             AnalyzeButton.IsEnabled = false;
 
             // --- DIALOG 1: Connecting ---
-            _loadingDialog = new LoadingDialog
+            loadingDialog = new LoadingDialog
             {
                 XamlRoot = MainWindow.Instance.Content.XamlRoot
             };
-            _loadingDialog.SetLoadingText("Connecting to Wwise...");
+            loadingDialog.SetLoadingText("Connecting to Wwise...");
 
             // Lancer le dialog sans bloquer
-            var connectDialogTask = _loadingDialog.ShowAsync();
+            var connectDialogTask = loadingDialog.ShowAsync();
 
             // Connexion (tâche lourde)
             await Task.Run(async () =>
             {
-                Log.Info("[Info] Attempting to connect to Wwise...");
+                Log.Info("Attempting to connect to Wwise...");
                 await WaapiBridge.ConnectToWwise();
             });
 
             // Fermer le dialog
-            if (_loadingDialog != null)
-                _loadingDialog.Hide();
+            if (loadingDialog != null)
+                loadingDialog.Hide();
             await connectDialogTask; // attendre la fin du ShowAsync
         }
 
@@ -182,30 +209,30 @@ namespace WwiseHDRTool
             FirstAnalyzePanel.Visibility = Visibility.Collapsed;
 
             // --- DIALOG 2: Analysing ---
-            _loadingDialog = new LoadingDialog
+            loadingDialog = new LoadingDialog
             {
                 XamlRoot = MainWindow.Instance.Content.XamlRoot
             };
-            _loadingDialog.SetLoadingText("Analysing Wwise project...");
+            loadingDialog.SetLoadingText("Analysing Wwise project...");
 
-            var analyseDialogTask = _loadingDialog.ShowAsync();
+            var analyseDialogTask = loadingDialog.ShowAsync();
             
             await Task.Run(async () =>
             {
-                Log.Info("[Info] Fetching Wwise project data...");
+                Log.Info("Fetching Wwise project data...");
                 await WaapiBridge.GetProjectInfos();
 
-                Log.Info("[Info] Project infos gathered");
+                Log.Info("Project infos gathered");
             });
 
             await Task.Run(async () =>
             {
-                Log.Info("[Info] Fetching Wwise project data...");
+                Log.Info("Fetching Wwise project data...");
                 await ChartBridge.ListSoundObjectsRoutedToHDR();
             });
 
-            if(_loadingDialog != null)
-                _loadingDialog.Hide();
+            if(loadingDialog != null)
+                loadingDialog.Hide();
             await analyseDialogTask;
         }
 
@@ -386,11 +413,11 @@ namespace WwiseHDRTool
 
             while (_messageQueue.TryDequeue(out var item))
             {
-                // Si tu as un _loadingDialog encore visible
-                if (_loadingDialog != null && _loadingDialog.Visibility == Visibility.Visible)
+                // Si tu as un loadingDialog encore visible
+                if (loadingDialog != null && loadingDialog.Visibility == Visibility.Visible)
                 {
-                    _loadingDialog.Hide();
-                    _loadingDialog = null;
+                    loadingDialog.Hide();
+                    loadingDialog = null;
                 }
 
                 StackPanel stackPanel = new StackPanel();

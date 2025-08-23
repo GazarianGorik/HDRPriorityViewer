@@ -129,7 +129,7 @@ namespace WwiseHDRTool
             {
                 MainWindow.MainDispatcherQueue.TryEnqueue(() =>
                 {
-                    ResetScanData();
+                    AppUtility.ResetCacheAndUI();
                 });
             }
 
@@ -146,35 +146,6 @@ namespace WwiseHDRTool
             await AnalyzeProcess();
 
             UpdateUIAfterAnalyze();
-        }
-
-        void ResetScanData()
-        {
-            // Reset WWUParser static paths
-            WWUParser.ResetForRescan();
-
-            // Reset WwiseCache static caches
-            WwiseCache.audioObjectsByIdCache.Clear();
-            WwiseCache.volumeRangeCache.Clear();
-            WwiseCache.outputBusCache.Clear();
-            WwiseCache.chartDefaultPoints.Clear();
-
-            // If you have other caches or static lists, clear them here as well
-            // e.g., WwiseCache.someOtherCache.Clear();
-
-            // Optionally, reset any static state in view models or chart data
-            if (MainWindow.Instance != null)
-            {
-                var vm = MainWindow.Instance.MainViewModel;
-                vm.ChartViewModel.ClearChart();
-                vm.SearchItems.Clear();
-                vm.CategorieFilterButtons.Clear();
-                vm.Searches.Clear();
-                // Reset other viewmodel state if needed
-            }
-
-            // Log for debugging
-            Log.Info("All caches and state have been reset for a fresh rescan.");
         }
 
         private async Task WwiseConnexionProcess()

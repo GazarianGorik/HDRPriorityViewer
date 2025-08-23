@@ -83,7 +83,7 @@ namespace WwiseHDRTool
             return allEvents;
         }
 
-        private static List<string> ExtractUniqueTargetIds(List<WwiseAction> actions)
+        public static List<string> ExtractUniqueTargetIds(List<WwiseAction> actions)
         {
             List<string?> uniqueTargetIds = actions
                 .Select(a => a.TargetId)

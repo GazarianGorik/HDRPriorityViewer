@@ -45,30 +45,11 @@ namespace WwiseHDRTool
             /* 27 */ new SKColor(129,140,150)
         };
 
-        public static void ResetForRescan()
+        public static void ResetProjectFolderPaths()
         {
-            try
-            {
-                // Reset des chemins
-                eventsWWUFolderPath = string.Empty;
-                audioObjWWUFolderPath = string.Empty;
-                busWWUFolderPath = string.Empty;
-
-                // Reset des caches
-                WwiseCache.audioObjectsByIdCache.Clear();
-                WwiseCache.busesByIdCache.Clear();
-                WwiseCache.volumeRangeCache.Clear();
-                WwiseCache.outputBusCache.Clear();
-
-                // Si tu as d'autres caches ou structures statiques, les vider aussi ici
-                // ex: WwiseCache.someOtherCache.Clear();
-
-                Log.Info("All caches and folder paths have been reset. Ready for fresh rescan.");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"ResetForRescan failed: {ex}");
-            }
+            eventsWWUFolderPath = string.Empty;
+            audioObjWWUFolderPath = string.Empty;
+            busWWUFolderPath = string.Empty;
         }
 
 

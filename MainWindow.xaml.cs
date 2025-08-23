@@ -61,12 +61,12 @@ namespace WwiseHDRTool
             {
                 Name = "HDR Priority",
                 NameTextSize = 14,
-                SeparatorsPaint = new SolidColorPaint(SKColors.LightYellow)
+                SeparatorsPaint = new SolidColorPaint(SKColors.WhiteSmoke)
                 {
                     StrokeThickness = 0.4f
                 },
-                NamePaint = new SolidColorPaint(SKColors.LightYellow, 1),
-                LabelsPaint = new SolidColorPaint(SKColors.LightYellow, 1)
+                NamePaint = new SolidColorPaint(SKColors.WhiteSmoke, 1),
+                LabelsPaint = new SolidColorPaint(SKColors.WhiteSmoke, 1)
             };
             Chart.XAxes = new List<Axis> { xAxis };
             Chart.YAxes = new List<Axis> { yAxis };
@@ -496,6 +496,14 @@ namespace WwiseHDRTool
             }
         }
 
+        private void SearchSuggestionLostFocus(object sender, RoutedEventArgs e)
+        {
+            if (SuggestionsPopup.IsOpen)
+            {
+                SuggestionsPopup.IsOpen = false;
+            }
+        }
+
         private void SearchSuggestionSelected(object sender, SelectionChangedEventArgs e)
         {
             if (sender is ListBox lb && lb.SelectedItem is string selected && _lastFocusedItem != null)
@@ -507,8 +515,9 @@ namespace WwiseHDRTool
                 MainViewModel.ValidateSearchItem(_lastFocusedItem);
 
                 // Close the popup
-                lb.SelectedItem = null;
                 SuggestionsPopup.IsOpen = false;
+                lb.SelectedItem = null;
+                Log.TempOverrided("Suggestion popup closed!");
             }
         }
 
@@ -535,6 +544,7 @@ namespace WwiseHDRTool
                         }
 
                         SuggestionsPopup.IsOpen = true;
+                        Log.TempOverrided("Suggestion popup openned!");
                     });
                 }
                 else

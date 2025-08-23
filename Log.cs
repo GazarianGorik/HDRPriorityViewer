@@ -24,6 +24,11 @@ public static class Log
         if (Enabled) Debug.WriteLine(new string('-', 50));
     }
 
+    public static void TempOverrided(string message)
+    {
+        Debug.WriteLine("[TEMP] " + message);
+    }
+
     public static void Info(string message)
     {
         if (Enabled) Debug.WriteLine("[Info] " + message);

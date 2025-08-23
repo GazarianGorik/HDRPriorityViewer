@@ -129,9 +129,10 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(item.Text))
         {
-            // Split des mots tapés
+            // Normaliser le texte utilisateur aussi (underscore -> espace, lower)
             var queryWords = item.Text
                 .ToLowerInvariant()
+                .Replace("_", " ")
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
             var matches = WwiseCache.chartDefaultPoints
@@ -146,7 +147,6 @@ public partial class MainViewModel : ObservableObject
                     // Chaque mot de la recherche doit apparaître dans le nom
                     var nameWords = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     return queryWords.All(q => nameWords.Any(nw => nw.StartsWith(q, StringComparison.OrdinalIgnoreCase)));
-
                 });
 
             foreach (var m in matches)
@@ -155,6 +155,7 @@ public partial class MainViewModel : ObservableObject
             }
         }
     }
+
 
 
     [RelayCommand]

@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,10 +17,10 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using SkiaSharp;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 using Windows.System;
 using WinRT.Interop;
 using WwiseHDRTool.Views;
-using System.Collections.Concurrent;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -29,16 +29,22 @@ namespace WwiseHDRTool
 {
     public sealed partial class MainWindow : Window
     {
-        public static MainWindow Instance { get; private set; } // Allows accessing MainWindow from other classes
+        public static MainWindow Instance
+        {
+            get; private set;
+        } // Allows accessing MainWindow from other classes
         public MainViewModel MainViewModel { get; } = new MainViewModel();
         public IntPtr WindowHandle => WindowNative.GetWindowHandle(this);
-        public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue { get; private set; }
+        public static Microsoft.UI.Dispatching.DispatcherQueue MainDispatcherQueue
+        {
+            get; private set;
+        }
         IEnumerable<ChartPoint>? chartPointUnderCursor;
         public LoadingDialog? loadingDialog;
 
-        private bool isCtrlDown = false;
-        private bool isMenuDown = false;
-        private bool isPointClickable = false;
+        private bool _isCtrlDown = false;
+        private bool _isMenuDown = false;
+        private bool _isPointClickable = false;
 
         public MainWindow()
         {
@@ -53,11 +59,11 @@ namespace WwiseHDRTool
 
             MainDispatcherQueue = this.DispatcherQueue;
 
-            Axis xAxis = new Axis
+            var xAxis = new Axis
             {
                 IsVisible = false
             };
-            Axis yAxis = new Axis
+            var yAxis = new Axis
             {
                 Name = "HDR Priority",
                 NameTextSize = 14,
@@ -90,20 +96,20 @@ namespace WwiseHDRTool
             Log.Info($"Point clicked!");
 
             // Only open Wwise element if Ctrl is pressed
-            if (!isCtrlDown || chartPointUnderCursor == null || chartPointUnderCursor.Count() == 0)
+            if (!_isCtrlDown || chartPointUnderCursor == null || chartPointUnderCursor.Count() == 0)
             {
                 return;
             }
 
             if (chartPointUnderCursor.Count() == 1)
             {
-                ChartPoint point = chartPointUnderCursor.Single();
+                var point = chartPointUnderCursor.Single();
 
                 if (point.Context.DataSource is ErrorPoint errorPoint)
                 {
-                    PointMetaData? meta = errorPoint.MetaData as PointMetaData;
-                    string name = meta?.Name ?? "Unknown";
-                    string wwiseID = meta?.WwiseID ?? "Unknown";
+                    var meta = errorPoint.MetaData as PointMetaData;
+                    var name = meta?.Name ?? "Unknown";
+                    var wwiseID = meta?.WwiseID ?? "Unknown";
 
                     Log.Info($"Point clicked: {name} ({wwiseID})");
 
@@ -121,25 +127,19 @@ namespace WwiseHDRTool
             }
         }
 
-        private bool hasAnalyzedOnce = false;
-
         private async void AnalyzeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (hasAnalyzedOnce)
-            {
-                MainWindow.MainDispatcherQueue.TryEnqueue(() =>
-                {
-                    AppUtility.ResetCacheAndUI();
-                });
-            }
+            AppUtility.ResetCacheAndUI();
 
-            if(!WaapiBridge.ConnectedToWwise)
+            if (!WaapiBridge.ConnectedToWwise)
+            {
                 await WwiseConnexionProcess();
+            }
 
             if (!WaapiBridge.ConnectedToWwise)
             {
                 AnalyzeButton.IsEnabled = true;
-                Log.Error("Failed to connect to Wwise.\nPlease ensure Wwise is running, Waapi is correctly set, and User Preference window is closed.");
+                Log.Error("Failed to connect to Wwise.\r\nPlease ensure that your Wwise project is running, Waapi is correctly set, and User Preference window is closed.");
                 return;
             }
 
@@ -148,19 +148,35 @@ namespace WwiseHDRTool
             UpdateUIAfterAnalyze();
         }
 
+        IAsyncOperation<ContentDialogResult> _connectDialogTask;
+
+        private void OpenLoadingDialog(string loadingText, string detailsText)
+        {
+            loadingDialog = new LoadingDialog
+            {
+                XamlRoot = MainWindow.Instance.Content.XamlRoot
+            };
+            loadingDialog.SetLoadingText(loadingText);
+            loadingDialog.SetDetailsText(detailsText);
+            _connectDialogTask = loadingDialog.ShowAsync();
+        }
+
+        private async Task CloseLoadingDialog()
+        {
+            if (loadingDialog != null)
+            {
+                loadingDialog.Hide();
+            }
+
+            await _connectDialogTask;
+        }
+
         private async Task WwiseConnexionProcess()
         {
             AnalyzeButton.IsEnabled = false;
 
             // --- DIALOG 1: Connecting ---
-            loadingDialog = new LoadingDialog
-            {
-                XamlRoot = MainWindow.Instance.Content.XamlRoot
-            };
-            loadingDialog.SetLoadingText("Connecting to Wwise...");
-
-            // Lancer le dialog sans bloquer
-            var connectDialogTask = loadingDialog.ShowAsync();
+            OpenLoadingDialog("Connecting to Wwise...", "");
 
             // Connexion (tâche lourde)
             await Task.Run(async () =>
@@ -170,9 +186,7 @@ namespace WwiseHDRTool
             });
 
             // Fermer le dialog
-            if (loadingDialog != null)
-                loadingDialog.Hide();
-            await connectDialogTask; // attendre la fin du ShowAsync
+            await CloseLoadingDialog();
         }
 
         private async Task AnalyzeProcess()
@@ -180,38 +194,17 @@ namespace WwiseHDRTool
             FirstAnalyzePanel.Visibility = Visibility.Collapsed;
 
             // --- DIALOG 2: Analysing ---
-            loadingDialog = new LoadingDialog
-            {
-                XamlRoot = MainWindow.Instance.Content.XamlRoot
-            };
-            loadingDialog.SetLoadingText("Analysing Wwise project...");
+            OpenLoadingDialog("Analysing Wwise project...", "");
 
-            var analyseDialogTask = loadingDialog.ShowAsync();
-            
-            await Task.Run(async () =>
-            {
-                Log.Info("Fetching Wwise project data...");
-                await WaapiBridge.GetProjectInfos();
+            await ProjectAnalyzer.AnalyzeProjectAsync();
 
-                Log.Info("Project infos gathered");
-            });
-
-            await Task.Run(async () =>
-            {
-                Log.Info("Fetching Wwise project data...");
-                await ChartBridge.ListSoundObjectsRoutedToHDR();
-            });
-
-            if(loadingDialog != null)
-                loadingDialog.Hide();
-            await analyseDialogTask;
+            await CloseLoadingDialog();
         }
 
         private void UpdateUIAfterAnalyze()
         {
             // --- MAJ UI ---
             MainViewModel.SearchItems.Add(new SearchItemViewModel());
-            hasAnalyzedOnce = true;
             Stats.Visibility = Visibility.Visible;
             Chart.IsEnabled = true;
 
@@ -221,7 +214,7 @@ namespace WwiseHDRTool
             });
         }
 
-        private IEnumerable<ChartPoint>? lastNewItems = null;
+        private IEnumerable<ChartPoint>? _lastHoveredPoints = null;
 
         private void HoveredPointsChanged(IChartView chart, IEnumerable<ChartPoint>? newItems, IEnumerable<ChartPoint>? oldItems)
         {
@@ -237,58 +230,58 @@ namespace WwiseHDRTool
         {
             if (chartPointUnderCursor == null || !chartPointUnderCursor.Any())
             {
-                if (isPointClickable)
+                if (_isPointClickable)
                 {
                     MainViewModel.ChartViewModel.UnmakeClickablePointByName();
-                    isPointClickable = false;
-                    lastNewItems = null;
+                    _isPointClickable = false;
+                    _lastHoveredPoints = null;
                 }
                 return;
             }
 
-            if (isCtrlDown)
+            if (_isCtrlDown)
             {
-                ChartPoint? chartPoint = chartPointUnderCursor.FirstOrDefault();
+                var chartPoint = chartPointUnderCursor.FirstOrDefault();
                 if (chartPoint?.Context.DataSource is ErrorPoint ep)
                 {
-                    string? pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
+                    var pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
                     if (!string.IsNullOrEmpty(pointName))
                     {
                         // Only redo if the point has changed
-                        if (!isPointClickable || !IsSameAsLast(chartPointUnderCursor))
+                        if (!_isPointClickable || !IsSameAsLast(chartPointUnderCursor))
                         {
                             MainViewModel.ChartViewModel.MakeClickablePointByName(ep);
-                            lastNewItems = chartPointUnderCursor.ToList();
-                            isPointClickable = true;
+                            _lastHoveredPoints = chartPointUnderCursor.ToList();
+                            _isPointClickable = true;
                         }
                     }
                 }
             }
             else
             {
-                if (isPointClickable)
+                if (_isPointClickable)
                 {
                     MainViewModel.ChartViewModel.UnmakeClickablePointByName();
-                    isPointClickable = false;
-                    lastNewItems = null;
+                    _isPointClickable = false;
+                    _lastHoveredPoints = null;
                 }
             }
         }
 
         private bool IsSameAsLast(IEnumerable<ChartPoint> newPoints)
         {
-            if (lastNewItems == null)
+            if (_lastHoveredPoints == null)
             {
                 return false;
             }
 
-            List<(double PrimaryValue, double SecondaryValue)> newCoords = newPoints
+            var newCoords = newPoints
                 .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
                 .OrderBy(t => t.PrimaryValue)
                 .ThenBy(t => t.SecondaryValue)
                 .ToList();
 
-            List<(double PrimaryValue, double SecondaryValue)> lastCoords = lastNewItems
+            var lastCoords = _lastHoveredPoints
                 .Select(p => (p.Coordinate.PrimaryValue, p.Coordinate.SecondaryValue))
                 .OrderBy(t => t.PrimaryValue)
                 .ThenBy(t => t.SecondaryValue)
@@ -309,8 +302,8 @@ namespace WwiseHDRTool
             if (args.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
             {
                 Chart.ZoomMode = ZoomAndPanMode.Both;
-                isMenuDown = false;
-                isCtrlDown = false;
+                _isMenuDown = false;
+                _isCtrlDown = false;
 
                 chartPointUnderCursor = null;
             }
@@ -321,33 +314,33 @@ namespace WwiseHDRTool
 
         private void KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            if (e.Key == VirtualKey.Control && !isCtrlDown)
+            if (e.Key == VirtualKey.Control && !_isCtrlDown)
             {
-                isCtrlDown = true;
+                _isCtrlDown = true;
                 Chart.ZoomMode = ZoomAndPanMode.Y;
                 UpdateClickablePoint();
             }
 
-            if (e.Key == VirtualKey.Menu && !isMenuDown)
+            if (e.Key == VirtualKey.Menu && !_isMenuDown)
             {
-                isMenuDown = true;
+                _isMenuDown = true;
                 Chart.ZoomMode = ZoomAndPanMode.X;
             }
         }
 
         private void KeyUp(object sender, KeyRoutedEventArgs e)
         {
-            if (e.Key == VirtualKey.Control && isCtrlDown)
+            if (e.Key == VirtualKey.Control && _isCtrlDown)
             {
-                isCtrlDown = false;
-                Chart.ZoomMode = isMenuDown ? ZoomAndPanMode.X : ZoomAndPanMode.Both;
+                _isCtrlDown = false;
+                Chart.ZoomMode = _isMenuDown ? ZoomAndPanMode.X : ZoomAndPanMode.Both;
                 UpdateClickablePoint();
             }
 
-            if (e.Key == VirtualKey.Menu && isMenuDown)
+            if (e.Key == VirtualKey.Menu && _isMenuDown)
             {
-                isMenuDown = false;
-                Chart.ZoomMode = isCtrlDown ? ZoomAndPanMode.Y : ZoomAndPanMode.Both;
+                _isMenuDown = false;
+                Chart.ZoomMode = _isCtrlDown ? ZoomAndPanMode.Y : ZoomAndPanMode.Both;
             }
         }
 
@@ -378,7 +371,9 @@ namespace WwiseHDRTool
         private async Task ProcessQueueAsync()
         {
             if (_isShowingDialog)
+            {
                 return; // déjà en cours
+            }
 
             _isShowingDialog = true;
 
@@ -391,7 +386,7 @@ namespace WwiseHDRTool
                     loadingDialog = null;
                 }
 
-                StackPanel stackPanel = new StackPanel();
+                var stackPanel = new StackPanel();
                 stackPanel.Children.Add(new TextBlock
                 {
                     Text = item.Message,
@@ -427,7 +422,7 @@ namespace WwiseHDRTool
         }
         public bool IsCtrlDown()
         {
-            return isCtrlDown;
+            return _isCtrlDown;
         }
 
         private void SearchField_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -441,7 +436,7 @@ namespace WwiseHDRTool
             }
         }
 
-        private void SehField_LostFocus(object sender, RoutedEventArgs e)
+        private void SearchField_LostFocus(object sender, RoutedEventArgs e)
         {
             if (sender is TextBox tb && tb.DataContext is SearchItemViewModel item)
             {
@@ -461,13 +456,15 @@ namespace WwiseHDRTool
 
         private void RootGrid_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            if (SuggestionsPopup.IsOpen)
-            {
-                SuggestionsPopup.IsOpen = false;
-            }
+            CloseSuggestionPopup();
         }
 
         private void SearchSuggestionLostFocus(object sender, RoutedEventArgs e)
+        {
+            CloseSuggestionPopup();
+        }
+
+        void CloseSuggestionPopup()
         {
             if (SuggestionsPopup.IsOpen)
             {
@@ -488,7 +485,6 @@ namespace WwiseHDRTool
                 // Close the popup
                 SuggestionsPopup.IsOpen = false;
                 lb.SelectedItem = null;
-                Log.TempOverrided("Suggestion popup closed!");
             }
         }
 
@@ -502,10 +498,10 @@ namespace WwiseHDRTool
                 {
                     tb.DispatcherQueue.TryEnqueue(() =>
                     {
-                        Microsoft.UI.Xaml.Media.GeneralTransform transform = tb.TransformToVisual(RootGrid);
-                        Windows.Foundation.Point position = transform.TransformPoint(new Windows.Foundation.Point(0, tb.ActualHeight));
+                        var transform = tb.TransformToVisual(RootGrid);
+                        var position = transform.TransformPoint(new Windows.Foundation.Point(0, tb.ActualHeight));
 
-                        Thickness padding = RootGrid.Padding;
+                        var padding = RootGrid.Padding;
                         SuggestionsPopup.HorizontalOffset = position.X - padding.Left;
                         SuggestionsPopup.VerticalOffset = position.Y - padding.Top;
 
@@ -515,7 +511,6 @@ namespace WwiseHDRTool
                         }
 
                         SuggestionsPopup.IsOpen = true;
-                        Log.TempOverrided("Suggestion popup openned!");
                     });
                 }
                 else

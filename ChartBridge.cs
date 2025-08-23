@@ -8,53 +8,7 @@ namespace WwiseHDRTool
 {
     internal class ChartBridge
     {
-        public static async Task ListSoundObjectsRoutedToHDR()
-        {
-            try
-            {
-                // === 1. Fetching data on default thread ===
-                List<AudioBus> allBusses = await GetRelevantAudioBuses();
-                List<WwiseEvent> allEvents = await GetAllEvents();
-
-                WWUParser.PreloadBusData();
-                WWUParser.PreloadVolumeRanges();
-
-                List<WwiseAction> allActionsWithTargets = WWUParser.ParseEventActionsFromWorkUnits();
-
-                List<string> uniqueTargetIds = ExtractUniqueTargetIds(allActionsWithTargets);
-
-
-                await BatchRequestTargetData(uniqueTargetIds);
-
-                List<(WwiseAction action, string outputBusId)> routedActions =
-                    FilterActionsRoutedToHDR(allActionsWithTargets, allBusses);
-
-                List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions =
-                    GroupActionsByEvent(routedActions, allEvents);
-
-                // === 2. Adding chart points on UI thread ===
-                await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
-                {
-                    Log.Info("Plotting events on UI thread...");
-                    PlotEvents(eventsWithActions);
-                });
-
-                // === 3. Updating borders on UI thread ===
-                await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
-                {
-                    Log.Info("Updating chart borders on UI thread...");
-                    MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
-                });
-
-                Log.Info("Chart update complete!");
-            }
-            catch (Exception ex)
-            {
-                Log.Info("[Error] Final error: " + ex);
-            }
-        }
-
-        private static async Task<List<AudioBus>> GetRelevantAudioBuses()
+        public static async Task<List<AudioBus>> GetRelevantAudioBuses()
         {
             Log.Info("Requesting Audio Buses...");
             List<AudioBus> allBusses = await WaapiBridge.GetAudioBuses();
@@ -68,7 +22,7 @@ namespace WwiseHDRTool
             return allBusses.Where(bus => bus.IsHDR || bus.HDRChild).ToList();
         }
 
-        private static async Task<List<WwiseEvent>> GetAllEvents()
+        public static async Task<List<WwiseEvent>> GetAllEvents()
         {
             Log.Info("Requesting Events...");
             List<WwiseEvent> allEvents = await WaapiBridge.GetEvents();
@@ -95,13 +49,13 @@ namespace WwiseHDRTool
             return uniqueTargetIds;
         }
 
-        private static async Task BatchRequestTargetData(List<string> targetIds)
+        public static async Task BatchRequestTargetData(List<string> targetIds)
         {
             Log.Info("Batch requesting OutputBus for targets...");
             await WaapiBridge.BatchGetTargetOutputBus(targetIds);
         }
 
-        private static List<(WwiseAction action, string outputBusId)> FilterActionsRoutedToHDR(
+        public static List<(WwiseAction action, string outputBusId)> FilterActionsRoutedToHDR(
             List<WwiseAction> allActionsWithTargets,
             List<AudioBus> relevantBusses)
         {
@@ -129,7 +83,7 @@ namespace WwiseHDRTool
             return routedActions;
         }
 
-        private static List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> GroupActionsByEvent(
+        public static List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> GroupActionsByEvent(
             List<(WwiseAction action, string busId)> routedActions,
             List<WwiseEvent> allEvents)
         {
@@ -148,7 +102,7 @@ namespace WwiseHDRTool
             return grouped;
         }
 
-        private static void PlotEvents(List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions)
+        public static void PlotEvents(List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions)
         {
             List<(float, float)> yMinMaxList = new List<(float, float)>();
             int xOffsetDirection = 1;

@@ -134,7 +134,7 @@
                                                  KeyDown="SearchField_KeyDown"
                                                  TextChanged="SearchField_TextChanged"
                                                  GotFocus="SearchField_GotFocus"
-                                                 LostFocus="SehField_LostFocus"/>
+                                                 LostFocus="SearchField_LostFocus"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

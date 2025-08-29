@@ -69,10 +69,10 @@ public partial class MainViewModel : ObservableObject
     {
         if (!string.IsNullOrWhiteSpace(item.PreviousValideText))
         {
-            if (Searches.Contains(item.PreviousValideText))
-            {
-                Searches.Remove(item.PreviousValideText);
-            }
+            var key = NormalizeKey(item.PreviousValideText);
+            var idx = Searches.FindIndex(s => NormalizeKey(s) == key);
+            if (idx >= 0) Searches.RemoveAt(idx);
+
             ChartViewModel.DehighlightPointByName(item.PreviousValideText);
         }
 
@@ -96,14 +96,13 @@ public partial class MainViewModel : ObservableObject
         ChartViewModel.HighlightPointByName(trimmedText);
         item.PreviousValideText = trimmedText;
 
-        // 3. Add to the global list if it’s a new term
-        if (!Searches.Contains(trimmedText))
+        // 3. Add to the global list if it’s a new term (comparaison normalisée)
+        if (!Searches.Any(s => NormalizeKey(s) == NormalizeKey(trimmedText)))
         {
             if (item == SearchItems.First())
             {
                 SearchItems.Insert(0, new SearchItemViewModel());
             }
-
             Searches.Add(trimmedText);
         }
     }
@@ -130,37 +129,47 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(item.Text))
         {
-            // Normaliser le texte utilisateur aussi (underscore -> espace, lower)
-            var queryWords = item.Text
-                .ToLowerInvariant()
-                .Replace("_", " ")
+            var queryWords = NormalizeKey(item.Text)
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
             var matches = WwiseCache.chartDefaultPoints
                 .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
                 .Where(n =>
                 {
-                    // Normaliser le nom : underscore → espace, minuscule
-                    var name = (n.MetaData as PointMetaData).Name.Split(':')[0]
-                                .Replace("_", " ")
-                                .ToLowerInvariant();
-
-                    // Chaque mot de la recherche doit apparaître dans le nom
-                    var nameWords = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    return queryWords.All(q => nameWords.Any(nw => nw.StartsWith(q, StringComparison.OrdinalIgnoreCase)));
+                    var name = (n.MetaData as PointMetaData).Name.Split(':')[0];
+                    var normalized = NormalizeKey(name);
+                    var nameWords = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    return queryWords.All(q => nameWords.Any(nw => nw.StartsWith(q, StringComparison.Ordinal)));
                 });
+
+            // Prépare des ensembles normalisés pour des tests O(1)
+            var normalizedSearched = new HashSet<string>(Searches.Select(NormalizeKey));
+            var normalizedListed = new HashSet<string>(SearchSuggestions.Select(NormalizeKey));
 
             foreach (var m in matches)
             {
                 var suggestionToAdd = (m.MetaData as PointMetaData).Name.Split(':')[0];
+                var key = NormalizeKey(suggestionToAdd);
 
-                if (!SearchSuggestions.Contains(suggestionToAdd)) // Multiple object can have the same name, dont need to show multiple same suggestions
+                // pas déjà listée (même nom, casse différente, espaces, _...) ET pas déjà cherchée
+                if (!normalizedListed.Contains(key) && !normalizedSearched.Contains(key))
+                {
                     SearchSuggestions.Add(suggestionToAdd);
+                    normalizedListed.Add(key);
+                }
             }
         }
     }
 
+    private static string NormalizeKey(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return string.Empty;
 
+        // 1) _ -> espace  2) Trim  3) compacter les espaces  4) lower invariant
+        var t = s.Replace('_', ' ').Trim();
+        t = string.Join(' ', t.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        return t.ToLowerInvariant();
+    }
 
     [RelayCommand]
     public void HideShowSeries(ButtonData btnData)

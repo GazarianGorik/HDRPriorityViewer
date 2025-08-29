@@ -113,7 +113,7 @@
                                Margin="8,0,0,8"/>
 
                         <!-- Search -->
-                        <Border Grid.Row="3" Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,40">
+                        <Border Grid.Row="3" Background="Transparent" Padding="12,12,5,12" CornerRadius="8" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,40">
                             <ScrollView Grid.Row="3" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto"
     VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="300" VerticalAlignment="Top">
 
@@ -127,14 +127,16 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Vertical" VerticalAlignment="Top" Spacing="4">
-                                                <TextBox Width="200"
-                                                 Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                 PlaceholderText="Search..."
-                                                 FontSize="13"
-                                                 KeyDown="SearchField_KeyDown"
-                                                 TextChanged="SearchField_TextChanged"
-                                                 GotFocus="SearchField_GotFocus"
-                                                 LostFocus="SearchField_LostFocus"/>
+                                                <TextBox Width="185"
+                                                    Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    PlaceholderText="Search..."
+                                                    FontSize="13"
+                                                    KeyDown="SearchField_KeyDown"
+                                                    TextChanged="SearchField_TextChanged"
+                                                    GotFocus="SearchField_GotFocus"
+                                                    LostFocus="SearchField_LostFocus"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Left"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

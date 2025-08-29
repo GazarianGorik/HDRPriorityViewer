@@ -1,4 +1,10 @@
-﻿using LiveChartsCore;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Kernel;
 using LiveChartsCore.Kernel.Sketches;
@@ -6,13 +12,6 @@ using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
 
 namespace WwiseHDRTool;
 
@@ -44,22 +43,20 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     public Dictionary<ParentData, ScatterSeries<ErrorPoint>> _seriesByParentData = new Dictionary<ParentData, ScatterSeries<ErrorPoint>>(new ParentDataEqualityComparer());
 
-    public void AddPointWithVerticalError(string name, int index, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, double pointOffset, ParentData parentData, string wwiseID)
+    public void AddPointWithVerticalError(string name, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, ParentData parentData, string wwiseID)
     {
         MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
-            float xOffsetStep = 0.04f;
-            double totalXOffset = 0 + (pointOffset * xOffsetStep);
 
             // If we don't have a series for this color yet, create it
             if (!_seriesByParentData.TryGetValue(parentData, out ScatterSeries<ErrorPoint>? series))
             {
                 series = new ScatterSeries<ErrorPoint>
                 {
-                    Name = parentData.Name,
+                    //Name = parentData.Name,
                     Values = new ObservableCollection<ErrorPoint>(),
                     Fill = AppSettings.chartPointFill(parentData.Color),
-                    Stroke = AppSettings.chartPointStroke,
+                    Stroke = AppSettings.chartPointStroke(),
                     ErrorPaint = AppSettings.chartPointError(parentData.Color),
                     GeometrySize = AppSettings.chartPointSize,
 
@@ -80,7 +77,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 MainWindow.Instance.MainViewModel.AddCategorieFilterButton(parentData);
             }
 
-            ErrorPoint pointToAdd = new ErrorPoint(totalXOffset, volume, 0, 0, VolumeRTPCMinValue, VolumeRTPCMaxValue)
+            ErrorPoint pointToAdd = new ErrorPoint(0, volume, 0, 0, VolumeRTPCMinValue, VolumeRTPCMaxValue)
             {
                 MetaData = new PointMetaData
                 {
@@ -148,7 +145,8 @@ public partial class ChartViewModel : INotifyPropertyChanged
                             MetaData = new PointMetaData
                             {
                                 Name = md.Name,
-                                WwiseID = md.WwiseID
+                                WwiseID = md.WwiseID,
+                                TwinPoint = pt
                             }
                         });
                     }
@@ -169,12 +167,12 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
                 Fill = new SolidColorPaint(Utility.OpaqueColor(matchedPointSerrieColor)),
-                Stroke = AppSettings.chartPointHighlightedStroke,
+                Stroke = AppSettings.chartPointHighlightedStroke(),
                 GeometrySize = 20,
                 IsHoverable = false,
                 ZIndex = 50,
                 DataLabelsSize = AppSettings.chartPointHighlightedDataLabelsSize,
-                DataLabelsPaint = new SolidColorPaint(SKColors.White),
+                DataLabelsPaint = AppSettings.chartPointHighlightedLabel(),
                 DataLabelsFormatter = cp =>
                 {
                     if (cp.Context.DataSource is ErrorPoint ep &&
@@ -206,16 +204,15 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         foreach (ISeries? s in Series.ToList())
         {
-            if (s is ScatterSeries<ErrorPoint> scatterSeries)
+            if (s is ScatterSeries<ErrorPoint> scatterSeries && !_highlightSeriesByName.ContainsValue(scatterSeries))
             {
                 if (scatterSeries.Fill is SolidColorPaint solidColor)
                 {
-                    // If it's the first highlight, make original series a bit transparent
-                    if (_highlightSeriesByName.Count == 0)
+                    MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
                     {
                         scatterSeries.Fill = AppSettings.chartPointFillDimed(solidColor.Color);
                         scatterSeries.ErrorPaint = AppSettings.chartPointErrorDimed(solidColor.Color);
-                    }
+                    });
                 }
             }
         }
@@ -225,16 +222,15 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         foreach (ISeries? s in Series.ToList())
         {
-            if (s is ScatterSeries<ErrorPoint> scatterSeries)
+            if (s is ScatterSeries<ErrorPoint> scatterSeries && !_highlightSeriesByName.ContainsValue(scatterSeries))
             {
                 if (scatterSeries.Fill is SolidColorPaint solidColor)
                 {
-                    // If it's the first highlight, make original series a bit transparent
-                    if (_highlightSeriesByName.Count == 0)
+                    MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
                     {
                         scatterSeries.Fill = AppSettings.chartPointFill(Utility.OpaqueColor(solidColor.Color));
                         scatterSeries.ErrorPaint = AppSettings.chartPointError(Utility.OpaqueColor(solidColor.Color));
-                    }
+                    });
                 }
             }
         }
@@ -440,9 +436,62 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 new ObservablePoint(maxX, maxY),
                 new ObservablePoint(minX, maxY)
             };
-            Series.Add(_borderSerie);
+
+            if (!Series.Contains(_borderSerie))
+                Series.Add(_borderSerie);
         });
         Log.Info($"Chart borders updated! ({pointsCount})");
+    }
+
+    public void UpdateHighlightedPointPoistion()
+    {
+        bool anyHighlightIsVisible = false;
+
+        foreach (ISeries s in _highlightSeriesByName.Values)
+        {
+            if (s is ScatterSeries<ErrorPoint> scatterSeries)
+            {
+                foreach (ErrorPoint pt in s.Values)
+                {
+                    var twinPoint = (pt.MetaData as PointMetaData).TwinPoint;
+
+                    if ((twinPoint.MetaData as PointMetaData).OwnerSerie.IsVisible == false)
+                    {
+                        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                        {
+                            s.IsVisible = false;
+                        });
+                        break;
+                    }
+                    else
+                    {
+                        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                        {
+                            s.IsVisible = true;
+                        });
+                        anyHighlightIsVisible = true;
+                    }
+
+                    var twinPointX = (pt.MetaData as PointMetaData).TwinPoint.X;
+                    var twinPointY = (pt.MetaData as PointMetaData).TwinPoint.Y;
+
+                    MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        pt.X = twinPointX;
+                        pt.Y = twinPointY;
+                    });
+                }
+            }
+        }
+
+        if (anyHighlightIsVisible)
+        {
+            DimDefaultChartPoints();
+        }
+        else
+        {
+            UnDimDefaultChartPoints();
+        }
     }
 
     // --- New method to call to reposition points (without overlap)
@@ -475,6 +524,75 @@ public partial class ChartViewModel : INotifyPropertyChanged
             point.X = xOffset;
         }
     }
+
+    /* OLD VERSION COULD BE USEFULL LATER (it stacks points with same value, min, max)
+    public void RepositionPointsWithoutOverlap()
+    {
+        // Liste des points déjà placés : on garde value, min, max et l'offset attribué
+        var placed = new List<(float value, float min, float max, int offset)>();
+        const float EPS = 0.0001f;
+        int xOffsetDirection = 1;
+        int index = 0;
+        IEnumerable<ErrorPoint> points = GetAllPoints();
+
+        foreach (ErrorPoint point in points)
+        {
+            index++;
+
+            float value = (float)(point.Y);
+            float min = Math.Max((float)point.YErrorI, -96f);
+            float max = (float)point.YErrorJ;
+
+            // 1) Existe-t-il déjà un point EXACT (value,min,max) ?
+            int? existingOffset = placed
+                .Where(p => Math.Abs(p.value - value) < EPS
+                         && Math.Abs(p.min - min) < EPS
+                         && Math.Abs(p.max - max) < EPS)
+                .Select(p => (int?)p.offset)
+                .FirstOrDefault();
+
+            int chosenOffset;
+            if (existingOffset.HasValue)
+            {
+                // Réutiliser l'offset existant → superposition des identiques
+                chosenOffset = existingOffset.Value;
+            }
+            else
+            {
+                // 2) Sinon, trouver les offsets déjà utilisés par les points qui se chevauchent verticalement
+                var usedOffsets = new HashSet<int>();
+                foreach (var p in placed)
+                {
+                    // test d'intersection correcte : !(current.max < p.min || current.min > p.max)
+                    if (!(max < p.min - EPS || min > p.max + EPS))
+                    {
+                        usedOffsets.Add(p.offset);
+                    }
+                }
+
+                // 3) choisir le plus petit offset libre (0, 1, 2, ...)
+                chosenOffset = 0;
+                while (usedOffsets.Contains(chosenOffset))
+                    chosenOffset++;
+            }
+
+            // On enregistre le point avec son offset
+            placed.Add((value, min, max, chosenOffset));
+
+            // Calcul du xOffset effectif envoyé au chart (garde ton xOffsetDirection)
+            float xOffset = chosenOffset * xOffsetDirection;
+
+            try
+            {
+                point.X = xOffset;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to reposition point on graph: {ex}");
+            }
+        }
+    }
+    */
 
     public IEnumerable<ErrorPoint> GetAllPoints()
     {
@@ -525,10 +643,28 @@ public class NoTooltip : IChartTooltip, IDisposable
 
 public class PointMetaData : ChartEntityMetaData
 {
-    public string Name { get; set; }
-    public string WwiseID { get; set; }
-    public SKColor SerieColor { get; set; }
-    public ScatterSeries<ErrorPoint> OwnerSerie { get; set; }
+    public string Name
+    {
+        get; set;
+    }
+    public string WwiseID
+    {
+        get; set;
+    }
+    public SKColor SerieColor
+    {
+        get; set;
+    }
+    public ScatterSeries<ErrorPoint> OwnerSerie
+    {
+        get; set;
+    }
+
+    // Only used for highlight to easilly update there position when the original point moves
+    public ErrorPoint TwinPoint
+    {
+        get; set;
+    }
 }
 
 public class ParentDataEqualityComparer : IEqualityComparer<ParentData>

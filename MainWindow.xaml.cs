@@ -15,7 +15,7 @@ using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using SkiaSharp;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
@@ -63,19 +63,21 @@ namespace WwiseHDRTool
             {
                 IsVisible = false
             };
+
             var yAxis = new Axis
             {
                 Name = "HDR Priority",
                 NameTextSize = 14,
-                SeparatorsPaint = new SolidColorPaint(SKColors.WhiteSmoke)
-                {
-                    StrokeThickness = 0.4f
-                },
-                NamePaint = new SolidColorPaint(SKColors.WhiteSmoke, 1),
-                LabelsPaint = new SolidColorPaint(SKColors.WhiteSmoke, 1)
             };
             Chart.XAxes = new List<Axis> { xAxis };
             Chart.YAxes = new List<Axis> { yAxis };
+
+            SetChartAxisColors();
+
+            RootGrid.ActualThemeChanged += (s, e) =>
+            {
+                SetChartAxisColors();
+            };
 
             Chart.ZoomMode = ZoomAndPanMode.Both;
 
@@ -89,6 +91,23 @@ namespace WwiseHDRTool
             this.Activated += UpdateAppFocused;
 
             LiveCharts.DefaultSettings.MaxTooltipsAndLegendsLabelsWidth = 1000;
+        }
+
+        private void SetChartAxisColors()
+        {
+            var separatorColor = Utility.ToSKColor(((SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"]).Color);
+            var namePaintColor = Utility.ToSKColor(((SolidColorBrush)Application.Current.Resources["TextFillColorPrimaryBrush"]).Color);
+            var labelsPaintColor = Utility.ToSKColor(((SolidColorBrush)Application.Current.Resources["TextFillColorPrimaryBrush"]).Color);
+
+            Chart.YAxes.FirstOrDefault().SeparatorsPaint = new SolidColorPaint(separatorColor, 0.4f);
+            Chart.YAxes.FirstOrDefault().NamePaint = new SolidColorPaint(namePaintColor, 1);
+            Chart.YAxes.FirstOrDefault().LabelsPaint = new SolidColorPaint(labelsPaintColor, 1);
+        }
+
+        public ElementTheme GetCurrentTheme()
+        {
+            var root = (Application.Current as App).MainWindow.Content as FrameworkElement;
+            return root.ActualTheme;
         }
 
         private async void ChartPointerPressed(object sender, PointerRoutedEventArgs e)

@@ -104,61 +104,33 @@ namespace WwiseHDRTool
 
         public static void PlotEvents(List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions)
         {
-            List<(float, float)> yMinMaxList = new List<(float, float)>();
-            int xOffsetDirection = 1;
-            int index = 0;
-
             foreach ((WwiseEvent evt, List<(WwiseAction action, string busId)> actionsList) in eventsWithActions)
             {
-                //Log.Info($"Event: {evt.Name} (ID: {evt.Id}) has {actionsList.Count} HDR routed action(s).");
                 foreach ((WwiseAction action, string busId) in actionsList)
                 {
-                    index++;
 
-                    //Log.Info($"  => Action: {action.Name} (ID: {action.Id}) => OutputBus: {busId}");
-
-                    // Get rounded volume
-
-                    (float value, float min, float max)? volumes = WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out (float value, float min, float max)? vr) ? vr : (0, 0, 0);
-
-                    float volume = volumes.Value.value;
-
-                    (float, float) yMinMax = (Math.Max(volumes.Value.min, -96), volumes.Value.max);
-
-                    int occurrence = 0;
-                    foreach ((float, float) range in yMinMaxList)
-                    {
-                        if (yMinMax.Item1 <= range.Item2 || yMinMax.Item2 >= range.Item1)
-                        {
-                            occurrence++;
-                        }
-                    }
-
-                    yMinMaxList.Add(yMinMax);
-
-                    float xOffset = occurrence * xOffsetDirection;
-
-                    //Log.Info($"    Volume: {volume} | Range: [{volumeRange.Value.min}, {volumeRange.Value.max}] | XOffset: {xOffset}");
+                    // Récupère les volumes
+                    (float value, float min, float max)? volumes =
+                        WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out (float value, float min, float max)? vr)
+                        ? vr
+                        : (0f, 0f, 0f);
 
                     try
                     {
                         MainWindow.Instance.MainViewModel.ChartViewModel.AddPointWithVerticalError(
                             action.TargetName,
-                            index,
-                            volume,
-                            yMinMax.Item1,
-                            yMinMax.Item2,
-                            xOffset,
+                            volumes.Value.value,
+                            Math.Max(volumes.Value.min, -96f),
+                            volumes.Value.max,
                             action.ParentData,
                             action.TargetId
                         );
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning($"Failed to add point to graph: {ex.ToString()}");
+                        Log.Warning($"Failed to add point to graph: {ex}");
                     }
                 }
-                //Log.Info("");
             }
         }
     }

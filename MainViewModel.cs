@@ -15,6 +15,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
+using SkiaSharp;
 using WwiseHDRTool.Views;
 
 namespace WwiseHDRTool;
@@ -116,7 +117,7 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            if (SearchItems.Count > 1)
+            if (SearchItems.IndexOf(item)!=0) // Do not remove default empty search bar
             {
                 RemoveSearchItem(item);
             }
@@ -151,7 +152,10 @@ public partial class MainViewModel : ObservableObject
 
             foreach (var m in matches)
             {
-                SearchSuggestions.Add((m.MetaData as PointMetaData).Name.Split(':')[0]);
+                var suggestionToAdd = (m.MetaData as PointMetaData).Name.Split(':')[0];
+
+                if (!SearchSuggestions.Contains(suggestionToAdd)) // Multiple object can have the same name, dont need to show multiple same suggestions
+                    SearchSuggestions.Add(suggestionToAdd);
             }
         }
     }
@@ -167,7 +171,10 @@ public partial class MainViewModel : ObservableObject
         {
             selectedSeries.IsVisible = false;
             selectedSeries.ErrorPaint = null;
-            btnData.Background = new SolidColorBrush(Colors.LightCoral);
+            btnData.Foreground = AppSettings.DisabledFiltersButtonForegroundColor(btnData.ParentData);
+            btnData.Background = AppSettings.DisabledFiltersButtonBackgroundColor(btnData.ParentData);
+            btnData.HoverBackground = AppSettings.DisabledFiltersButtonHoverBackgroundColor(btnData.ParentData);
+
         }
         else
         {
@@ -176,10 +183,13 @@ public partial class MainViewModel : ObservableObject
                 Utility.LightenColor(btnData.ParentData.Color, 0.1f, 0.6f)
             )
             { StrokeThickness = 2 };
-            btnData.Background = new SolidColorBrush(Colors.LightBlue);
+            btnData.Foreground = AppSettings.EnabledFiltersButtonForegroundColor(btnData.ParentData);
+            btnData.Background = AppSettings.EnabledFiltersButtonBackgroundColor(btnData.ParentData);
+            btnData.HoverBackground = AppSettings.EnabledFiltersButtonHoverBackgroundColor(btnData.ParentData);
         }
 
         ChartViewModel.RepositionPointsWithoutOverlap();
+        ChartViewModel.UpdateHighlightedPointPoistion();
     }
 
     public void AddCategorieFilterButton(ParentData parentData)
@@ -188,10 +198,11 @@ public partial class MainViewModel : ObservableObject
 
         ButtonData btnData = new ButtonData
         {
-            Background = new SolidColorBrush(Colors.LightBlue)
+            Foreground = AppSettings.EnabledFiltersButtonForegroundColor(parentData),
+            Background = AppSettings.EnabledFiltersButtonBackgroundColor(parentData),
+            HoverBackground = AppSettings.EnabledFiltersButtonHoverBackgroundColor(parentData)
         };
 
-        // Now we can use btnData in the lambda without any problem
         btnData.ParentData = parentData;
         btnData.Command = new RelayCommand(() => HideShowSeries(btnData));
 
@@ -222,6 +233,20 @@ public class ButtonData : ObservableObject
     {
         get => _background;
         set => SetProperty(ref _background, value);
+    }
+
+    private Brush _foreground;
+    public Brush Foreground
+    {
+        get => _foreground;
+        set => SetProperty(ref _foreground, value);
+    }
+
+    private Brush _hoverBackground;
+    public Brush HoverBackground
+    {
+        get => _hoverBackground;
+        set => SetProperty(ref _hoverBackground, value);
     }
 
     public ICommand Command { get; set; }

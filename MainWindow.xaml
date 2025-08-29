@@ -36,10 +36,10 @@
                 <!-- PANNEAU FILTRES (il s’étire en hauteur car on est en Row="1" Height="*") -->
                 <Border
                     Grid.Column="0"
-                    Background="#1E1E1E"
+                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                     CornerRadius="8"
                     Padding="12,12,12,12"
-                    BorderBrush="#222"
+                    BorderBrush="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                     BorderThickness="5">
 
                     <!-- Séparer haut (titre+recherche) et bas (catégories) : Auto / * / Auto -->
@@ -76,7 +76,7 @@
                                    Text="Project Infos"
                                    FontSize="18"
                                    FontWeight="SemiBold"
-                                   Foreground="White"
+                                   Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
                                    Margin="0,0,0,8"/>
                             <Button Grid.Row="2" 
                                 x:Name="ReAnalyzeButton"
@@ -95,11 +95,11 @@
                                 VerticalAlignment="Top"
                                 Margin="0,12,0,0"
                                 Visibility="Collapsed">
-                            <Border Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="#333" BorderThickness="1" Margin="0,0,0,40">
+                            <Border Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,40">
                                 <StackPanel Orientation="Vertical" Spacing="6" HorizontalAlignment="Right">
-                                    <TextBlock FontSize="13" Text="{Binding WwiseVersion}" Foreground="LightGray"/>
-                                    <TextBlock FontSize="13" Text="{Binding WwiseProjectName}" Foreground="LightGray"/>
-                                    <TextBlock FontSize="13" Text="{Binding TotalChartPoints}" Foreground="LightGray"/>
+                                    <TextBlock FontSize="13" Text="{Binding WwiseVersion}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
+                                    <TextBlock FontSize="13" Text="{Binding WwiseProjectName}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
+                                    <TextBlock FontSize="13" Text="{Binding TotalChartPoints}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -109,11 +109,11 @@
                                Text="Search"
                                FontSize="18"
                                FontWeight="SemiBold"
-                               Foreground="White"
+                               Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
                                Margin="8,0,0,8"/>
 
                         <!-- Search -->
-                        <Border Grid.Row="3" Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="#333" BorderThickness="1" Margin="0,0,0,40">
+                        <Border Grid.Row="3" Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,40">
                             <ScrollView Grid.Row="3" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto"
     VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="300" VerticalAlignment="Top">
 
@@ -147,29 +147,35 @@
                                Text="Filters"
                                FontSize="18"
                                FontWeight="SemiBold"
-                               Foreground="White"
+                               Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
                                Margin="8,0,0,8"/>
                         
-                        <!-- Categories -->
-                        <Border Grid.Row="5" Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="#333" BorderThickness="1">
-                        <ScrollView HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto"
-    VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                        <!-- Filters -->
+                        <Border Grid.Row="5" Background="Transparent" Padding="12" CornerRadius="8" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1">
+                            <ScrollView HorizontalScrollMode="Auto" 
+                                        HorizontalScrollBarVisibility="Auto"
+                                        VerticalScrollMode="Auto" 
+                                        VerticalScrollBarVisibility="Auto">
 
-                            <StackPanel VerticalAlignment="Top" HorizontalAlignment="Stretch" Orientation="Vertical" Margin="0,0,0,0">
-                                <ItemsControl ItemsSource="{Binding CategorieFilterButtons}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Spacing="10"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Content="{Binding Label}" Command="{Binding Command}" FontSize="14"  Foreground="{Binding Background}"/>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </ScrollView>
+                                <StackPanel VerticalAlignment="Top" HorizontalAlignment="Stretch" Orientation="Vertical" Margin="0,0,0,0">
+                                    <ItemsControl ItemsSource="{Binding CategorieFilterButtons}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Spacing="10"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Content="{Binding Label}"
+                                                        Command="{Binding Command}"
+                                                        FontSize="14"
+                                                        Background="{Binding Background}"
+                                                        Foreground="{Binding Foreground}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollView>
                         </Border>
                     </Grid>
                 </Border>
@@ -190,7 +196,7 @@
 
 
         <!-- Connexion -->
-        <Grid x:Name="FirstAnalyzePanel" VerticalAlignment="Stretch" Background="#FF1E1E1E">
+        <Grid x:Name="FirstAnalyzePanel" VerticalAlignment="Stretch" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -206,7 +212,7 @@
                    Text="WAAPI Connexion Settings"
                    FontSize="25"
                    FontWeight="SemiBold"
-                   Foreground="#E0E0E0"
+                   Foreground="{ThemeResource ApplicationHeaderForegroundThemeBrush}"
                    Margin="0,0,0,35"/>
 
                 <!-- IP -->
@@ -218,16 +224,15 @@
                                FontSize="16"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center"
-                               Foreground="#C8C8C8"
+                               Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"
                                Margin="0,0,0,25"/>
                     <TextBox x:Name="WampIP_TextBox"
                              Width="180"
                              PlaceholderText="(ex: localhost)"
                              Text="localhost"
                              VerticalAlignment="Center"
-                             Background="#3A3F4B"
-                             Foreground="#F0F0F0"
-                             BorderBrush="#5A5F6B"
+                             Background="{ThemeResource TextBoxBackgroundThemeBrush}"
+                             Foreground="{ThemeResource TextBoxPlaceholderTextThemeBrush}"
                              Margin="0,0,0,25"/>
                 </StackPanel>
 
@@ -240,16 +245,15 @@
                                VerticalAlignment="Center"
                                FontSize="16"
                                FontWeight="SemiBold"
-                               Foreground="#C8C8C8"
+                               Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"
                                Margin="0,0,0,25"/>
                     <TextBox x:Name="WampHost_TextBox"
                             Width="220"
                             PlaceholderText="(ex: 8080)"
                             Text="8080"
                             VerticalAlignment="Center"
-                            Background="#3A3F4B"
-                            Foreground="#F0F0F0"
-                            BorderBrush="#5A5F6B"
+                            Background="{ThemeResource TextBoxBackgroundThemeBrush}"
+                            Foreground="{ThemeResource TextBoxPlaceholderTextThemeBrush}"
                             Margin="0,0,0,30"/>
                 </StackPanel>
 
@@ -273,6 +277,7 @@
                         <!-- Style hover/pressed -->
                         <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#4DA6FF"/>
                         <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#2E6CA3"/>
+                        <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#0F1633"/>
                     </Button.Resources>
                 </Button>
 

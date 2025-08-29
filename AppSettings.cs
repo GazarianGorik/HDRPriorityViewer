@@ -1,13 +1,23 @@
 ﻿using LiveChartsCore.SkiaSharpView.Painting;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
+
 
 namespace WwiseHDRTool
 {
     public static class AppSettings
     {
         // Wwise audio objects point settings
-        public static readonly SolidColorPaint chartPointStroke = new SolidColorPaint(SKColors.Black) { StrokeThickness = 1.5f };
         public static readonly float chartPointSize = 15;
+        public static SolidColorPaint chartPointStroke()
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorPaint(SKColors.Black) { StrokeThickness = 1.5f };
+            else
+                return new SolidColorPaint(SKColors.White) { StrokeThickness = 1.5f };
+
+        }
         public static SolidColorPaint chartPointFill(SKColor parentDatacolor)
         {
             return new SolidColorPaint(parentDatacolor) { ZIndex = 10 };
@@ -26,8 +36,23 @@ namespace WwiseHDRTool
         }
 
         // Highlighted point settings
-        public static readonly SolidColorPaint chartPointHighlightedStroke = new SolidColorPaint(Utility.LightenColor(SKColors.LightGoldenrodYellow, 0, 0.1f)) { StrokeThickness = 2 };
-        public static readonly int chartPointHighlightedDataLabelsSize = 18;
+        public static SolidColorPaint chartPointHighlightedStroke()
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorPaint(SKColors.White){ StrokeThickness = 2 };
+            else
+                return new SolidColorPaint(SKColors.Black){ StrokeThickness = 2 };
+
+        }
+        public static readonly int chartPointHighlightedDataLabelsSize = 20;
+        public static SolidColorPaint chartPointHighlightedLabel()
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorPaint(SKColors.White);
+            else
+                return new SolidColorPaint(SKColors.Black);
+
+        }
 
         // Clickable point settings        
         public static SolidColorPaint chartPointClickableFill(SKColor serieColor)
@@ -35,5 +60,50 @@ namespace WwiseHDRTool
             return new SolidColorPaint(Utility.LightenColor(serieColor, 0.4f, 0));
         }
         public static readonly float chartPointClickabeSize = 30;
+
+        //Filters buttons
+        public static SolidColorBrush EnabledFiltersButtonForegroundColor(ParentData parentData)
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(parentData.Color, 0.2f, 0.1f)));
+            else
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.DimColor(parentData.Color, 0.2f, 0.1f)));
+        }
+        public static SolidColorBrush EnabledFiltersButtonBackgroundColor(ParentData parentData)
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(parentData.Color, 0.1f, 0.93f)));
+            else
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.DimColor(parentData.Color, 0.1f, 0.93f)));
+        }
+        public static SolidColorBrush EnabledFiltersButtonHoverBackgroundColor(ParentData parentData)
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(parentData.Color, 0.2f, 0.7f)));
+            else
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.DimColor(parentData.Color, 0.2f, 0.7f)));
+        }
+
+        public static SolidColorBrush DisabledFiltersButtonForegroundColor(ParentData parentData)
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(parentData.Color, 0, 0.5f)));
+            else
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.DimColor(parentData.Color, 0, 0.5f)));
+        }
+        public static SolidColorBrush DisabledFiltersButtonBackgroundColor(ParentData parentData)
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(SKColors.Black, 0.1f, 0.5f)));
+            else
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(SKColors.White, 0.1f, 0.5f)));
+        }
+        public static SolidColorBrush DisabledFiltersButtonHoverBackgroundColor(ParentData parentData)
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(parentData.Color, 0, 0.5f)));
+            else
+                return new SolidColorBrush(Utility.ToWinUIColor(Utility.DimColor(parentData.Color, 0, 0.5f)));
+        }
     }
 }

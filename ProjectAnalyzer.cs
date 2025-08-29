@@ -50,14 +50,15 @@ namespace WwiseHDRTool
                         ChartBridge.PlotEvents(eventsWithActions);
                     });
 
-                    // === 3. Updating borders on UI thread ===
                     await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
                     {
-                        Log.Info("Updating chart borders on UI thread...");
-                        MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
+                        MainWindow.Instance.MainViewModel.ChartViewModel.RepositionPointsWithoutOverlap();
                     });
 
-                    Log.Info("Chart update complete!");
+                    await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
+                    {
+                        MainWindow.Instance.MainViewModel.ChartViewModel.UpdateHighlightedPointPoistion();
+                    });
                 }
                 catch (Exception ex)
                 {

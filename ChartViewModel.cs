@@ -95,7 +95,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
 
     // Add in your class a dictionary to manage highlights by name
-    private readonly Dictionary<string, ScatterSeries<ErrorPoint>> _highlightSeriesByName = new();
+    private Dictionary<string, List<ISeries>> _highlightSeriesByName = new();
 
     public void HighlightPointByName(string pointName)
     {
@@ -113,7 +113,8 @@ public partial class ChartViewModel : INotifyPropertyChanged
         // Go through all series (including highlights already added)
         List<ISeries> baseSeries = Series.ToList();
 
-        SKColor matchedPointSerrieColor = SKColors.Red;
+        // Dictionnaire SKColor -> liste de points à surligner
+        var pointsByColor = new Dictionary<SKColor, List<ErrorPoint>>();
 
         foreach (ISeries? s in baseSeries)
         {
@@ -121,26 +122,22 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 foreach (ErrorPoint pt in scatterSeries.Values)
                 {
-                    // Fetch point name without other data
                     string ptNameWithoutOtherData = "";
                     PointMetaData md = new PointMetaData();
 
                     if (pt.MetaData is PointMetaData pointMetaData)
                     {
                         md = pointMetaData;
-                        ptNameWithoutOtherData = md.Name.Split(':')[0].Trim(); ;
+                        ptNameWithoutOtherData = md.Name.Split(':')[0].Trim();
                     }
 
-                    // If the point name without other data matches the pointName we want to highlight
-                    if (!String.IsNullOrEmpty(ptNameWithoutOtherData) && ptNameWithoutOtherData == pointName)
+                    if (!string.IsNullOrEmpty(ptNameWithoutOtherData) && ptNameWithoutOtherData == pointName)
                     {
+                        SKColor ptColor = SKColors.Red; // fallback
                         if (scatterSeries.Fill is SolidColorPaint solidColor)
-                        {
-                            matchedPointSerrieColor = solidColor.Color;
-                        }
+                            ptColor = solidColor.Color;
 
-                        // Create a new ErrorPoint with the same coordinates and metadata
-                        pointsToHighlight.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
+                        var newPoint = new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
                         {
                             MetaData = new PointMetaData
                             {
@@ -148,71 +145,91 @@ public partial class ChartViewModel : INotifyPropertyChanged
                                 WwiseID = md.WwiseID,
                                 TwinPoint = pt
                             }
-                        });
+                        };
+
+                        if (!pointsByColor.ContainsKey(ptColor))
+                            pointsByColor[ptColor] = new List<ErrorPoint>();
+
+                        pointsByColor[ptColor].Add(newPoint);
                     }
                 }
             }
         }
 
-        // If we found points to highlight, create a new series and add it to the chart
-        if (pointsToHighlight.Count > 0)
+        if (pointsByColor.Count > 0)
         {
-            // If it's the first highlight, we dim the default points
-            if (pointsToHighlight.Count == 1)
-            {
+            int totalPoints = pointsByColor.Values.Sum(list => list.Count);
+
+            // Si c'est le premier highlight, on dim les points par défaut
+            if (totalPoints == 1)
                 DimDefaultChartPoints();
+
+            foreach (var kvp in pointsByColor)
+            {
+                SKColor color = kvp.Key;
+                List<ErrorPoint> pts = kvp.Value;
+
+                ScatterSeries<ErrorPoint> highlightSeries = new ScatterSeries<ErrorPoint>
+                {
+                    Values = new ObservableCollection<ErrorPoint>(pts),
+                    Fill = new SolidColorPaint(Utility.OpaqueColor(color)),
+                    Stroke = AppSettings.chartPointHighlightedStroke(),
+                    GeometrySize = 20,
+                    IsHoverable = false,
+                    ZIndex = 50,
+                    DataLabelsSize = AppSettings.chartPointHighlightedDataLabelsSize,
+                    DataLabelsPaint = AppSettings.chartPointHighlightedLabel(),
+                    DataLabelsFormatter = cp =>
+                    {
+                        if (cp.Context.DataSource is ErrorPoint ep &&
+                            ep.MetaData is PointMetaData md)
+                        {
+                            return md.Name.Split(':')[0];
+                        }
+                        return "";
+                    },
+                    XToolTipLabelFormatter = _ => "",
+                    YToolTipLabelFormatter = _ => "",
+                };
+
+                Series.Add(highlightSeries);
+
+                if (!_highlightSeriesByName.ContainsKey(pointName))
+                    _highlightSeriesByName[pointName] = new List<ISeries>();
+
+                _highlightSeriesByName[pointName].Add(highlightSeries);
             }
 
-            ScatterSeries<ErrorPoint> highlightSeries = new ScatterSeries<ErrorPoint>
-            {
-                Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
-                Fill = new SolidColorPaint(Utility.OpaqueColor(matchedPointSerrieColor)),
-                Stroke = AppSettings.chartPointHighlightedStroke(),
-                GeometrySize = 20,
-                IsHoverable = false,
-                ZIndex = 50,
-                DataLabelsSize = AppSettings.chartPointHighlightedDataLabelsSize,
-                DataLabelsPaint = AppSettings.chartPointHighlightedLabel(),
-                DataLabelsFormatter = cp =>
-                {
-                    if (cp.Context.DataSource is ErrorPoint ep &&
-                        ep.MetaData is PointMetaData md)
-                    {
-                        return md.Name.Split(':')[0];
-                    }
-
-                    return "";
-                },
-                XToolTipLabelFormatter = _ => "",
-                YToolTipLabelFormatter = _ => "",
-            };
-
-            Series.Add(highlightSeries);
-
-            // Store the highlight series by pointName to avoid duplicates
-            _highlightSeriesByName[pointName] = highlightSeries;
-
-            Log.Info($"Point '{pointName}' highlighted with {pointsToHighlight.Count} points.");
+            Log.Info($"Point '{pointName}' highlighted with {totalPoints} points.");
         }
         else
         {
             Log.Info($"No point found with the name '{pointName}'.");
         }
+
     }
 
     private void DimDefaultChartPoints()
     {
         foreach (ISeries? s in Series.ToList())
         {
-            if (s is ScatterSeries<ErrorPoint> scatterSeries && !_highlightSeriesByName.ContainsValue(scatterSeries))
+            if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
-                if (scatterSeries.Fill is SolidColorPaint solidColor)
+                // Vérifie que cette série n'est pas déjà highlightée
+                bool isHighlighted = _highlightSeriesByName.Values
+                    .SelectMany(list => list) // aplatit toutes les listes de séries
+                    .Contains(scatterSeries);
+
+                if (!isHighlighted)
                 {
-                    MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                    if (scatterSeries.Fill is SolidColorPaint solidColor)
                     {
-                        scatterSeries.Fill = AppSettings.chartPointFillDimed(solidColor.Color);
-                        scatterSeries.ErrorPaint = AppSettings.chartPointErrorDimed(solidColor.Color);
-                    });
+                        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                        {
+                            scatterSeries.Fill = AppSettings.chartPointFillDimed(solidColor.Color);
+                            scatterSeries.ErrorPaint = AppSettings.chartPointErrorDimed(solidColor.Color);
+                        });
+                    }
                 }
             }
         }
@@ -222,15 +239,23 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         foreach (ISeries? s in Series.ToList())
         {
-            if (s is ScatterSeries<ErrorPoint> scatterSeries && !_highlightSeriesByName.ContainsValue(scatterSeries))
+            if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
-                if (scatterSeries.Fill is SolidColorPaint solidColor)
+                // Vérifie que cette série n'est pas highlightée
+                bool isHighlighted = _highlightSeriesByName.Values
+                    .SelectMany(list => list) // aplatit toutes les listes de séries highlight
+                    .Contains(scatterSeries);
+
+                if (!isHighlighted)
                 {
-                    MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                    if (scatterSeries.Fill is SolidColorPaint solidColor)
                     {
-                        scatterSeries.Fill = AppSettings.chartPointFill(Utility.OpaqueColor(solidColor.Color));
-                        scatterSeries.ErrorPaint = AppSettings.chartPointError(Utility.OpaqueColor(solidColor.Color));
-                    });
+                        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                        {
+                            scatterSeries.Fill = AppSettings.chartPointFill(Utility.OpaqueColor(solidColor.Color));
+                            scatterSeries.ErrorPaint = AppSettings.chartPointError(Utility.OpaqueColor(solidColor.Color));
+                        });
+                    }
                 }
             }
         }
@@ -240,16 +265,21 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         Log.Info($"Dehighlighting {pointName}...");
 
-        // Look for highlight series associated with pointName
-        if (_highlightSeriesByName.TryGetValue(pointName, out ScatterSeries<ErrorPoint>? highlightSeries))
+        // Récupère la liste des séries highlight pour ce pointName
+        if (_highlightSeriesByName.TryGetValue(pointName, out List<ISeries>? highlightSeriesList))
         {
-            // Remove the series from the chart and collection
-            Series.Remove(highlightSeries);
+            // Supprime chaque série highlight du chart
+            foreach (var highlightSeries in highlightSeriesList)
+            {
+                Series.Remove(highlightSeries);
+            }
+
+            // Supprime l'entrée du dictionnaire
             _highlightSeriesByName.Remove(pointName);
 
             Log.Info($"Highlight removed for point '{pointName}'.");
 
-            // If there are no more highlights, restore original colors
+            // Si plus aucun highlight, restaure les couleurs originales
             if (_highlightSeriesByName.Count == 0)
             {
                 UnDimDefaultChartPoints();
@@ -260,6 +290,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
             Log.Info($"No highlight found for point '{pointName}'.");
         }
     }
+
 
     // Add in your class a dictionary to manage clickable points by name
     private ScatterSeries<ErrorPoint> _clickableSerieByName = new();
@@ -447,39 +478,34 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         bool anyHighlightIsVisible = false;
 
-        foreach (ISeries s in _highlightSeriesByName.Values)
+        foreach (ISeries s in _highlightSeriesByName.Values.SelectMany(list => list))
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
-                foreach (ErrorPoint pt in s.Values)
+                foreach (ErrorPoint pt in scatterSeries.Values)
                 {
-                    var twinPoint = (pt.MetaData as PointMetaData).TwinPoint;
+                    var twinPoint = (pt.MetaData as PointMetaData)?.TwinPoint;
+                    if (twinPoint == null) continue;
 
-                    if ((twinPoint.MetaData as PointMetaData).OwnerSerie.IsVisible == false)
-                    {
-                        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
-                        {
-                            s.IsVisible = false;
-                        });
-                        break;
-                    }
-                    else
-                    {
-                        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
-                        {
-                            s.IsVisible = true;
-                        });
-                        anyHighlightIsVisible = true;
-                    }
+                    bool ownerVisible = (twinPoint.MetaData as PointMetaData)?.OwnerSerie?.IsVisible ?? true;
 
-                    var twinPointX = (pt.MetaData as PointMetaData).TwinPoint.X;
-                    var twinPointY = (pt.MetaData as PointMetaData).TwinPoint.Y;
+                    MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        scatterSeries.IsVisible = ownerVisible;
+                    });
+
+                    if (!ownerVisible) break;
+
+                    var twinPointX = twinPoint.X;
+                    var twinPointY = twinPoint.Y;
 
                     MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
                     {
                         pt.X = twinPointX;
                         pt.Y = twinPointY;
                     });
+
+                    anyHighlightIsVisible = true;
                 }
             }
         }

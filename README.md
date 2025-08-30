@@ -5,9 +5,8 @@ A tool to visualize and analyze audio objects and priority charts in Wwise proje
 ## Usage
 
 ### ✅ Allowed
+- Use the **compiled tool** as an internal tool to develop commercial projects.
 - Use, copy, and modify the **code** for personal or internal purposes.
-- Use the **compiled tool** as an internal tool to develop commercial projects (e.g., analyze AAA game projects).
-- Share the **compiled tool** with colleagues within your organization.
 
 ### ❌ Not Allowed
 - Sell, distribute, or commercialize the **code**.

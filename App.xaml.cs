@@ -1,20 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+﻿/****************************************************************************** 
+ Copyright (c) 2025 Gorik Gazarian
+ 
+ This file is part of WwiseHDRTool.
+ 
+ Licensed under the PolyForm Noncommercial License 1.0.0.
+
+ You may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ https://polyformproject.org/licenses/noncommercial/1.0.0
+ and in the LICENSE file in this repository.
+ 
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on
+ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ either express or implied. See the License for the specific
+ language governing permissions and limitations under the License.
+******************************************************************************/
+
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

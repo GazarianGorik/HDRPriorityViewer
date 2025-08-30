@@ -1,28 +1,44 @@
-﻿using System;
+﻿/****************************************************************************** 
+ Copyright (c) 2025 Gorik Gazarian
+ 
+ This file is part of WwiseHDRTool.
+ 
+ Licensed under the PolyForm Noncommercial License 1.0.0.
+
+ You may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ https://polyformproject.org/licenses/noncommercial/1.0.0
+ and in the LICENSE file in this repository.
+ 
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on
+ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ either express or implied. See the License for the specific
+ language governing permissions and limitations under the License.
+******************************************************************************/
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
-using SkiaSharp;
-using WwiseHDRTool.Views;
 
 namespace WwiseHDRTool;
 
 public partial class MainViewModel : ObservableObject
 {
-    public ChartViewModel ChartViewModel { get; }
+    public ChartViewModel ChartViewModel
+    {
+        get;
+    }
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -33,7 +49,10 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<SearchItemViewModel> SearchItems { get; } = new();
 
-    public IRelayCommand<SearchItemViewModel> RemoveSearchItemCommand { get; }
+    public IRelayCommand<SearchItemViewModel> RemoveSearchItemCommand
+    {
+        get;
+    }
 
     public List<string> Searches = new List<string>();
 
@@ -116,7 +135,7 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            if (SearchItems.IndexOf(item)!=0) // Do not remove default empty search bar
+            if (SearchItems.IndexOf(item) != 0) // Do not remove default empty search bar
             {
                 RemoveSearchItem(item);
             }
@@ -191,7 +210,9 @@ public partial class MainViewModel : ObservableObject
             selectedSeries.ErrorPaint = new SolidColorPaint(
                 Utility.LightenColor(btnData.ParentData.Color, 0.1f, 0.6f)
             )
-            { StrokeThickness = 2 };
+            {
+                StrokeThickness = 2
+            };
             btnData.Foreground = AppSettings.EnabledFiltersButtonForegroundColor(btnData.ParentData);
             btnData.Background = AppSettings.EnabledFiltersButtonBackgroundColor(btnData.ParentData);
             btnData.HoverBackground = AppSettings.EnabledFiltersButtonHoverBackgroundColor(btnData.ParentData);
@@ -258,7 +279,10 @@ public class ButtonData : ObservableObject
         set => SetProperty(ref _hoverBackground, value);
     }
 
-    public ICommand Command { get; set; }
+    public ICommand Command
+    {
+        get; set;
+    }
 }
 
 public class BoolToVisibilityConverter : IValueConverter

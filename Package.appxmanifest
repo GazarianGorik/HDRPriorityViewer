@@ -9,14 +9,14 @@
 
   <Identity
     Name="f026d84b-05e3-4b3c-905c-6777832d0100"
-    Publisher="CN=Sioum"
+    Publisher="CN=GorikG"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="f026d84b-05e3-4b3c-905c-6777832d0100" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>WwiseHDRTool</DisplayName>
-    <PublisherDisplayName>Sioum</PublisherDisplayName>
+    <PublisherDisplayName>Gorik Gazarian</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

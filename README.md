@@ -2,7 +2,11 @@
 
 A tool to visualize and analyze audio objects and priority charts in Wwise projects.
 
-## Usage
+## License
+
+This project is licensed under the [PolyForm Internal Use License 1.0.0](https://polyformproject.org/licenses/internal-use/1.0.0/).
+
+Copyright (c) 2025 [Ton Nom ou Organisation]
 
 ### ✅ Allowed
 - Use the **compiled tool** as an internal tool to develop commercial projects.
@@ -12,8 +16,4 @@ A tool to visualize and analyze audio objects and priority charts in Wwise proje
 - Sell, distribute, or commercialize the **code**.
 - Sell the **compiled tool** or redistribute it commercially for profit.
 
-## License
-
-This project is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
-
-![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20NonCommercial-lightgrey.svg)
+For full details, see the [LICENSE](./LICENSE) file in this repository.

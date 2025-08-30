@@ -1,9 +1,11 @@
 # WwiseHDRTool
 
-This tool allow to visualize HDR priority of a Wwise project. 
+A tool to visualize and analyze audio objects and priority charts in Wwise projects.
 
 ## License
 
-This project is licensed under the [CC BY-NC 4.0 License](https://creativecommons.org/licenses/by-nc/4.0/).
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
 
-![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)
+You are allowed to use this program or code as a tool to develop commercial products, but you may **not sell, distribute, or commercialize the program or code itself**.
+
+![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20NonCommercial-lightgrey.svg)

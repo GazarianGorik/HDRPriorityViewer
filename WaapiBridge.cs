@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using CSharpMarkup.WinUI;
 using Newtonsoft.Json.Linq;
@@ -310,10 +311,18 @@ namespace HDRPriorityGraph
         }
         #endregion
 
+        [DllImport("user32.dll")]
+        static extern bool AllowSetForegroundWindow(int dwProcessId);
+
         public static async Task FocusWwiseWindow()
         {
             try
             {
+                var info = await GenericClienCall("ak.wwise.core.getInfo", null, null);
+                int wwisePid = info["processId"].Value<int>();
+
+                AllowSetForegroundWindow(wwisePid);
+
                 await GenericClienCall("ak.wwise.ui.bringToForeground", null, null);
                 Log.Info("Wwise window brought to foreground.");
             }

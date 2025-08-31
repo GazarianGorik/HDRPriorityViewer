@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
+using HDRPriorityGraph.Views;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Kernel;
@@ -35,7 +36,6 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
 using WinRT.Interop;
-using HDRPriorityGraph.Views;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -60,6 +60,8 @@ namespace HDRPriorityGraph
         private bool _isCtrlDown = false;
         private bool _isMenuDown = false;
         private bool _isPointClickable = false;
+
+        private bool _isChartUpToDate = false;
 
         public MainWindow()
         {
@@ -177,9 +179,17 @@ namespace HDRPriorityGraph
                 return;
             }
 
+            if (await WaapiBridge.IsWwiseProjectDirty() ?? true)
+            {
+                await OpenUnsavedWwiseProjectPopup();
+            }
+
             await AnalyzeProcess();
 
             UpdateUIAfterAnalyze();
+
+            _isChartUpToDate = true;
+            SetChartUpdatedState();
         }
 
         IAsyncOperation<ContentDialogResult> _connectDialogTask;
@@ -203,6 +213,27 @@ namespace HDRPriorityGraph
             }
 
             await _connectDialogTask;
+        }
+
+
+        public async Task OpenUnsavedWwiseProjectPopup()
+        {
+            ContentDialog dialog = new ContentDialog
+            {
+                Title = "Wwise project changes detected!",
+                Content = "You may want to first save your Wwise project to analyze the current state of your Wwise session.\nClick OK once you saved it.",
+                CloseButtonText = "OK",
+                SecondaryButtonText = "Cancel",
+                XamlRoot = this.Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Secondary)
+            {
+                AnalyzeButton.IsEnabled = true;
+                return;
+            }
         }
 
         private async Task WwiseConnexionProcess()
@@ -330,7 +361,7 @@ namespace HDRPriorityGraph
                    ).All(equal => equal);
         }
 
-        private void UpdateAppFocused(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
+        private async void UpdateAppFocused(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
             // Window lost focus
             if (args.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
@@ -343,6 +374,53 @@ namespace HDRPriorityGraph
             }
             else // Window gained focus
             {
+                await SetWwiseProjectSavedState();
+                SetChartUpdatedState();
+            }
+        }
+
+        public async Task SetWwiseProjectSavedState()
+        {
+            if (WaapiBridge.ConnectedToWwise)
+            {
+                if (await WaapiBridge.IsWwiseProjectDirty() ?? true)
+                {
+                    WwiseProjectSavedState.Text = "Unsaved";
+                    WwiseProjectSavedState.Foreground = AppSettings.WwiseProjectUnsavedTextColor();
+                    _isChartUpToDate = false;
+                }
+                else
+                {
+                    WwiseProjectSavedState.Text = "Saved";
+                    WwiseProjectSavedState.Foreground = AppSettings.WwiseProjectSavedTextColor();
+                }
+            }
+            else
+            {
+                WwiseProjectSavedState.Text = "Not connected";
+                WwiseProjectSavedState.Foreground = AppSettings.WwiseProjectNotConnectedTextColor();
+            }
+        }
+
+        public void SetChartUpdatedState()
+        {
+            if (WaapiBridge.ConnectedToWwise)
+            {
+                if (_isChartUpToDate)
+                {
+                    ChartUpdatedState.Text = "(Updated)";
+                    ChartUpdatedState.Foreground = AppSettings.WwiseProjectSavedTextColor();
+                }
+                else
+                {
+                    ChartUpdatedState.Text = "(Outdated!)";
+                    ChartUpdatedState.Foreground = AppSettings.WwiseProjectUnsavedTextColor();
+                }
+            }
+            else
+            {
+                ChartUpdatedState.Text = "";
+                ChartUpdatedState.Foreground = AppSettings.WwiseProjectNotConnectedTextColor();
             }
         }
 
@@ -399,21 +477,20 @@ namespace HDRPriorityGraph
         public void EnqueueMessage(string title, string message)
         {
             _messageQueue.Enqueue((title, message));
-            _ = ProcessQueueAsync(); // fire & forget
+            _ = ProcessQueueAsync();
         }
 
         private async Task ProcessQueueAsync()
         {
             if (_isShowingDialog)
             {
-                return; // déjà en cours
+                return;
             }
 
             _isShowingDialog = true;
 
             while (_messageQueue.TryDequeue(out var item))
             {
-                // Si tu as un loadingDialog encore visible
                 if (loadingDialog != null && loadingDialog.Visibility == Visibility.Visible)
                 {
                     loadingDialog.Hide();

@@ -13,11 +13,12 @@
 #                                                                             #
 ******************************************************************************/
 
+using System.Drawing;
 using LiveChartsCore.SkiaSharpView.Painting;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
-
 
 namespace HDRPriorityGraph
 {
@@ -119,6 +120,26 @@ namespace HDRPriorityGraph
                 return new SolidColorBrush(Utility.ToWinUIColor(Utility.LightenColor(parentData.Color, 0, 0.5f)));
             else
                 return new SolidColorBrush(Utility.ToWinUIColor(Utility.DimColor(parentData.Color, 0, 0.5f)));
+        }
+
+        // WwiseProjectSaveState
+        public static SolidColorBrush WwiseProjectUnsavedTextColor()
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Colors.OrangeRed);
+            else
+                return new SolidColorBrush(Colors.OrangeRed);
+        }
+        public static SolidColorBrush WwiseProjectSavedTextColor()
+        {
+            if (MainWindow.Instance.GetCurrentTheme() == ElementTheme.Dark)
+                return new SolidColorBrush(Colors.Green);
+            else
+                return new SolidColorBrush(Colors.Green);
+        }
+        public static SolidColorBrush WwiseProjectNotConnectedTextColor()
+        {
+            return (SolidColorBrush)Application.Current.Resources["ApplicationSecondaryForegroundThemeBrush"];
         }
     }
 }

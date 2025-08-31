@@ -105,9 +105,17 @@
                                       Margin="0,12,0,40"
                                       Padding="10, 10, 10, 16">
                             <StackPanel Orientation="Vertical" Spacing="6">
-                                <TextBlock TextWrapping="NoWrap" FontSize="13" Text="{Binding WwiseVersion}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
                                 <TextBlock TextWrapping="NoWrap" FontSize="13" Text="{Binding WwiseProjectName}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
-                                <TextBlock TextWrapping="NoWrap" FontSize="13" Text="{Binding TotalChartPoints}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <TextBlock TextWrapping="NoWrap" Text="Project state:" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="WwiseProjectSavedState" TextWrapping="NoWrap" FontSize="13"/>
+                                </StackPanel>
+                                <TextBlock TextWrapping="NoWrap" FontSize="13" Text="{Binding WwiseVersion}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
+                                
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <TextBlock TextWrapping="NoWrap" FontSize="13" Text="{Binding TotalChartPoints}" Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"/>
+                                    <TextBlock x:Name="ChartUpdatedState" TextWrapping="NoWrap" FontSize="13"/>
+                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
 

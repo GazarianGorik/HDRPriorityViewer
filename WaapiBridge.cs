@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -36,12 +35,24 @@ namespace HDRPriorityGraph
                 await client.Connect($"ws://{WwiseCache.wampIP}:{WwiseCache.wampPort}/waapi", 10000);
                 ConnectedToWwise = true;
 
+                MainWindow.MainDispatcherQueue.TryEnqueue(async () =>
+                {
+                    await MainWindow.Instance.SetWwiseProjectSavedState();
+                    MainWindow.Instance.SetChartUpdatedState();
+                });
+
                 Log.Info("Connected to Wwise!");
 
                 client.Disconnected += () =>
                 {
                     Log.Error("Lost connection to Wwise!");
                     ConnectedToWwise = false;
+
+                    MainWindow.MainDispatcherQueue.TryEnqueue(async () =>
+                    {
+                        await MainWindow.Instance.SetWwiseProjectSavedState();
+                        MainWindow.Instance.SetChartUpdatedState();
+                    });
                 };
 
                 return true;
@@ -73,19 +84,10 @@ namespace HDRPriorityGraph
             return await client.Call(uri, args, options);
         }
 
-        public static async Task<JObject> GetWwiseInfos()
+        public static async Task<bool?> IsWwiseProjectDirty()
         {
-            try
-            {
-                JObject response = await GenericClienCall(ak.wwise.core.getInfo, null, null);
-                Debug.WriteLine(response);
-                return response;
-            }
-            catch (Exception e)
-            {
-                Log.Error(e);
-                throw;
-            }
+            var result = await GenericClienCall(ak.wwise.core.getProjectInfo, null, null);
+            return result["isDirty"]?.Value<bool>();
         }
 
         public static async Task GetProjectInfos()

@@ -17,7 +17,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 
-namespace WwiseHDRTool;
+namespace HDRPriorityGraph;
 public static class DispatcherQueueExtensions
 {
     public static Task EnqueueAsync(this DispatcherQueue dispatcherQueue, Action action)

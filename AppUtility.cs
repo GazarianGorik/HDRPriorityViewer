@@ -13,7 +13,7 @@
 #                                                                             #
 ******************************************************************************/
 
-namespace WwiseHDRTool
+namespace HDRPriorityGraph
 {
     public static class AppUtility
     {

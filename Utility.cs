@@ -17,7 +17,7 @@ using System;
 using SkiaSharp;
 using Windows.UI;
 
-namespace WwiseHDRTool
+namespace HDRPriorityGraph
 {
     public static class Utility
     {

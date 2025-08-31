@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 using CSharpMarkup.WinUI;
 using Newtonsoft.Json.Linq;
 
-namespace WwiseHDRTool
+namespace HDRPriorityGraph
 {
     internal static class WaapiBridge
     {

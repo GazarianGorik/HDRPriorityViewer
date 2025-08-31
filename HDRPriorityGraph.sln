@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WwiseHDRTool", "WwiseHDRTool.csproj", "{F470C52F-5E34-47DA-BEA0-2E1993152C50}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDRPriorityGraph", "HDRPriorityGraph.csproj", "{F470C52F-5E34-47DA-BEA0-2E1993152C50}"
 	ProjectSection(ProjectDependencies) = postProject
 		{102D363C-7CB8-A300-85C9-26F5F1D3FF00} = {102D363C-7CB8-A300-85C9-26F5F1D3FF00}
 	EndProjectSection

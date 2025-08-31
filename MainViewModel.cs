@@ -27,7 +27,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 
-namespace WwiseHDRTool;
+namespace HDRPriorityGraph;
 
 public partial class MainViewModel : ObservableObject
 {

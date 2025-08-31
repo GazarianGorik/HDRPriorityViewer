@@ -19,7 +19,7 @@ using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
 
 
-namespace WwiseHDRTool
+namespace HDRPriorityGraph
 {
     public static class AppSettings
     {

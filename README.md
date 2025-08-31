@@ -1,4 +1,4 @@
-# WwiseHDRTool
+# HDR Priority Graph
 
 A tool to visualize and analyze audio objects and priority charts in Wwise projects.
 

@@ -15,7 +15,7 @@
   <mp:PhoneIdentity PhoneProductId="f026d84b-05e3-4b3c-905c-6777832d0100" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>WwiseHDRTool</DisplayName>
+    <DisplayName>HDR Priority Graph</DisplayName>
     <PublisherDisplayName>Gorik Gazarian</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -34,8 +34,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="WwiseHDRTool"
-        Description="WwiseHDRTool"
+        DisplayName="HDR Priority Graph"
+        Description="HDR Priority Graph"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">

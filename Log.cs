@@ -16,7 +16,7 @@
 using System;
 using System.Diagnostics;
 
-namespace WwiseHDRTool;
+namespace HDRPriorityGraph;
 
 public static class Log
 {

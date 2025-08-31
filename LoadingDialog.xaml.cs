@@ -15,7 +15,7 @@
 
 using Microsoft.UI.Xaml.Controls;
 
-namespace WwiseHDRTool.Views
+namespace HDRPriorityGraph.Views
 {
     public sealed partial class LoadingDialog : ContentDialog
     {

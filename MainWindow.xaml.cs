@@ -35,12 +35,12 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
 using WinRT.Interop;
-using WwiseHDRTool.Views;
+using HDRPriorityGraph.Views;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace WwiseHDRTool
+namespace HDRPriorityGraph
 {
     public sealed partial class MainWindow : Window
     {

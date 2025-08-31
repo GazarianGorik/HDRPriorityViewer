@@ -15,7 +15,7 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace WwiseHDRTool;
+namespace HDRPriorityGraph;
 
 public class UIState : ObservableObject
 {

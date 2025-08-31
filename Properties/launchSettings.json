@@ -1,10 +1,10 @@
 {
   "profiles": {
-    "WwiseHDRTool (Package)": {
+    "HDR Priority Graph (Package)": {
       "commandName": "MsixPackage",
       "nativeDebugging": true
     },
-    "WwiseHDRTool (Unpackaged)": {
+    "HDR Priority Graph (Unpackaged)": {
       "commandName": "Project"
     }
   }

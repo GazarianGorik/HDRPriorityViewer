@@ -60,6 +60,7 @@ namespace HDRPriorityGraph
             catch (Exception ex)
             {
                 Log.Error($"{ex.ToString()}");
+
                 // Force reset the client if it was partially connected
                 client = new AK.Wwise.Waapi.JsonClient();
                 return false;

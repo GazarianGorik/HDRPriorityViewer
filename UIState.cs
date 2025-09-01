@@ -33,7 +33,6 @@ public class UIState : ObservableObject
         set => SetProperty(ref _isChartReady, value);
     }
 
-    // Ajoute ici deux autres états globaux si nécessaire
     private bool _isProcessing;
     public bool IsProcessing
     {

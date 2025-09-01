@@ -256,7 +256,7 @@ namespace HDRPriorityGraph
                 await WaapiBridge.ConnectToWwise();
             });
 
-            // Fermer le dialog
+            // Close dialog
             await CloseLoadingDialog();
         }
 

@@ -56,7 +56,7 @@ public partial class MainViewModel : ObservableObject
     public string WwiseVersion
     {
         get => _wwiseVersion;
-        set => SetProperty(ref _wwiseVersion, "Version: " + value); // si tu as BaseViewModel avec INotifyPropertyChanged
+        set => SetProperty(ref _wwiseVersion, "Version: " + value);
     }
 
     private string _wwiseProjectName;
@@ -157,7 +157,7 @@ public partial class MainViewModel : ObservableObject
                     return queryWords.All(q => nameWords.Any(nw => nw.StartsWith(q, StringComparison.Ordinal)));
                 });
 
-            // Prépare des ensembles normalisés pour des tests O(1)
+            // Prepare normalized sets for O(1) tests
             var normalizedSearched = new HashSet<string>(Searches.Select(NormalizeKey));
             var normalizedListed = new HashSet<string>(SearchSuggestions.Select(NormalizeKey));
 
@@ -166,7 +166,7 @@ public partial class MainViewModel : ObservableObject
                 var suggestionToAdd = (m.MetaData as PointMetaData).Name.Split(':')[0];
                 var key = NormalizeKey(suggestionToAdd);
 
-                // pas déjà listée (même nom, casse différente, espaces, _...) ET pas déjà cherchée
+                // Not already listed (same name, different case, spaces, _...) AND not already searched
                 if (!normalizedListed.Contains(key) && !normalizedSearched.Contains(key))
                 {
                     SearchSuggestions.Add(suggestionToAdd);
@@ -180,7 +180,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(s)) return string.Empty;
 
-        // 1) _ -> espace  2) Trim  3) compacter les espaces  4) lower invariant
+        // 1) _ -> space  2) Trim  3) Collapse spaces  4) Invariant lowercase
         var t = s.Replace('_', ' ').Trim();
         t = string.Join(' ', t.Split(' ', StringSplitOptions.RemoveEmptyEntries));
         return t.ToLowerInvariant();

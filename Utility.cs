@@ -114,9 +114,9 @@ namespace HDRPriorityGraph
             var colors = new List<SKColor>();
             for (int i = 0; i < count; i++)
             {
-                float hue = (360f / count) * i;  // réparti sur le cercle chromatique
-                float saturation = 0.6f;         // pastel → faible saturation
-                float value = 0.9f;              // clair → forte luminosité
+                float hue = (360f / count) * i;
+                float saturation = 0.6f;
+                float value = 0.9f;     
 
                 colors.Add(HsvToColor(hue, saturation, value));
             }

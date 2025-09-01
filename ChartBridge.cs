@@ -127,8 +127,6 @@ namespace HDRPriorityGraph
             {
                 foreach ((WwiseAction action, string busId) in actionsList)
                 {
-
-                    // Récupère les volumes
                     (float value, float min, float max)? volumes =
                         WwiseCache.volumeRangeCache.TryGetValue(action.TargetId!, out (float value, float min, float max)? vr)
                         ? vr

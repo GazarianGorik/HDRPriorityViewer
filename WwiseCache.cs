@@ -49,8 +49,6 @@ namespace HDRPriorityGraph
 
     public static class WwiseCache
     {
-        // Caches & stores
-
         public static ConcurrentDictionary<string, string?> outputBusCache = new(); // A link between AudioOjbId and OutputBusId
         public static ConcurrentDictionary<string, (float value, float min, float max)?> volumeRangeCache = new();
         public static readonly ConcurrentDictionary<string, XElement> audioObjectsByIdCache= new ConcurrentDictionary<string, XElement>();

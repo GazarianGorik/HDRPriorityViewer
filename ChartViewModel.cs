@@ -176,7 +176,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
         {
             int totalPoints = pointsByColor.Values.Sum(list => list.Count);
 
-            // Si c'est le premier highlight, on dim les points par défaut
+            // If this is the first highlight, dim the points by default
             if (totalPoints == 1)
                 DimDefaultChartPoints();
 
@@ -231,9 +231,9 @@ public partial class ChartViewModel : INotifyPropertyChanged
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
-                // Vérifie que cette série n'est pas déjà highlightée
+                // Check that this series is not already highlighted
                 bool isHighlighted = _highlightSeriesByName.Values
-                    .SelectMany(list => list) // aplatit toutes les listes de séries
+                    .SelectMany(list => list) // Flatten all series lists
                     .Contains(scatterSeries);
 
                 if (!isHighlighted)
@@ -257,9 +257,8 @@ public partial class ChartViewModel : INotifyPropertyChanged
         {
             if (s is ScatterSeries<ErrorPoint> scatterSeries)
             {
-                // Vérifie que cette série n'est pas highlightée
                 bool isHighlighted = _highlightSeriesByName.Values
-                    .SelectMany(list => list) // aplatit toutes les listes de séries highlight
+                    .SelectMany(list => list)
                     .Contains(scatterSeries);
 
                 if (!isHighlighted)
@@ -281,7 +280,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
     {
         Log.Info($"Dehighlighting {pointName}...");
 
-        // Récupère la liste des séries highlight pour ce pointName
+        // Retrieve the list of highlighted series for this pointName
         if (_highlightSeriesByName.TryGetValue(pointName, out List<ISeries>? highlightSeriesList))
         {
             // Supprime chaque série highlight du chart
@@ -290,12 +289,12 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 Series.Remove(highlightSeries);
             }
 
-            // Supprime l'entrée du dictionnaire
+            // Remove the entry from the dictionary
             _highlightSeriesByName.Remove(pointName);
 
             Log.Info($"Highlight removed for point '{pointName}'.");
 
-            // Si plus aucun highlight, restaure les couleurs originales
+            // If no highlights remain, restore the original chart colors
             if (_highlightSeriesByName.Count == 0)
             {
                 UnDimDefaultChartPoints();
@@ -339,7 +338,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         if (scatterSeries.Fill is SolidColorPaint solidColorPaint)
                         {
                             color = solidColorPaint.Color;
-                            // You can use color here
+
                             Log.Info($"Color: {color}");
                         }
 
@@ -566,75 +565,6 @@ public partial class ChartViewModel : INotifyPropertyChanged
             point.X = xOffset;
         }
     }
-
-    /* OLD VERSION COULD BE USEFULL LATER (it stacks points with same value, min, max)
-    public void RepositionPointsWithoutOverlap()
-    {
-        // Liste des points déjà placés : on garde value, min, max et l'offset attribué
-        var placed = new List<(float value, float min, float max, int offset)>();
-        const float EPS = 0.0001f;
-        int xOffsetDirection = 1;
-        int index = 0;
-        IEnumerable<ErrorPoint> points = GetAllPoints();
-
-        foreach (ErrorPoint point in points)
-        {
-            index++;
-
-            float value = (float)(point.Y);
-            float min = Math.Max((float)point.YErrorI, -96f);
-            float max = (float)point.YErrorJ;
-
-            // 1) Existe-t-il déjà un point EXACT (value,min,max) ?
-            int? existingOffset = placed
-                .Where(p => Math.Abs(p.value - value) < EPS
-                         && Math.Abs(p.min - min) < EPS
-                         && Math.Abs(p.max - max) < EPS)
-                .Select(p => (int?)p.offset)
-                .FirstOrDefault();
-
-            int chosenOffset;
-            if (existingOffset.HasValue)
-            {
-                // Réutiliser l'offset existant → superposition des identiques
-                chosenOffset = existingOffset.Value;
-            }
-            else
-            {
-                // 2) Sinon, trouver les offsets déjà utilisés par les points qui se chevauchent verticalement
-                var usedOffsets = new HashSet<int>();
-                foreach (var p in placed)
-                {
-                    // test d'intersection correcte : !(current.max < p.min || current.min > p.max)
-                    if (!(max < p.min - EPS || min > p.max + EPS))
-                    {
-                        usedOffsets.Add(p.offset);
-                    }
-                }
-
-                // 3) choisir le plus petit offset libre (0, 1, 2, ...)
-                chosenOffset = 0;
-                while (usedOffsets.Contains(chosenOffset))
-                    chosenOffset++;
-            }
-
-            // On enregistre le point avec son offset
-            placed.Add((value, min, max, chosenOffset));
-
-            // Calcul du xOffset effectif envoyé au chart (garde ton xOffsetDirection)
-            float xOffset = chosenOffset * xOffsetDirection;
-
-            try
-            {
-                point.X = xOffset;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Failed to reposition point on graph: {ex}");
-            }
-        }
-    }
-    */
 
     public IEnumerable<ErrorPoint> GetAllPoints()
     {

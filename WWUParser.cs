@@ -78,7 +78,7 @@ namespace HDRPriorityGraph
         }
 
         /// <summary>
-        /// Charge tous les Bus des WWU et les met en cache (par ID).
+        /// Loads all the WWU Buses and caches them (by ID).
         /// </summary>
         public static void PreloadBusData()
         {
@@ -118,8 +118,8 @@ namespace HDRPriorityGraph
 
 
         /// <summary>
-        /// Remonte la hiérarchie des Bus (OutputBus → parent → root HDR)
-        /// et retourne le cumul de leurs contributions Volume.
+        /// Traverses the Bus hierarchy (OutputBus → parent → root HDR)
+        /// and returns the cumulative sum of their Volume contributions.
         /// </summary>
         private static (float value, float min, float max) GetCumulativeBusVolume(string? busId)
         {
@@ -199,7 +199,7 @@ namespace HDRPriorityGraph
 
                                 if (audioObj != null)
                                 {
-                                    // Nouvelle logique : applique l'algorigramme optimisé
+                                    // New logic: applies the optimized flowchart
                                     var finalTargets = GetHDRTargetsWithFlowchartLogic(audioObj);
 
                                     foreach (var target in finalTargets)
@@ -484,13 +484,13 @@ namespace HDRPriorityGraph
                 return null;
             }
 
-            // Regarde si déjà en cache
+            // check if already cached
             if (WwiseCache.audioObjectsByIdCache.TryGetValue(targetId, out var cachedObj))
             {
                 return cachedObj;
             }
 
-            return null; // pas trouvé
+            return null;
         }
 
         private static ParentData GetInheritedParentData(XElement element, int defaultPaletteRange, int defaultColorPaletteIndex)
@@ -529,7 +529,7 @@ namespace HDRPriorityGraph
 
                             Log.Info("Succeeded.");
                             Log.AddSpace();
-                            return parentData; // priorité à OverrideColor
+                            return parentData;
                         }
                     }
                 }
@@ -587,14 +587,14 @@ namespace HDRPriorityGraph
 
         private static XElement FindAncestor(IEnumerable<XElement> ancestors, string tagName, string nameContains = null)
         {
-            // 1. Ancien format : balise directe
+            // 1. Old format: direct tag
             var match = ancestors.LastOrDefault(a =>
                 string.Equals(a.Name.LocalName, tagName, StringComparison.OrdinalIgnoreCase));
 
             if (match != null)
                 return match;
 
-            // 2. Nouveau format : PropertyContainer avec Name qui contient l'indice
+            // 2. New format: PropertyContainer with Name containing the index
             if (!string.IsNullOrEmpty(nameContains))
             {
                 match = ancestors.LastOrDefault(a =>
@@ -608,8 +608,8 @@ namespace HDRPriorityGraph
 
         private static SKColor GetColorBasedOnIndexAndPaletteRange(int paletteRange, int index)
         {
-            // Palette pastel générée en HSL -> SKColor
-            var pastelPalette = Utility.GeneratePastelPalette(paletteRange); // génère 20 couleurs différentes
+            // Pastel palette generated in HSL -> SKColor
+            var pastelPalette = Utility.GeneratePastelPalette(paletteRange);
 
             return pastelPalette[index];
         }
@@ -655,10 +655,10 @@ namespace HDRPriorityGraph
                                 continue;
                             }
 
-                            // Ajouter au cache brut des objets
+                            // Add to the raw object cache
                             WwiseCache.audioObjectsByIdCache[id] = obj;
 
-                            // Ajouter lien objet audio => bus
+                            // Add audio object → bus link
                             WwiseCache.outputBusCache.TryAdd(id, GetOutputBus(obj));
                             Log.Info($"{obj.Attribute("Name")?.Value} has been added to outputBusCache!");
                         }
@@ -669,7 +669,7 @@ namespace HDRPriorityGraph
                     }
                 }
 
-                // Une fois tous les objets chargés, calculer les ranges cumulés
+                // Once all objects are loaded, calculate the cumulative ranges
                 foreach (var kvp in WwiseCache.audioObjectsByIdCache)
                 {
                     var id = kvp.Key;
@@ -701,7 +701,7 @@ namespace HDRPriorityGraph
 
             while (current != null)
             {
-                // Cherche un OutputBus à ce niveau
+                // Search for an OutputBus at this level
                 var outputBusRef = current.Element("ReferenceList")
                     ?.Elements("Reference")
                     .FirstOrDefault(r => r.Attribute("Name")?.Value == "OutputBus")
@@ -712,7 +712,7 @@ namespace HDRPriorityGraph
                     lastBus = outputBusRef.Attribute("ID")?.Value;
                 }
 
-                // Vérifie OverrideOutput
+                // Check OverrideOutput
                 var overrideProp = current.Element("PropertyList")
                     ?.Elements("Property")
                     .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideOutput");
@@ -721,11 +721,11 @@ namespace HDRPriorityGraph
 
                 if (overrideOutput && lastBus != null)
                 {
-                    // Si override trouvé, retourne immédiatement ce bus
+                    // If an override is found, return this bus immediately
                     return lastBus;
                 }
 
-                // remonter en ignorant les ChildrenList intermédiaires
+                // Traverse upwards, ignoring intermediate ChildrenList
                 current = current.Parent;
                 while (current != null && current.Name == "ChildrenList")
                 {
@@ -733,18 +733,18 @@ namespace HDRPriorityGraph
                 }
             }
 
-            // Aucun override trouvé → retourne le dernier bus trouvé sur la chaîne
+            // No override found → return the last bus found in the chain
             return lastBus;
         }
 
 
 
         /// <summary>
-        /// Remonte la hiérarchie et cumule :
-        /// - VoiceVolume de l'objet et ses parents jusqu'au HDR bus
-        /// - Randoms de VoiceVolume
-        /// - RTPC min/max de VoiceVolume
-        /// - States affectant le VoiceVolume
+        /// Traverses the hierarchy and accumulates:
+        /// - VoiceVolume of the object and its parents up to the HDR bus
+        /// - Random variations of VoiceVolume
+        /// - Min/max RTPC of VoiceVolume
+        /// - States affecting the VoiceVolume
         /// </summary>
         private static (float value, float min, float max)? GetCumulativeVolumeRange(string id)
         {
@@ -760,7 +760,7 @@ namespace HDRPriorityGraph
                 totalMin += contrib.min;
                 totalMax += contrib.max;
 
-                // remonter au parent
+                // Move up to the parent
                 currentId = obj.Parent?.Parent?.Attribute("ID")?.Value;
             }
 
@@ -776,8 +776,8 @@ namespace HDRPriorityGraph
         }
 
         /// <summary>
-        /// Extrait toutes les contributions volume (VoiceVolume, Random, RTPC min/max, States)
-        /// pour un seul objet.
+        /// Extracts all volume contributions (VoiceVolume, Random, RTPC min/max, States)
+        /// for a single object.
         /// </summary>
         public static (float value, float min, float max) ExtractVolumeContributions(XElement obj, bool xtractFromRTPC)
         {
@@ -785,7 +785,7 @@ namespace HDRPriorityGraph
             var min = 0f;
             var max = 0f;
 
-            // Volume direct (Property "Volume")
+            // Volume (Property "Volume")
             var volProp = obj.Element("PropertyList")?
                 .Elements("Property")
                 .FirstOrDefault(p => (string)p.Attribute("Name") == "Volume");
@@ -823,7 +823,7 @@ namespace HDRPriorityGraph
                 }
             }
 
-            // RTPC → min/max YPos (uniquement ceux définis directement sur l'objet)
+            // RTPC → min/max YPos
             if (xtractFromRTPC)
             {
                 var rtpcs = obj.Element("ObjectLists")?

@@ -171,9 +171,12 @@ namespace HDRPriorityGraph
                 {
                     var doc = XDocument.Load(wwuFile);
                     var events = doc.Descendants("Event");
+                    int defaultColorPaletteIndex = 0;
 
                     foreach (var evt in events)
                     {
+                        defaultColorPaletteIndex++;
+
                         var eventPath = evt.Attribute("Name")?.Value ?? "";
 
                         foreach (var action in evt.Element("ChildrenList")?.Elements("Action") ?? Enumerable.Empty<XElement>())
@@ -210,7 +213,7 @@ namespace HDRPriorityGraph
                                         IDsAddedToChart.Add(childID);
 
                                         var targetName = target.Attribute("Name")?.Value;
-                                        var parentData = GetInheritedParentData(target);
+                                        var parentData = GetInheritedParentData(target, events.Count(), defaultColorPaletteIndex - 1);
 
                                         actionsWithTargets.Add(new WwiseAction
                                         {
@@ -490,16 +493,19 @@ namespace HDRPriorityGraph
             return null; // pas trouvé
         }
 
-        private static ParentData GetInheritedParentData(XElement element)
+        private static ParentData GetInheritedParentData(XElement element, int defaultPaletteRange, int defaultColorPaletteIndex)
         {
             var parentData = new ParentData
             {
                 Name = "[NONE]",
-                Color = new SKColor(200, 200, 200)
+                Color = new SKColor(200, 200, 200),
+                ID = "[UNKNOWN]"
             };
 
-            var current = element;
+            // --- 1. Based on Color Override ---
+            Log.Info("Trying to get inherited parent data based on color override...");
 
+            var current = element;
             while (current != null)
             {
                 var propertyList = current.Element("PropertyList");
@@ -517,24 +523,95 @@ namespace HDRPriorityGraph
                     {
                         if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Return parent color + name if override is enabled
-                            var nameAttr = current.Attribute("Name")?.Value;
-
                             parentData.Color = GetSkColorFromWwiseCode(colorCode);
-                            parentData.Name = nameAttr ?? "[NONE]";
+                            parentData.Name = current.Attribute("Name")?.Value ?? "[NONE]";
+                            parentData.ID = current.Attribute("ID")?.Value ?? "[UNKOWN]";
 
-                            return parentData;
+                            Log.Info("Succeeded.");
+                            Log.AddSpace();
+                            return parentData; // priorité à OverrideColor
                         }
-                        // If no override, keep the color but reset the name
-                        parentData.Color = GetSkColorFromWwiseCode(colorCode);
-                        parentData.Name = "[NONE]";
-                        return parentData;
                     }
                 }
                 current = current.Parent;
             }
 
+            Log.Info("Failed.");
+            Log.AddSpace();
+            Log.Info("Trying to get inherited parent data based on work unit...");
+
+
+            var ancestors = element.AncestorsAndSelf().ToList();
+
+            // --- 2. Fallback WorkUnit ---
+            var workUnit = FindAncestor(ancestors, "WorkUnit", "Work Unit");
+            if (workUnit != null && workUnit.Attribute("Name")?.Value != "Default Work Unit")
+            {
+                parentData.Name = workUnit.Attribute("Name")?.Value ?? "[NONE]";
+                parentData.ID = workUnit.Attribute("ID")?.Value ?? "[UNKOWN]";
+                parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+
+                Log.Info("Succeeded.");
+                Log.AddSpace();
+                return parentData;
+            }
+
+            // --- 3. Fallback Folder ---
+            var folder = FindAncestor(ancestors, "Folder", "Folder");
+            if (folder != null)
+            {
+                parentData.Name = folder.Attribute("Name")?.Value ?? "[NONE]";
+                parentData.ID = folder.Attribute("ID")?.Value ?? "[UNKOWN]";
+                parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+
+                Log.Info("Succeeded.");
+                Log.AddSpace();
+                return parentData;
+            }
+
+            // --- 4. Fallback Actor-Mixer ---
+            var actorMixer = FindAncestor(ancestors, "ActorMixer", "Actor-Mixer");
+            if (actorMixer != null)
+            {
+                parentData.Name = actorMixer.Attribute("Name")?.Value ?? "[NONE]";
+                parentData.ID = actorMixer.Attribute("ID")?.Value ?? "[UNKOWN]";
+                parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+
+                Log.Info("Succeeded.");
+                Log.AddSpace();
+                return parentData;
+            }
+
             return parentData;
+        }
+
+        private static XElement FindAncestor(IEnumerable<XElement> ancestors, string tagName, string nameContains = null)
+        {
+            // 1. Ancien format : balise directe
+            var match = ancestors.LastOrDefault(a =>
+                string.Equals(a.Name.LocalName, tagName, StringComparison.OrdinalIgnoreCase));
+
+            if (match != null)
+                return match;
+
+            // 2. Nouveau format : PropertyContainer avec Name qui contient l'indice
+            if (!string.IsNullOrEmpty(nameContains))
+            {
+                match = ancestors.LastOrDefault(a =>
+                    string.Equals(a.Name.LocalName, "PropertyContainer", StringComparison.OrdinalIgnoreCase) &&
+                    (a.Attribute("Name")?.Value?.Contains(nameContains, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            return match;
+        }
+
+
+        private static SKColor GetColorBasedOnIndexAndPaletteRange(int paletteRange, int index)
+        {
+            // Palette pastel générée en HSL -> SKColor
+            var pastelPalette = Utility.GeneratePastelPalette(paletteRange); // génère 20 couleurs différentes
+
+            return pastelPalette[index];
         }
 
         /// <summary>
@@ -545,9 +622,13 @@ namespace HDRPriorityGraph
         {
             try
             {
+                Log.AddSpace();
+                Log.Info($"Preloading volume ranges");
+
                 if (string.IsNullOrEmpty(audioObjWWUFolderPath) || !Directory.Exists(audioObjWWUFolderPath))
                 {
                     Log.Warning($"audioObjWWUFolderPath is not set or doesn't exist: {audioObjWWUFolderPath}");
+                    Log.Warning($"Preloading volume ranges FAILED.");
                     return;
                 }
 
@@ -569,6 +650,8 @@ namespace HDRPriorityGraph
                             var id = obj.Attribute("ID")?.Value;
                             if (string.IsNullOrEmpty(id))
                             {
+
+                                Log.Warning($"{obj.Attribute("Name")?.Value} has been ignored due to null or empty ID");
                                 continue;
                             }
 
@@ -576,7 +659,8 @@ namespace HDRPriorityGraph
                             WwiseCache.audioObjectsByIdCache[id] = obj;
 
                             // Ajouter lien objet audio => bus
-                            WwiseCache.outputBusCache.TryAdd(id, ResolveEffectiveOutputBus(obj));
+                            WwiseCache.outputBusCache.TryAdd(id, GetOutputBus(obj));
+                            Log.Info($"{obj.Attribute("Name")?.Value} has been added to outputBusCache!");
                         }
                     }
                     catch (Exception ex)
@@ -610,16 +694,24 @@ namespace HDRPriorityGraph
             }
         }
 
-        /// <summary>
-        /// Résout le OutputBus effectif d’un objet audio en tenant compte
-        /// des OverrideOutput et de l’héritage parent.
-        /// </summary>
-        private static string? ResolveEffectiveOutputBus(XElement audioObj)
+        private static string? GetOutputBus(XElement audioObj)
         {
             XElement? current = audioObj;
+            string? lastBus = null;
 
             while (current != null)
             {
+                // Cherche un OutputBus à ce niveau
+                var outputBusRef = current.Element("ReferenceList")
+                    ?.Elements("Reference")
+                    .FirstOrDefault(r => r.Attribute("Name")?.Value == "OutputBus")
+                    ?.Element("ObjectRef");
+
+                if (outputBusRef != null)
+                {
+                    lastBus = outputBusRef.Attribute("ID")?.Value;
+                }
+
                 // Vérifie OverrideOutput
                 var overrideProp = current.Element("PropertyList")
                     ?.Elements("Property")
@@ -627,27 +719,24 @@ namespace HDRPriorityGraph
 
                 bool overrideOutput = overrideProp?.Attribute("Value")?.Value == "True";
 
-                if (overrideOutput || current.Name == "ActorMixer" || current.Name == "Bus")
+                if (overrideOutput && lastBus != null)
                 {
-                    // Si override, ou si on est à la racine (ActorMixer/Bus),
-                    // on prend le OutputBus de ce niveau
-                    var outputBusRef = current.Element("ReferenceList")
-                        ?.Elements("Reference")
-                        .FirstOrDefault(r => r.Attribute("Name")?.Value == "OutputBus")
-                        ?.Element("ObjectRef");
-
-                    if (outputBusRef != null)
-                    {
-                        return outputBusRef.Attribute("ID")?.Value;
-                    }
+                    // Si override trouvé, retourne immédiatement ce bus
+                    return lastBus;
                 }
 
-                // remonter à l’ancêtre (ChildrenList → Parent)
-                current = current.Parent?.Parent;
+                // remonter en ignorant les ChildrenList intermédiaires
+                current = current.Parent;
+                while (current != null && current.Name == "ChildrenList")
+                {
+                    current = current.Parent;
+                }
             }
 
-            return null; // pas trouvé (rare)
+            // Aucun override trouvé → retourne le dernier bus trouvé sur la chaîne
+            return lastBus;
         }
+
 
 
         /// <summary>

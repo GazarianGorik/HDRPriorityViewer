@@ -64,5 +64,13 @@ namespace HDRPriorityGraph
     {
         public string Name { get; set; }
         public SKColor Color { get; set; }
+        public string ID { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is ParentData other && ID.Equals(other.ID);
+        }
+
+        public override int GetHashCode() => ID.GetHashCode();
     }
 }

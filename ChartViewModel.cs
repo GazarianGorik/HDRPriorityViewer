@@ -56,16 +56,17 @@ public partial class ChartViewModel : INotifyPropertyChanged
         Series = new ObservableCollection<ISeries> { };
     }
 
-    public Dictionary<ParentData, ScatterSeries<ErrorPoint>> _seriesByParentData = new Dictionary<ParentData, ScatterSeries<ErrorPoint>>(new ParentDataEqualityComparer());
+    public Dictionary<ParentData, ScatterSeries<ErrorPoint>> _seriesByParentData = new Dictionary<ParentData, ScatterSeries<ErrorPoint>>();
 
     public void AddPointWithVerticalError(string name, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, ParentData parentData, string wwiseID)
     {
         MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
-
             // If we don't have a series for this color yet, create it
-            if (!_seriesByParentData.TryGetValue(parentData, out ScatterSeries<ErrorPoint>? series))
+            if (!_seriesByParentData.TryGetValue(parentData, out var series))
             {
+                Log.Info($"{parentData.ID} is unique!");
+
                 series = new ScatterSeries<ErrorPoint>
                 {
                     //Name = parentData.Name,
@@ -705,43 +706,5 @@ public class PointMetaData : ChartEntityMetaData
     public ErrorPoint TwinPoint
     {
         get; set;
-    }
-}
-
-public class ParentDataEqualityComparer : IEqualityComparer<ParentData>
-{
-    public bool Equals(ParentData x, ParentData y)
-    {
-        if (ReferenceEquals(x, y))
-        {
-            return true;    // same object
-        }
-
-        if (x is null || y is null)
-        {
-            return false; // null safety
-        }
-
-        return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) &&
-               x.Color.Red == y.Color.Red &&
-               x.Color.Green == y.Color.Green &&
-               x.Color.Blue == y.Color.Blue &&
-               x.Color.Alpha == y.Color.Alpha;
-    }
-
-    public int GetHashCode(ParentData obj)
-    {
-        if (obj is null)
-        {
-            return 0;
-        }
-
-        return HashCode.Combine(
-            obj.Name?.ToLowerInvariant(),  // case-insensitive hash
-            obj.Color.Red,
-            obj.Color.Green,
-            obj.Color.Blue,
-            obj.Color.Alpha
-        );
     }
 }

@@ -153,6 +153,7 @@ namespace HDRPriorityGraph
                 Log.Info($"Wwise version set to {wwiseVersion}");
                 MainWindow.Instance.MainViewModel.WwiseProjectName = projectName;
                 Log.Info($"Wwise project name set to {projectName}");
+                Log.AddSpace();
             });
 
         }
@@ -268,6 +269,7 @@ namespace HDRPriorityGraph
             List<string> idsToFetch = targetIds.Where(id => !WwiseCache.outputBusCache.ContainsKey(id)).Distinct().ToList();
             if (idsToFetch.Count == 0)
             {
+                Log.Warning("No output bus foud in outputBusCache!");
                 return;
             }
 

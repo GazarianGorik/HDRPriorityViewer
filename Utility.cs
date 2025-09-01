@@ -14,6 +14,7 @@
 ******************************************************************************/
 
 using System;
+using System.Collections.Generic;
 using SkiaSharp;
 using Windows.UI;
 
@@ -102,6 +103,54 @@ namespace HDRPriorityGraph
             byte a = 255;
 
             return new SKColor(r, g, b, a);
+        }
+
+        /// <summary>
+        /// Generates a pastel color palette using HSV/HSL.
+        /// Hue varies, Saturation is low (~0.4), Value is high (~0.9).
+        /// </summary>
+        public static List<SKColor> GeneratePastelPalette(int count)
+        {
+            var colors = new List<SKColor>();
+            for (int i = 0; i < count; i++)
+            {
+                float hue = (360f / count) * i;  // réparti sur le cercle chromatique
+                float saturation = 0.6f;         // pastel → faible saturation
+                float value = 0.9f;              // clair → forte luminosité
+
+                colors.Add(HsvToColor(hue, saturation, value));
+            }
+            return colors;
+        }
+
+        /// <summary>
+        /// Convert HSV into SKColor
+        /// </summary>
+        public static SKColor HsvToColor(float h, float s, float v)
+        {
+            int hi = (int)(h / 60) % 6;
+            float f = h / 60 - (int)(h / 60);
+
+            float p = v * (1 - s);
+            float q = v * (1 - f * s);
+            float t = v * (1 - (1 - f) * s);
+
+            float r = 0, g = 0, b = 0;
+            switch (hi)
+            {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+            }
+
+            return new SKColor(
+                (byte)(r * 255),
+                (byte)(g * 255),
+                (byte)(b * 255)
+            );
         }
     }
 }

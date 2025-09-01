@@ -36,6 +36,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
 using WinRT.Interop;
+using Microsoft.UI.Windowing;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -71,8 +72,13 @@ namespace HDRPriorityGraph
 
             RootGrid.DataContext = MainViewModel;
 
-            this.AppWindow.Resize(new Windows.Graphics.SizeInt32(800, 600));
             this.AppWindow.Closing += AppWindow_Closing;
+
+            // Maximize window
+            if (this.AppWindow.Presenter is OverlappedPresenter presenter)
+            {
+                presenter.Maximize();
+            }
 
             MainDispatcherQueue = this.DispatcherQueue;
 
@@ -285,7 +291,7 @@ namespace HDRPriorityGraph
         {
             chartPointUnderCursor = newItems?.ToList();
 
-            Log.Info($"Hovered points changed: {chartPointUnderCursor?.Count() ?? 0} points under cursor.");
+            //Log.Info($"Hovered points changed: {chartPointUnderCursor?.Count() ?? 0} points under cursor.");
 
             // Always try to update if Ctrl is pressed
             UpdateClickablePoint();

@@ -84,11 +84,16 @@ namespace HDRPriorityGraph
                     continue;
                 }
 
-                if (WwiseCache.outputBusCache.TryGetValue(action.TargetId!, out string? busId)
-                    && !string.IsNullOrEmpty(busId)
-                    && allRelevantBusIds.Contains(busId))
+                if (WwiseCache.outputBusCache.TryGetValue(action.TargetId!, out string? busId))
                 {
-                    routedActions.Add((action, busId!));
+                    if (!string.IsNullOrEmpty(busId) && allRelevantBusIds.Contains(busId))
+                    {
+                        routedActions.Add((action, busId!));
+                    }
+                }
+                else
+                {
+                    Log.Warning($"OutputBusCache doesn't contain {action.TargetName} bus");
                 }
             }
 

@@ -20,8 +20,11 @@ namespace HDRPriorityGraph;
 
 public static class Log
 {
-    // Active/désactive tous les logs
+#if DEBUG
+    public static bool Enabled { get; set; } = true;
+#else
     public static bool Enabled { get; set; } = false;
+#endif
 
     public static void AddSpace()
     {

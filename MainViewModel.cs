@@ -236,6 +236,16 @@ public partial class MainViewModel : ObservableObject
 
         CategorieFilterButtons.Add(btnData);
     }
+
+    public void ApplyDefaultFilter()
+    {
+        // Deactive every filters exept the first one
+        for (var i = 0; i < CategorieFilterButtons.Count; i++)
+        {
+            if(i > 0)
+                HideShowSeries(CategorieFilterButtons[i]);
+        }
+    }
 }
 
 public class ButtonData : ObservableObject

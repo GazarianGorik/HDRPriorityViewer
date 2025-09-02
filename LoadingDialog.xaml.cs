@@ -22,6 +22,8 @@ namespace HDRPriorityGraph.Views
         public LoadingDialog()
         {
             this.InitializeComponent();
+
+            DetailsMessage.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
         }
 
         public void SetLoadingText(string text)
@@ -37,6 +39,15 @@ namespace HDRPriorityGraph.Views
             MainWindow.MainDispatcherQueue.TryEnqueue(() =>
             {
                 DetailsMessage.Text = text;
+
+                if (string.IsNullOrEmpty(text))
+                {
+                    DetailsMessage.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                }
+                else
+                {
+                    DetailsMessage.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                }
             });
         }
     }

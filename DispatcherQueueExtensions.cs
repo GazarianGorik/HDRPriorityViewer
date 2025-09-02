@@ -40,4 +40,44 @@ public static class DispatcherQueueExtensions
         }
         return tcs.Task;
     }
+
+    public static Task<T> EnqueueAsync<T>(this DispatcherQueue dispatcher, Func<Task<T>> func)
+    {
+        var tcs = new TaskCompletionSource<T>();
+
+        dispatcher.TryEnqueue(async () =>
+        {
+            try
+            {
+                var result = await func();
+                tcs.SetResult(result);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        });
+
+        return tcs.Task;
+    }
+
+    public static Task EnqueueAsync(this DispatcherQueue dispatcher, Func<Task> func)
+    {
+        var tcs = new TaskCompletionSource();
+
+        dispatcher.TryEnqueue(async () =>
+        {
+            try
+            {
+                await func();
+                tcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        });
+
+        return tcs.Task;
+    }
 }

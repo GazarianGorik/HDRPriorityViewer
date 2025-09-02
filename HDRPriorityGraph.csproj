@@ -26,6 +26,9 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="HDRPriorityGraph_Icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -82,5 +85,6 @@
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <WindowsPackageType>None</WindowsPackageType>
+    <ApplicationIcon>HDRPriorityGraph_Icon.ico</ApplicationIcon>
   </PropertyGroup>
 </Project>

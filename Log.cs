@@ -57,7 +57,7 @@ public static class Log
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
         {
-            MainWindow.Instance.EnqueueMessage("Error", $"{message}");
+            MainWindow.Instance.EnqueueDialogAsync("Error", $"{message}");
         });
     }
 
@@ -67,7 +67,7 @@ public static class Log
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
         {
-            MainWindow.Instance.EnqueueMessage("Error", $"{ex.Message}\n{ex.ToString()}");
+            MainWindow.Instance.EnqueueDialogAsync("Error", $"{ex.Message}\n{ex.ToString()}");
         });
     }
 }

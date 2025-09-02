@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml.Controls;
 
 namespace HDRPriorityGraph
 {
@@ -57,12 +58,44 @@ namespace HDRPriorityGraph
                     List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions =
                         ChartBridge.GroupActionsByEvent(routedActions, allEvents);
 
+                    int chartTotalPoints = ChartBridge.PrecalculateChartTotalPoints(eventsWithActions);
+                    bool needToApplyDefaultFilter = false;
+
+                    if (chartTotalPoints > AppSettings.totalChartPointsWarningTreshold)
+                    {
+                        var message =
+                            $"A large number of audio elements were detected ({chartTotalPoints}). Rendering all of them at once may impact performance.\n\n" +
+                            "You can choose to proceed anyway or apply a default filter to hide some categories. " +
+                            "Filtered categories can be re-enabled using the filter panel.";
+
+                        if (await MainWindow.Instance.EnqueueDialogAsync(
+                            "Potential Performance Issue",
+                            message,
+                            "Proceed Anyway",
+                            "Apply Default Filter") == ContentDialogResult.Secondary)
+                        {
+                            needToApplyDefaultFilter = true;
+                        }
+                    }
+
+
                     // === 2. Adding chart points on UI thread ===
                     await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
                     {
                         Log.Info("Plotting events on UI thread...");
                         ChartBridge.PlotEvents(eventsWithActions);
                     });
+
+                    if (needToApplyDefaultFilter)
+                    {
+                        await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
+                        {
+                            Log.Info("Applying default filter...");
+                            MainWindow.Instance.MainViewModel.ApplyDefaultFilter();
+                        });
+
+                        needToApplyDefaultFilter = false;
+                    }
 
                     await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
                     {

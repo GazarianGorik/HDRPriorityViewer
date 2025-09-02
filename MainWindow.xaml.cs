@@ -17,6 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
@@ -28,15 +29,14 @@ using LiveChartsCore.Kernel.Sketches;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
 using WinRT.Interop;
-using Microsoft.UI.Windowing;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -45,6 +45,19 @@ namespace HDRPriorityGraph
 {
     public sealed partial class MainWindow : Window
     {
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern IntPtr LoadImage(IntPtr hInst, string lpszName, uint uType,
+                                       int cxDesired, int cyDesired, uint fuLoad);
+
+        const int WM_SETICON = 0x80;
+        const int ICON_SMALL = 0;
+        const int ICON_BIG = 1;
+        const uint IMAGE_ICON = 1;
+        const uint LR_LOADFROMFILE = 0x00000010;
+
         public static MainWindow Instance
         {
             get; private set;
@@ -71,6 +84,8 @@ namespace HDRPriorityGraph
             Instance = this;
 
             RootGrid.DataContext = MainViewModel;
+
+            LoadAppIcon();
 
             this.AppWindow.Closing += AppWindow_Closing;
 
@@ -114,6 +129,18 @@ namespace HDRPriorityGraph
             this.Activated += UpdateAppFocused;
 
             LiveCharts.DefaultSettings.MaxTooltipsAndLegendsLabelsWidth = 1000;
+        }
+
+        private void LoadAppIcon()
+        {
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+
+            // Charge ton icône custom
+            var hIcon = LoadImage(IntPtr.Zero, "HDRPriorityGraph_Icon.ico", IMAGE_ICON, 256, 256, LR_LOADFROMFILE);
+
+            // Applique pour la fenêtre (grande et petite icône)
+            SendMessage(hwnd, WM_SETICON, (IntPtr)ICON_BIG, hIcon);
+            SendMessage(hwnd, WM_SETICON, (IntPtr)ICON_SMALL, hIcon);
         }
 
         private void SetChartAxisColors()
@@ -224,18 +251,11 @@ namespace HDRPriorityGraph
 
         public async Task OpenUnsavedWwiseProjectPopup()
         {
-            ContentDialog dialog = new ContentDialog
-            {
-                Title = "Wwise project changes detected!",
-                Content = "You may want to first save your Wwise project to analyze the current state of your Wwise session.\nClick OK once you saved it.",
-                CloseButtonText = "OK",
-                SecondaryButtonText = "Cancel",
-                XamlRoot = this.Content.XamlRoot
-            };
 
-            var result = await dialog.ShowAsync();
-
-            if (result == ContentDialogResult.Secondary)
+            if (await EnqueueDialogAsync("Wwise project changes detected!",
+            "You may want to first save your Wwise project to analyze the current state of your Wwise session.\nClick OK once you saved it.",
+            "Ok",
+            "Cancel") == ContentDialogResult.Secondary)
             {
                 AnalyzeButton.IsEnabled = true;
                 return;
@@ -477,61 +497,70 @@ namespace HDRPriorityGraph
             }).Start();
         }
 
-        private readonly ConcurrentQueue<(string Title, string Message)> _messageQueue = new();
-        private bool _isShowingDialog = false;
+        private readonly ConcurrentQueue<(string Title, string Message, string CloseText, string? SecondaryText, TaskCompletionSource<ContentDialogResult> Tcs)> _dialogQueue = new();
+        private bool _isDialogOpen = false;
 
-        public void EnqueueMessage(string title, string message)
+        public Task<ContentDialogResult> EnqueueDialogAsync(
+            string title,
+            string message,
+            string closeButtonText = "OK",
+            string? secondaryButtonText = null)
         {
-            _messageQueue.Enqueue((title, message));
-            _ = ProcessQueueAsync();
+            var tcs = new TaskCompletionSource<ContentDialogResult>();
+            _dialogQueue.Enqueue((title, message, closeButtonText, secondaryButtonText, tcs));
+            _ = ProcessDialogQueueAsync();
+            return tcs.Task;
         }
 
-        private async Task ProcessQueueAsync()
+        private async Task ProcessDialogQueueAsync()
         {
-            if (_isShowingDialog)
-            {
-                return;
-            }
+            if (_isDialogOpen) return;
+            _isDialogOpen = true;
 
-            _isShowingDialog = true;
 
-            while (_messageQueue.TryDequeue(out var item))
+            DispatcherQueue.TryEnqueue(() =>
             {
                 if (loadingDialog != null && loadingDialog.Visibility == Visibility.Visible)
                 {
                     loadingDialog.Hide();
                     loadingDialog = null;
                 }
+            });
 
-                var stackPanel = new StackPanel();
-                stackPanel.Children.Add(new TextBlock
+
+            while (_dialogQueue.TryDequeue(out var item))
+            {
+                try
                 {
-                    Text = item.Message,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 0, 0, 12)
-                });
+                    // Ensure execution on the UI thread
+                    var result = await DispatcherQueue.EnqueueAsync(async () =>
+                    {
+                        var dialog = new ContentDialog
+                        {
+                            Title = item.Title,
+                            Content = new TextBlock { Text = item.Message, TextWrapping = TextWrapping.Wrap },
+                            CloseButtonText = item.CloseText,
+                            XamlRoot = this.Content.XamlRoot
+                        };
 
-                var dialog = new ContentDialog
+                        if (!string.IsNullOrWhiteSpace(item.SecondaryText))
+                            dialog.SecondaryButtonText = item.SecondaryText;
+
+                        return await dialog.ShowAsync();
+                    });
+
+                    item.Tcs.SetResult(result);
+                }
+                catch (Exception ex)
                 {
-                    Title = item.Title,
-                    Content = stackPanel,
-                    PrimaryButtonText = "Copy",
-                    CloseButtonText = "OK",
-                    XamlRoot = this.Content.XamlRoot
-                };
-
-                var result = await dialog.ShowAsync();
-
-                if (result == ContentDialogResult.Primary)
-                {
-                    var dataPackage = new DataPackage();
-                    dataPackage.SetText(item.Message);
-                    Clipboard.SetContent(dataPackage);
+                    item.Tcs.SetException(ex);
                 }
             }
 
-            _isShowingDialog = false;
+            _isDialogOpen = false;
         }
+
+
 
         public CartesianChart GetChart()
         {

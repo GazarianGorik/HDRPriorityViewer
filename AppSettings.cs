@@ -24,6 +24,8 @@ namespace HDRPriorityGraph
 {
     public static class AppSettings
     {
+        public static readonly int totalChartPointsWarningTreshold = 1000;
+
         // Wwise audio objects point settings
         public static readonly float chartPointSize = 15;
         public static SolidColorPaint chartPointStroke()

@@ -121,6 +121,21 @@ namespace HDRPriorityGraph
             return grouped;
         }
 
+        public static int PrecalculateChartTotalPoints(List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions)
+        {
+            int total = 0;
+
+            foreach ((WwiseEvent evt, List<(WwiseAction action, string busId)> actionsList) in eventsWithActions)
+            {
+                foreach ((WwiseAction action, string busId) in actionsList)
+                {
+                    total++;
+                }
+            }
+
+            return total;
+        }
+
         public static void PlotEvents(List<(WwiseEvent evt, List<(WwiseAction action, string busId)> actions)> eventsWithActions)
         {
             foreach ((WwiseEvent evt, List<(WwiseAction action, string busId)> actionsList) in eventsWithActions)
@@ -145,7 +160,7 @@ namespace HDRPriorityGraph
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning($"Failed to add point to graph: {ex}");
+                        Log.Error(ex);
                     }
                 }
             }

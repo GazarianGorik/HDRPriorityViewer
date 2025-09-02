@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using CSharpMarkup.WinUI;
 using Newtonsoft.Json.Linq;
@@ -80,14 +81,24 @@ namespace HDRPriorityGraph
             }
         }
 
-        public static async Task<JObject> GenericClienCall(string uri, JObject args, JObject options)
+        private static readonly SemaphoreSlim _waapiLock = new(1, 1);
+
+        public static async Task<JObject> GenericClientCall(string uri, JObject? args = null, JObject? options = null)
         {
-            return await client.Call(uri, args, options);
+            await _waapiLock.WaitAsync();
+            try
+            {
+                return await client.Call(uri, args ?? new JObject(), options ?? new JObject());
+            }
+            finally
+            {
+                _waapiLock.Release();
+            }
         }
 
         public static async Task<bool?> IsWwiseProjectDirty()
         {
-            var result = await GenericClienCall(ak.wwise.core.getProjectInfo, null, null);
+            var result = await GenericClientCall("ak.wwise.core.getProjectInfo");
             return result["isDirty"]?.Value<bool>();
         }
 
@@ -95,7 +106,7 @@ namespace HDRPriorityGraph
         {
             try
             {
-                JObject projectInfo = await GenericClienCall(ak.wwise.core.getProjectInfo, null, null);
+                JObject projectInfo = await GenericClientCall(ak.wwise.core.getProjectInfo, null, null);
 
                 // Get the project name
                 string displayTitle = projectInfo["displayTitle"]?.ToString() ?? "";
@@ -177,7 +188,7 @@ namespace HDRPriorityGraph
 
             try
             {
-                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClientCall("ak.wwise.core.object.get", query, options);
 
                 Dictionary<string, bool> hdrMap = result["return"]?
                     .ToDictionary(
@@ -237,7 +248,7 @@ namespace HDRPriorityGraph
 
             try
             {
-                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClientCall("ak.wwise.core.object.get", query, options);
 
                 foreach (JToken evt in result["return"]!)
                 {
@@ -286,7 +297,7 @@ namespace HDRPriorityGraph
                     new JProperty("return", new JArray("id", "OutputBus"))
                 );
 
-                JObject result = await WaapiBridge.GenericClienCall("ak.wwise.core.object.get", query, options);
+                JObject result = await WaapiBridge.GenericClientCall("ak.wwise.core.object.get", query, options);
 
                 foreach (JToken obj in result["return"]!)
                 {
@@ -323,12 +334,12 @@ namespace HDRPriorityGraph
         {
             try
             {
-                var info = await GenericClienCall("ak.wwise.core.getInfo", null, null);
+                var info = await GenericClientCall("ak.wwise.core.getInfo", null, null);
                 int wwisePid = info["processId"].Value<int>();
 
                 AllowSetForegroundWindow(wwisePid);
 
-                await GenericClienCall("ak.wwise.ui.bringToForeground", null, null);
+                await GenericClientCall("ak.wwise.ui.bringToForeground", null, null);
                 Log.Info("Wwise window brought to foreground.");
             }
             catch (Exception ex)
@@ -353,7 +364,7 @@ namespace HDRPriorityGraph
                     ["objects"] = new JArray(objectId)
                 };
 
-                await GenericClienCall("ak.wwise.ui.commands.execute", args, null);
+                await GenericClientCall("ak.wwise.ui.commands.execute", args, null);
                 Log.Info($"Object {objectId} inspected in Wwise.");
             }
             catch (Exception ex)
@@ -376,7 +387,7 @@ namespace HDRPriorityGraph
                     ["command"] = "FindInProjectExplorerSelectionChannel1",
                     ["objects"] = new JArray(objectId)
                 };
-                await GenericClienCall("ak.wwise.ui.commands.execute", args, null);
+                await GenericClientCall("ak.wwise.ui.commands.execute", args, null);
                 Log.Info($"Object {objectId} found in Project Explorer.");
             }
             catch (Exception ex)

@@ -1,7 +1,5 @@
-WIP
-
-# HDR Priority Graph
-HDR Priority Graph is a visual helper tool for Wwise projects that allows you to visualize your HDR setup on an interactive graph.
+# HDR Priority Viewer
+HDR Priority Viewer is a visual helper tool for Wwise projects that allows you to visualize your HDR setup on an interactive graph.
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, ensuring consistency across your project.
 
 <br>
@@ -42,26 +40,25 @@ It provides a clear overview of your project and lets you open elements directly
    - If a target audio object has children with specific volume setups, they will be displayed instead of the parent (event target audio). (Recursive logic).
    - Otherwise, the event target audio object itself is displayed.
 
+
+> [!TIP]
+> Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unecessary elements.  
+> It's recommanded to apply the default filter (first one in the list) if this popup shows-up.
+> <p align="left">
+> <img width="400" alt="HDR Priority Graph Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
+</p>
+
 <br>
 
-## ❓ Safety
-
-- Thechnically it is ! As the tool is "read only". It **does not modify `.wwu` files** or send any WAAPI commands that write to your project.
-- **BUT**, the tool is still in pre-release version, so always save your work before using it, as large graphs may freeze the tool, and less likely your system.
-- A performance warning popup is shown when too many elements are about to be displayed, just apply the default filter, we never now!
-
-<br>
-
-<img width="537" height="269" alt="HDR Priority Graph Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
-
-> Depending on project complexity, the graph may contain many elements. Using filters or search bars is recommended.  
-> **Tip:** Apply the default filter for large projects, especially on low-spec PCs.
+## Is this app safe to use❓
+- As the tool is "read only", the short answer is yes. It **does not modify `.wwu` files** or send any WAAPI commands that write to your project.
+- **BUT**, the tool is still in pre-release version, so always save your work before using it, as large graphs may freeze the tool, and maybe your system (less likely but we never know).
 
 <br>
 
 ## 🪲 Known issues
-- Ctrl or Alt zoom are a bit buggy (zoom axis is updated a bit too late, comes from how LiveCharts2 handle it, I was not able to fix this issue. For now right clic selection is the best option to zoom-in).
-- If you un-maximaze the tool window and open an audio object in Wwise with a left click on the graph point, Wwise window will resize to the tool window size, seems to be an AudioKinetic's side bug.
+- **Zooming with Ctrl or Alt is a bit buggy.** The zoom axis updates with a slight delay due to the way LiveCharts2 handles input. For now, the most reliable way to zoom in is by using right-click selection.
+- If you un-maximaze the tool window and open an audio object in Wwise with a left click on the graph point, Wwise window will resize to the tool's window size. This looks like a bug on AudioKinetic's side  , I’ll investigate further.
 
 <br>
 
@@ -70,17 +67,15 @@ It provides a clear overview of your project and lets you open elements directly
 <br>
 
 ## 🤝 License
-This project is licensed under the [PolyForm Internal Use License 1.0.0](https://polyformproject.org/licenses/internal-use/1.0.0/).
-Copyright (c) 2025 Gorik Gazarian
-
-#### ✅ Allowed
+✅ Allowed
 - Use the **compiled tool** as an internal tool to develop commercial projects.
 - Use, copy, and modify the **code** for personal or internal purposes.
 
-#### ❌ Not Allowed
+❌ Not Allowed
 - Sell, distribute, or commercialize the **code**.
 - Sell the **compiled tool** or redistribute it commercially for profit.
 
 <br>
-
+<sub>Copyright (c) 2025 Gorik Gazarian. This project is licensed under the [PolyForm Internal Use License 1.0.0](https://polyformproject.org/licenses/internal-use/1.0.0/).
+<br>
 For full details, see the [LICENSE](./LICENSE) file in this repository.

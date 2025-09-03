@@ -34,6 +34,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
 using WinRT.Interop;
@@ -254,6 +255,7 @@ namespace HDRPriorityGraph
 
             if (await EnqueueDialogAsync("Wwise project changes detected!",
             "You may want to first save your Wwise project to analyze the current state of your Wwise session.\nClick OK once you saved it.",
+            false,
             "Ok",
             "Cancel") == ContentDialogResult.Secondary)
             {
@@ -497,17 +499,21 @@ namespace HDRPriorityGraph
             }).Start();
         }
 
-        private readonly ConcurrentQueue<(string Title, string Message, string CloseText, string? SecondaryText, TaskCompletionSource<ContentDialogResult> Tcs)> _dialogQueue = new();
+        private readonly ConcurrentQueue<(string Title, string Message, string CloseText, bool allowCopy, string? SecondaryText,
+            TaskCompletionSource<ContentDialogResult> Tcs, Style CloseButtonStyle, Style SecondaryButtonStyle)> _dialogQueue = new();
         private bool _isDialogOpen = false;
 
         public Task<ContentDialogResult> EnqueueDialogAsync(
             string title,
             string message,
+            bool allowCopy,
             string closeButtonText = "OK",
-            string? secondaryButtonText = null)
+            string? secondaryButtonText = null,
+            Style closeButtonStyle = null,
+            Style secondaryButtonStyle = null)
         {
             var tcs = new TaskCompletionSource<ContentDialogResult>();
-            _dialogQueue.Enqueue((title, message, closeButtonText, secondaryButtonText, tcs));
+            _dialogQueue.Enqueue((title, message, closeButtonText, allowCopy, secondaryButtonText, tcs, closeButtonStyle, secondaryButtonStyle));
             _ = ProcessDialogQueueAsync();
             return tcs.Task;
         }
@@ -543,6 +549,26 @@ namespace HDRPriorityGraph
                             XamlRoot = this.Content.XamlRoot
                         };
 
+                        if (item.allowCopy)
+                        {
+                            dialog.PrimaryButtonText = "Copy";
+                            dialog.PrimaryButtonClick += (sender, args) =>
+                            {
+                                args.Cancel = true;
+
+                                dialog.PrimaryButtonStyle = (Style)Application.Current.Resources["CopyButtonCopied"];
+                                dialog.PrimaryButtonText = "Copied";
+
+                                CopyDialogMessageToClipboard(item.Message);
+                            };
+                        }
+
+                        if (item.CloseButtonStyle != null)
+                            dialog.CloseButtonStyle = item.CloseButtonStyle;
+
+                        if (item.SecondaryButtonStyle != null)
+                            dialog.SecondaryButtonStyle = item.SecondaryButtonStyle;
+
                         if (!string.IsNullOrWhiteSpace(item.SecondaryText))
                             dialog.SecondaryButtonText = item.SecondaryText;
 
@@ -560,7 +586,20 @@ namespace HDRPriorityGraph
             _isDialogOpen = false;
         }
 
+        private void CopyDialogMessageToClipboard(String message)
+        {
+            try
+            {
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(message);
+                Clipboard.SetContent(dataPackage);
+            }
+            catch (Exception)
+            {
 
+                throw;
+            }
+        }
 
         public CartesianChart GetChart()
         {

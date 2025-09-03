@@ -11,6 +11,15 @@
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
             <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <Style x:Key="CopyButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            </Style>
+            <Style x:Key="CopyButtonCopied" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+            </Style>
+            <Style x:Key="RiskyButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Background" Value="{ThemeResource SystemFillColorCriticalBackgroundBrush}"/>
+            </Style>
+            <Style x:Key="ValidateButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

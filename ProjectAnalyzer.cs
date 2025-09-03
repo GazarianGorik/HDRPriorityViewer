@@ -16,7 +16,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using CSharpMarkup.WinUI;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
 
 namespace HDRPriorityGraph
 {
@@ -68,11 +70,27 @@ namespace HDRPriorityGraph
                             "You can choose to proceed anyway or apply a default filter to hide some categories. " +
                             "Filtered categories can be re-enabled using the filter panel.";
 
-                        if (await MainWindow.Instance.EnqueueDialogAsync(
+
+
+                        ContentDialogResult? result = null;
+                        
+                        await MainWindow.Instance.DispatcherQueue.EnqueueAsync(async () =>
+                        {
+                            result = await
+                            MainWindow.Instance.EnqueueDialogAsync(
                             "Potential Performance Issue",
                             message,
-                            "Proceed Anyway",
-                            "Apply Default Filter") == ContentDialogResult.Secondary)
+                            false,
+                            "Apply default filter",
+                            "Proceed anyway",
+                            (Microsoft.UI.Xaml.Style)Application.Current.Resources["ValidateButton"],
+                            (Microsoft.UI.Xaml.Style)Application.Current.Resources["RiskyButton"]);
+                        });
+
+                        // This looks weird but it's correct, None is the close button which is Apply default filter here cause I want it to the right side
+                        // I cant use primary / secondary cause primary is only used for copy
+                        // TODO, clean up this mess 
+                        if (result == ContentDialogResult.None)
                         {
                             needToApplyDefaultFilter = true;
                         }

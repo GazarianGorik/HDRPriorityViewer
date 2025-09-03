@@ -19,7 +19,7 @@ using System.Xml.Linq;
 using LiveChartsCore.Defaults;
 using SkiaSharp;
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     public class AudioBus
     {

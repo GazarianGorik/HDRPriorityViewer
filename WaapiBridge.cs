@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 using CSharpMarkup.WinUI;
 using Newtonsoft.Json.Linq;
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     internal static class WaapiBridge
     {

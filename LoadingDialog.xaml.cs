@@ -15,7 +15,7 @@
 
 using Microsoft.UI.Xaml.Controls;
 
-namespace HDRPriorityGraph.Views
+namespace HDRPriorityViewer.Views
 {
     public sealed partial class LoadingDialog : ContentDialog
     {

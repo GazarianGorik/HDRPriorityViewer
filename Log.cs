@@ -16,7 +16,7 @@
 using System;
 using System.Diagnostics;
 
-namespace HDRPriorityGraph;
+namespace HDRPriorityViewer;
 
 public static class Log
 {

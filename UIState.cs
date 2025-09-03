@@ -15,7 +15,7 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace HDRPriorityGraph;
+namespace HDRPriorityViewer;
 
 public class UIState : ObservableObject
 {

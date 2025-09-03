@@ -28,7 +28,7 @@ using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 
-namespace HDRPriorityGraph;
+namespace HDRPriorityViewer;
 
 public partial class ChartViewModel : INotifyPropertyChanged
 {

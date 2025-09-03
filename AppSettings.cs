@@ -20,7 +20,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     public static class AppSettings
     {

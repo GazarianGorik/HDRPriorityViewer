@@ -13,7 +13,7 @@
 #                                                                             #
 ******************************************************************************/
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     public static class AppUtility
     {

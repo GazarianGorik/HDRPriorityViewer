@@ -21,7 +21,7 @@ using System.Linq;
 using System.Xml.Linq;
 using SkiaSharp;
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     public static class WWUParser
     {

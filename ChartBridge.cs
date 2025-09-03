@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     internal class ChartBridge
     {

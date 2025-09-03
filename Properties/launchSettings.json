@@ -1,10 +1,10 @@
 {
   "profiles": {
-    "HDR Priority Graph (Package)": {
+    "HDR Priority Viewer (Package)": {
       "commandName": "MsixPackage",
       "nativeDebugging": true
     },
-    "HDR Priority Graph (Unpackaged)": {
+    "HDR Priority Viewer (Unpackaged)": {
       "commandName": "Project"
     }
   }

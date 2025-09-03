@@ -20,7 +20,7 @@ using CSharpMarkup.WinUI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml;
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     public static class ProjectAnalyzer
     {

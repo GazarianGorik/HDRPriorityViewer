@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <RootNamespace>HDRPriorityGraph</RootNamespace>
+    <RootNamespace>HDRPriorityViewer</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
@@ -26,7 +26,7 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
-    <Content Include="HDRPriorityGraph_Icon.ico">
+    <Content Include="HDRPriorityViewer_Icon.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -81,10 +81,10 @@
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
     <PackageCertificateThumbprint>722FD6079B2421C829AE29C17D02DCA6A7AFA7A9</PackageCertificateThumbprint>
-    <PackageCertificateKeyFile>HDRPriorityGraph_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>HDRPriorityViewer_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <WindowsPackageType>None</WindowsPackageType>
-    <ApplicationIcon>HDRPriorityGraph_Icon.ico</ApplicationIcon>
+    <ApplicationIcon>HDRPriorityViewer_Icon.ico</ApplicationIcon>
   </PropertyGroup>
 </Project>

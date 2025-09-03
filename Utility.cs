@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using SkiaSharp;
 using Windows.UI;
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     public static class Utility
     {

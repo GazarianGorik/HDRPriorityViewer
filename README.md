@@ -45,7 +45,7 @@ It provides a clear overview of your project and lets you open elements directly
 > Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unecessary elements.  
 > It's recommanded to apply the default filter (first one in the list) if this popup shows-up.
 > <p align="left">
-> <img width="400" alt="HDR Priority Graph Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
+> <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
 </p>
 
 <br>

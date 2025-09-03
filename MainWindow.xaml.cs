@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpMarkup.WinUI.LiveChartsCore.SkiaSharpView;
-using HDRPriorityGraph.Views;
+using HDRPriorityViewer.Views;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Kernel;
@@ -42,7 +42,7 @@ using WinRT.Interop;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace HDRPriorityGraph
+namespace HDRPriorityViewer
 {
     public sealed partial class MainWindow : Window
     {
@@ -137,7 +137,7 @@ namespace HDRPriorityGraph
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
             // Charge ton icône custom
-            var hIcon = LoadImage(IntPtr.Zero, "HDRPriorityGraph_Icon.ico", IMAGE_ICON, 256, 256, LR_LOADFROMFILE);
+            var hIcon = LoadImage(IntPtr.Zero, "HDRPriorityViewer_Icon.ico", IMAGE_ICON, 256, 256, LR_LOADFROMFILE);
 
             // Applique pour la fenêtre (grande et petite icône)
             SendMessage(hwnd, WM_SETICON, (IntPtr)ICON_BIG, hIcon);

@@ -2,15 +2,22 @@
 HDR Priority Viewer is a visual helper tool for Wwise projects that allows you to visualize your HDR setup on an interactive graph.
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, ensuring consistency across your project.
 
+
+
 <br>
 
-## ⌨️ Features & Commands
+## ⌨️ How to use
+
+**WAAPI Connection & Project Analyze**
+You first need to open your Wwise project and enable WAAPI connection if not already done. Then you may need to change the settings connection according to your project WAAPI setup. 
+<p align="left"><img src="https://github.com/user-attachments/assets/fbdcf96e-8ed9-48bd-91a8-f13931f734cf" width="800" /></p>
+
+**You can then hide or highlight specific elements**:
+<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="800" /></p>
+  - *Left pannel filters & search bars*
 
 **Zoom and pan through your HDR setup**:
   - *Right mouse button selection or Scrollwheel + optionnal Ctrl or Alt keys for Vertical / Horizontal zoom)*
-    
-**Quickly hide or highlight specific elements**:
-  - *Left pannel filters & search bars*
     
 **Open audio objects in Wwise directly from the graph**:
   - *Ctrl + Click on a point*
@@ -76,6 +83,7 @@ It provides a clear overview of your project and lets you open elements directly
 - Sell the **compiled tool** or redistribute it commercially for profit.
 
 <br>
-<sub>Copyright (c) 2025 Gorik Gazarian. This project is licensed under the [PolyForm Internal Use License 1.0.0](https://polyformproject.org/licenses/internal-use/1.0.0/).
+Copyright © 2025 Gorik Gazarian.
 <br>
-For full details, see the [LICENSE](./LICENSE) file in this repository.
+
+This project is licensed under the [PolyForm Internal Use License 1.0.0](https://polyformproject.org/licenses/internal-use/1.0.0/). For full details, see the [LICENSE](./LICENSE) file in this repository.

@@ -83,7 +83,7 @@
                                 x:Name="ReAnalyzeButton"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Center"
-                                Content="Re-analyse"
+                                Content="Re-analyze"
                                 FontSize="12"
                                 Click="AnalyzeButton_Click"
                                 Width="90"

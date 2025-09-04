@@ -54,10 +54,8 @@
     <PackageReference Include="System.Private.Uri" Version="4.3.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientCore\WaapiClientCore.csproj" />
-    <ProjectReference Include="..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientJson\WaapiClientJson.csproj" />
-    <ProjectReference Include="..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientCore\WaapiClientCore.csproj" />
-    <ProjectReference Include="..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientJson\WaapiClientJson.csproj" />
+    <ProjectReference Include="..\WaapiClientCore\WaapiClientCore.csproj" />
+    <ProjectReference Include="..\WaapiClientJson\WaapiClientJson.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="LoadingDialog.xaml">

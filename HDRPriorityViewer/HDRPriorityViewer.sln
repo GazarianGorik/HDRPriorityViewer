@@ -3,14 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaapiClientCore", "..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientCore\WaapiClientCore.csproj", "{BF45323C-2BD1-9F00-34E2-22F5A0ECFB00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDRPriorityViewer", "HDRPriorityViewer.csproj", "{301A067B-E08E-50D3-7C6D-35B9D272653D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaapiClientJson", "..\..\..\Audiokinetic\Wwise2024.1.6.8842\SDK\samples\WwiseAuthoringAPI\cs\WaapiClientJson\WaapiClientJson.csproj", "{102D363C-7CB8-A300-85C9-26F5F1D3FF00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaapiClientCore", "..\WaapiClientCore\WaapiClientCore.csproj", "{BF45323C-2BD1-9F00-34E2-22F5A0ECFB00}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaapiClientJson", "..\WaapiClientJson\WaapiClientJson.csproj", "{102D363C-7CB8-A300-85C9-26F5F1D3FF00}"
 	ProjectSection(ProjectDependencies) = postProject
 		{BF45323C-2BD1-9F00-34E2-22F5A0ECFB00} = {BF45323C-2BD1-9F00-34E2-22F5A0ECFB00}
 	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDRPriorityViewer", "HDRPriorityViewer.csproj", "{301A067B-E08E-50D3-7C6D-35B9D272653D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,6 +22,24 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|ARM64.Build.0 = Debug|ARM64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x64.ActiveCfg = Debug|x64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x64.Build.0 = Debug|x64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x64.Deploy.0 = Debug|x64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x86.ActiveCfg = Debug|x86
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x86.Build.0 = Debug|x86
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x86.Deploy.0 = Debug|x86
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|ARM64.ActiveCfg = Release|ARM64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|ARM64.Build.0 = Release|ARM64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|ARM64.Deploy.0 = Release|ARM64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x64.ActiveCfg = Release|x64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x64.Build.0 = Release|x64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x64.Deploy.0 = Release|x64
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x86.ActiveCfg = Release|x86
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x86.Build.0 = Release|x86
+		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x86.Deploy.0 = Release|x86
 		{BF45323C-2BD1-9F00-34E2-22F5A0ECFB00}.Debug|ARM64.ActiveCfg = Debug|x64
 		{BF45323C-2BD1-9F00-34E2-22F5A0ECFB00}.Debug|ARM64.Build.0 = Debug|x64
 		{BF45323C-2BD1-9F00-34E2-22F5A0ECFB00}.Debug|x64.ActiveCfg = Debug|x64
@@ -46,24 +64,6 @@ Global
 		{102D363C-7CB8-A300-85C9-26F5F1D3FF00}.Release|x64.Build.0 = Release|x64
 		{102D363C-7CB8-A300-85C9-26F5F1D3FF00}.Release|x86.ActiveCfg = Release|x64
 		{102D363C-7CB8-A300-85C9-26F5F1D3FF00}.Release|x86.Build.0 = Release|x64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|ARM64.Build.0 = Debug|ARM64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|ARM64.Deploy.0 = Debug|ARM64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x64.ActiveCfg = Debug|x64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x64.Build.0 = Debug|x64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x64.Deploy.0 = Debug|x64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x86.ActiveCfg = Debug|x86
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x86.Build.0 = Debug|x86
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Debug|x86.Deploy.0 = Debug|x86
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|ARM64.ActiveCfg = Release|ARM64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|ARM64.Build.0 = Release|ARM64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|ARM64.Deploy.0 = Release|ARM64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x64.ActiveCfg = Release|x64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x64.Build.0 = Release|x64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x64.Deploy.0 = Release|x64
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x86.ActiveCfg = Release|x86
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x86.Build.0 = Release|x86
-		{301A067B-E08E-50D3-7C6D-35B9D272653D}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

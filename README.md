@@ -6,7 +6,6 @@ It provides a clear overview of your project and lets you open elements directly
 > The gif and screenshots doesn't reflect a normal use of the tool since I'm using using the Wwise Limbo sample project **which is not an HDR project** with the HDR option enabled on of the main bus.💥  
 > I just needed a large session to work with and be able to see the limits of the tool and improve it.
 
-You can download the tool [here](#%EF%B8%8F-download)
 <br>
 
 ## 🛠️ Setup & Connection

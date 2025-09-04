@@ -79,7 +79,7 @@ Retrieves HDR priority data, including:
 
 <br>
 
-## Is this tool safe to use❓
+## ❓Is this tool safe to use
 - As the tool is "read only", the short answer is yes. It **does not modify `.wwu` files** or send any WAAPI commands that write to your project.
 - **BUT**, the tool is still in pre-release version, so always save your work before using it, as large graphs may freeze the tool, and maybe your system (less likely but we never know).
 
@@ -88,10 +88,6 @@ Retrieves HDR priority data, including:
 ## 🪲 Known issues
 - **Zooming with Ctrl or Alt is a bit buggy.** The zoom axis updates with a slight delay due to the way LiveCharts2 handles input. For now, the most reliable way to zoom in is by using right-click selection.
 - If you un-maximaze the tool window and open an audio object in Wwise with a left click on the graph point, Wwise window will resize to the tool's window size. This looks like a bug on AudioKinetic's side  , I’ll investigate further.
-
-<br>
-
-## 🛟 Troubleshoot
 
 <br>
 

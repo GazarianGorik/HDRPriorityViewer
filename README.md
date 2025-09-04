@@ -2,18 +2,19 @@
 HDR Priority Viewer is a visual helper tool for Wwise projects that allows you to visualize your HDR setup on an interactive graph.
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, ensuring consistency across your project.
 
-<br>
-
 > [!IMPORTANT]
 > The gif and screenshots doesn't reflect a normal use of the tool since I'm using using the Wwise Limbo sample project **which is not an HDR project** with the HDR option enabled on of the main bus.💥  
 > I just needed a large session to work with and be able to see the limits of the tool and improve it.
-> 
+
+<br>
 
 ## 🛠️ Setup & Connection
 
 You first need to open your Wwise project and make sure that Waapi is enabled.  
 Then make sure the connection settings of your Wwise project and the tool matches and click on "Connect and Analyze Wwise project". 
 <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p>
+
+<br>
 
 ## ⌨️ Chart controls
 ### Search & Filters:  
@@ -37,7 +38,7 @@ Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 <p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>
 
 > [!IMPORTANT]
-> Each time you modify your Wwise project, you need to save it and re-analyse it (Left pannel -> "Re-analyze" button) to update the chart data.  
+> Each time you modify your Wwise project, you need to save it and re-analyse it (Left pannel -> "Re-analyze" button) to update the chart data.
 
 <br>
 
@@ -50,18 +51,18 @@ The logic to display an element is following:
 ### Priority value:  
 Audio elements are positionned on the Y axis based on there **“fixed” volume setup** (priority), which combines:
    - The audio object and its parents voice volume
-   - The audio object's bus and parents bus voice volume  
+   - The audio object's bus and parents bus voice volume
 
 ### Priority Range:
 Then, the minimum and maximum priority is displayed with a vertical lign which combines:  
    - Voice volumes random ranges
    - States
-   - RTPCs min/max  
+   - RTPCs min/max
 
 > [!IMPORTANT]
 > The min and max value is a theorical value, since the state may never been used, or some RTPCs may cancel each others depending on how the game code / Wwise project works.
 > It's just a here to show how much a priority can change and it's better to use Wwise's profiler for live data.
-> (And I'm not even sure if a real HDR project will use 
+> (And I'm not even sure if a real HDR project will use
 
 <br>
 
@@ -101,7 +102,7 @@ Not Allowed
 - Sell the **compiled tool** or redistribute it commercially for profit.
 
 <br>
-This project incorporates third-party code:  
+This project incorporates third-party code:
 
 1. LiveCharts2
    Copyright (c) 2021

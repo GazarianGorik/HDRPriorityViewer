@@ -106,6 +106,7 @@ Not Allowed
 - Sell the **compiled tool** or redistribute it commercially for profit.
 
 <br>
+
 This project incorporates third-party code:
 
 1. LiveCharts2
@@ -122,6 +123,8 @@ This project incorporates third-party code:
 
 ##
 
+<br>
+
 <sub>
    <p  align="center">
       <br>
@@ -129,7 +132,7 @@ This project incorporates third-party code:
          This project is licensed under the 
          <a href="https://polyformproject.org/licenses/internal-use/1.0.0/">PolyForm Internal Use License 1.0.0</a> - 
          For full details, see the 
-         <a href="./LICENSE">LICENSE</a> file in this repository
+         <a href="./LICENSE">LICENSE file in this repository</a>
       <br>
    </p>
 </sub>

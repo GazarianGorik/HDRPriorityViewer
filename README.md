@@ -88,6 +88,23 @@ Then make sure the connection settings of your Wwise project and the tool matche
 - Sell the **compiled tool** or redistribute it commercially for profit.
 
 <br>
+
+THIRD-PARTY NOTICES
+
+This project incorporates third-party code:
+
+1. LiveCharts2
+   Copyright (c) 2021 LiveCharts Contributors
+   Licensed under the MIT License
+   https://github.com/beto-rodriguez/LiveCharts2
+
+2. Audiokinetic Wwise SDK (portions of code)
+   Copyright (c) 2025 Audiokinetic Inc.
+   Licensed under the Apache License, Version 2.0
+   http://www.apache.org/licenses/LICENSE-2.0
+
+
+<br>
 Copyright © 2025 Gorik Gazarian.
 <br>
 

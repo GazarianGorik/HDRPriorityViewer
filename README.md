@@ -92,33 +92,39 @@ Retrieves HDR priority data, including:
 <br>
 
 ## 🤝 License
-✅ Allowed
+Allowed
 - Use the **compiled tool** as an internal tool to develop commercial projects.
 - Use, copy, and modify the **code** for personal or internal purposes.
 
-❌ Not Allowed
+Not Allowed
 - Sell, distribute, or commercialize the **code**.
 - Sell the **compiled tool** or redistribute it commercially for profit.
 
 <br>
-
-THIRD-PARTY NOTICES
-
-This project incorporates third-party code:
+This project incorporates third-party code:  
 
 1. LiveCharts2
-   Copyright (c) 2021 LiveCharts Contributors
-   Licensed under the MIT License
-   https://github.com/beto-rodriguez/LiveCharts2
+   Copyright (c) 2021
+   <a href="https://github.com/beto-rodriguez/LiveCharts2">LiveCharts</a>
+   Contributors
+   Licensed under the 
+   <a href="https://opensource.org/license/mit">MIT License</a>
 
-2. Audiokinetic Wwise SDK (WaapiClientCore & WaapiClientJson)
+3. Audiokinetic Wwise SDK (WaapiClientCore & WaapiClientJson)
    Copyright (c) 2025 Audiokinetic Inc.
-   Licensed under the Apache License, Version 2.0
-   http://www.apache.org/licenses/LICENSE-2.0
+   Licensed under the 
+   <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>
 
+##
 
-<br>
-Copyright © 2025 Gorik Gazarian.
-<br>
-
-This project is licensed under the [PolyForm Internal Use License 1.0.0](https://polyformproject.org/licenses/internal-use/1.0.0/). For full details, see the [LICENSE](./LICENSE) file in this repository.
+<sub>
+   <p  align="center">
+      <br>
+         Copyright © 2025 Gorik Gazarian - 
+         This project is licensed under the 
+         <a href="https://polyformproject.org/licenses/internal-use/1.0.0/">PolyForm Internal Use License 1.0.0</a> - 
+         For full details, see the 
+         <a href="./LICENSE">LICENSE</a> file in this repository
+      <br>
+   </p>
+</sub>

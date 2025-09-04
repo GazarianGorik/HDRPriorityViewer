@@ -8,19 +8,24 @@ It provides a clear overview of your project and lets you open elements directly
 
 ## ⌨️ How to use
 
-**WAAPI Connection & Project Analyze**
-You first need to open your Wwise project and enable WAAPI connection if not already done. Then you may need to change the settings connection according to your project WAAPI setup. 
-<p align="left"><img src="https://github.com/user-attachments/assets/fbdcf96e-8ed9-48bd-91a8-f13931f734cf" width="800" /></p>
+### I - WAAPI Connection & Project Analyze
+You first need to open your Wwise project and make sure that Waapi is enabled.  
+Then make sure the connection settings of your Wwise project and the tool matches and click on "Connect and Analyze Wwise project". 
+<p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p>
 
-**You can then hide or highlight specific elements**:
-<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="800" /></p>
-  - *Left pannel filters & search bars*
 
-**Zoom and pan through your HDR setup**:
-  - *Right mouse button selection or Scrollwheel + optionnal Ctrl or Alt keys for Vertical / Horizontal zoom)*
-    
-**Open audio objects in Wwise directly from the graph**:
-  - *Ctrl + Click on a point*
+### II - Chart controls
+<ins>Search & Filters:</ins> You can **hide or highlight specific elements** using the left pannel filters & search bars.
+<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p>
+
+<ins>Zoom & Pan:</ins> Using the right mouse button you can select an area of the chart to zoom-in, or use the scroll-wheel to zoom / de-zoom.
+<p align="left"><img src="https://github.com/user-attachments/assets/810f1185-3afe-4731-a129-9b9aee254a46" width="500" /></p>
+
+<ins>Chart points:</ins> Hover a point to show its priority and priority range. Ctrl + Left Click to open an audio object in Wwise directly from the graph.
+<p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>
+
+> [!IMPORTANT]
+> Each time you modify your Wwise project, you need to save it and re-analyse it (Left pannel -> "Re-analyze" button) to update the chart data.  
 
 <br>
 

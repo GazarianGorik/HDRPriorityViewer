@@ -6,10 +6,10 @@ It provides a clear overview of your project and lets you open elements directly
 > The gif and screenshots doesn't reflect a normal use of the tool since I'm using using the Wwise Limbo sample project **which is not an HDR project** with the HDR option enabled on of the main bus.💥  
 > I just needed a large session to work with and be able to see the limits of the tool and improve it.
 
+You can download the tool [here](#%EF%B8%8F-download)
 <br>
 
 ## 🛠️ Setup & Connection
-
 You first need to open your Wwise project and make sure that Waapi is enabled.  
 Then make sure the connection settings of your Wwise project and the tool matches and click on "Connect and Analyze Wwise project". 
 <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p>
@@ -83,6 +83,11 @@ Retrieves HDR priority data, including:
 ## ❓Is this tool safe to use
 - As the tool is "read only", the short answer is yes. It **does not modify `.wwu` files** or send any WAAPI commands that write to your project.
 - **BUT**, the tool is still in pre-release version, so always save your work before using it, as large graphs may freeze the tool, and maybe your system (less likely but we never know).
+
+<br>
+
+## ⬇️ Download
+Go to [Releases page](https://github.com/GazarianGorik/HDRPriorityViewer/releases) => Assets => Download and un-zip *HDRPriorityViewer.zip* => Run *HDRPriorityViewer.exe*
 
 <br>
 

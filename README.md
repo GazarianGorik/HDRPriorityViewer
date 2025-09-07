@@ -1,4 +1,4 @@
-# HDR Priority Viewer
+# HDR Priority Viewer (W10, W11)
 HDR Priority Viewer is a visual helper tool for Wwise projects that displays your HDR setup on an interactive graph.  
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, helping you maintain consistency throughout your project.
 
@@ -9,18 +9,35 @@ It provides a clear overview of your project and lets you open elements directly
 <br>
 
 ## Table of Contents
-1 - [Getting Started](#i---getting-started)
-   A) - [Downloads](#i---getting-started)
-1 - [Getting Started](#i---getting-started)
-1 - [Getting Started](#i---getting-started)
-1 - [Getting Started](#i---getting-started)
-1 - [Getting Started](#i---getting-started)
-1 - [Getting Started](#i---getting-started)
+
+I - [Getting Started](#i---getting-started)  
+ A) [Downloads](#a-downloads)  
+ B) [Setup & Connection](#b-setup--connection)  
+ C) [Chart controls](#c-chart-controls)  
+  1) [Search & Filters](#1-search--filters)  
+  2) [Zoom & Pan](#2-zoom--pan)  
+  3) [Chart points](#3-chart-points)  
+ D) [Chart Display](#d-chart-display)  
+  1) [Display logic](#1-display-logic)  
+  2) [Priority value](#2-priority-value)  
+  3) [Priority range](#3-priority-range)  
+
+II - [How it works](#ii---how-it-works)  
+ A) [WAAPI Data Retrieval](#a-waapi-data-retrieval)  
+ B) [Project Scanning](#b-project-scanning)  
+
+III - [Is it safe to use?](#iii---is-it-safe-to-use)  
+
+IV - [Known issues](#iv---known-issues)  
+
+V - [Credits](#v---credits)  
+
+VI - [License](#vi---license)
 
 <br>
 
 ## I - Getting Started  
-### A) Downloads (Windows 10, 11)
+### A) Downloads
 #### [Pre-Release](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip) [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)  
 
@@ -40,7 +57,7 @@ Next, verify that the connection settings in your Wwise project match those in t
 <br>
 
 ### C) Chart controls
-#### 1) Search & Filters:  
+#### 1) Search & Filters  
 You can **hide or highlight specific elements** using the left pannel filters & search bars.
 <p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p>
 
@@ -51,11 +68,11 @@ You can **hide or highlight specific elements** using the left pannel filters & 
 > <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
 </p>
 
-#### 2) Zoom & Pan:  
+#### 2) Zoom & Pan  
 Using the right mouse button you can select an area of the chart to zoom-in, or use the scroll-wheel to zoom / de-zoom.
 <p align="left"><img src="https://github.com/user-attachments/assets/810f1185-3afe-4731-a129-9b9aee254a46" width="500" /></p>
 
-#### 3) Chart points:  
+#### 3) Chart points  
 Hover a point to show its priority properties.  
 Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 <p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>
@@ -66,17 +83,17 @@ Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 <br>
 
 ### D) Chart Display
-#### 1) Display logic:  
+#### 1) Display logic  
 The logic to display an element is following:
    - If the target audio object of the event has children with specific volume setups, they will be displayed instead of the parent. (Recursive logic).
    - Otherwise, the event target audio object itself is displayed.
 
-#### 2) Priority value:  
+#### 2) Priority value  
 Audio elements are positionned on the Y axis based on their **“fixed” volume setup** (priority), which combines:
    - The audio object and its parents voice volume
    - The audio object's bus and parents bus voice volume
 
-#### 3) Priority Range:
+#### 3) Priority range
 Then, the minimum and maximum priority is displayed with a vertical lign which combines:  
    - Voice volumes random ranges
    - States
@@ -91,14 +108,15 @@ Then, the minimum and maximum priority is displayed with a vertical lign which c
 ## II - How it works
 
 ### A) WAAPI Data Retrieval  
-Connects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
+The tool first onnects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
 
-### B) Project Scanning via `.wwu` files  
-Retrieves HDR priority data, including:
+### B) Project Scanning  
+Then, it scans the `.wwu` files to retrieve HDR priority data, including:
    - Voice volume
    - Voice volume random ranges
    - Voice volume affected by States
-   - RTPCs on both audio objects and their busses
+   - Voice volume RTPCs
+This is done for both audio objects and their busses.
 
 <br>
 

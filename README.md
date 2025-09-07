@@ -6,10 +6,8 @@ It provides a clear overview of your project and lets you open elements directly
 > The following GIFs and screenshots do not represent typical usage of the tool. They were captured using the Wwise Limbo sample project — which is not an HDR project — with the HDR option enabled on one of the main busses. 💥  
 > I chose this project simply because it provided a large session to test with, allowing me to explore the tool’s limits and refine it.
 
-<br>
-
-## Table of Contents
-Open and navigate GitHub’s built-in table of contents using the header filters in the top-right corner.
+> [!TIP]
+> Open and navigate GitHub’s built-in table of contents using the header filters in the top-right corner.
 
 <!--I - [Getting Started](#i---getting-started)  
  A) [Downloads](#a-downloads)  
@@ -54,7 +52,7 @@ Next, verify that the connection settings in your Wwise project match those in t
 <!-- <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p> --> 
 
 ### **Chart controls**
-#### <ins>Search & Filters</ins>  
+#### **Search & Filters**  
 You can **hide or highlight specific elements** using the left pannel filters & search bars.
 <p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p>
 
@@ -65,11 +63,11 @@ You can **hide or highlight specific elements** using the left pannel filters & 
 > <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
 </p>
 
-#### <ins>Zoom & Pan</ins>  
+#### **Zoom & Pan**  
 Using the right mouse button you can select an area of the chart to zoom-in, or use the scroll-wheel to zoom / de-zoom.
 <p align="left"><img src="https://github.com/user-attachments/assets/810f1185-3afe-4731-a129-9b9aee254a46" width="500" /></p>
 
-#### <ins>Chart points</ins>  
+#### **Chart points**  
 Hover a point to show its priority properties.  
 Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 <p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>
@@ -77,18 +75,20 @@ Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 > [!IMPORTANT]
 > Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.
 
+<br>
+
 ### **Chart Display**
-#### <ins>Display logic</ins>  
+#### **Display logic**  
 The logic to display an element is following:
    - If the target audio object of the event has children with specific volume setups, they will be displayed instead of the parent. (Recursive logic).
    - Otherwise, the event target audio object itself is displayed.
 
-#### <ins>Priority value</ins>  
+#### **Priority value**  
 Audio elements are positionned on the Y axis based on their **“fixed” volume setup** (priority), which combines:
    - The audio object and its parents voice volume
    - The audio object's bus and parents bus voice volume
 
-#### <ins>Priority range</ins>
+#### **Priority range**
 Then, the minimum and maximum priority is displayed with a vertical lign which combines:  
    - Voice volumes random ranges
    - States
@@ -102,10 +102,10 @@ Then, the minimum and maximum priority is displayed with a vertical lign which c
 
 ## II - How it works
 
-#### <ins>WAAPI Data Retrieval</ins>  
+#### **WAAPI Data Retrieval**  
 The tool first onnects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
 
-#### <ins>Project Scanning</ins>  
+#### **Project Scanning**  
 Then, it scans the `.wwu` files to retrieve HDR priority data, including:
    - Voice volume
    - Voice volume random ranges

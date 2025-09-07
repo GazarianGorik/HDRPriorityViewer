@@ -9,8 +9,9 @@ It provides a clear overview of your project and lets you open elements directly
 <br>
 
 ## Table of Contents
+Open and navigate GitHub’s built-in table of contents using the header filters in the top-right corner.
 
-I - [Getting Started](#i---getting-started)  
+<!--I - [Getting Started](#i---getting-started)  
  A) [Downloads](#a-downloads)  
  B) [Setup & Connection](#b-setup--connection)  
  C) [Chart controls](#c-chart-controls)  
@@ -32,18 +33,16 @@ IV - [Known issues](#iv---known-issues)
 
 V - [Credits](#v---credits)  
 
-VI - [License](#vi---license)
+VI - [License](#vi---license) -->
 
 <br>
 
-## I - Getting Started  
-### A) Downloads
+## I - Getting Started
+### **Downloads**
 #### [Pre-Release](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip) [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)  
 
-<br>
-
-### B) Setup & Connection
+### **Setup & Connection**
 First, open your Wwise project and ensure that WAAPI is enabled.  
 Next, verify that the connection settings in your Wwise project match those in the tool, then click "Connect and Analyze Wwise Project."
 
@@ -54,10 +53,8 @@ Next, verify that the connection settings in your Wwise project match those in t
 > More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/public-library/2024.1.7_8863/?source=SDK&id=waapi_prepare.html).
 <!-- <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p> --> 
 
-<br>
-
-### C) Chart controls
-#### 1) Search & Filters  
+### **Chart controls**
+#### <ins>Search & Filters</ins>  
 You can **hide or highlight specific elements** using the left pannel filters & search bars.
 <p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p>
 
@@ -68,11 +65,11 @@ You can **hide or highlight specific elements** using the left pannel filters & 
 > <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
 </p>
 
-#### 2) Zoom & Pan  
+#### <ins>Zoom & Pan</ins>  
 Using the right mouse button you can select an area of the chart to zoom-in, or use the scroll-wheel to zoom / de-zoom.
 <p align="left"><img src="https://github.com/user-attachments/assets/810f1185-3afe-4731-a129-9b9aee254a46" width="500" /></p>
 
-#### 3) Chart points  
+#### <ins>Chart points</ins>  
 Hover a point to show its priority properties.  
 Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 <p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>
@@ -80,20 +77,18 @@ Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 > [!IMPORTANT]
 > Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.
 
-<br>
-
-### D) Chart Display
-#### 1) Display logic  
+### **Chart Display**
+#### <ins>Display logic</ins>  
 The logic to display an element is following:
    - If the target audio object of the event has children with specific volume setups, they will be displayed instead of the parent. (Recursive logic).
    - Otherwise, the event target audio object itself is displayed.
 
-#### 2) Priority value  
+#### <ins>Priority value</ins>  
 Audio elements are positionned on the Y axis based on their **“fixed” volume setup** (priority), which combines:
    - The audio object and its parents voice volume
    - The audio object's bus and parents bus voice volume
 
-#### 3) Priority range
+#### <ins>Priority range</ins>
 Then, the minimum and maximum priority is displayed with a vertical lign which combines:  
    - Voice volumes random ranges
    - States
@@ -107,10 +102,10 @@ Then, the minimum and maximum priority is displayed with a vertical lign which c
 
 ## II - How it works
 
-### A) WAAPI Data Retrieval  
+#### <ins>WAAPI Data Retrieval</ins>  
 The tool first onnects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
 
-### B) Project Scanning  
+#### <ins>Project Scanning</ins>  
 Then, it scans the `.wwu` files to retrieve HDR priority data, including:
    - Voice volume
    - Voice volume random ranges

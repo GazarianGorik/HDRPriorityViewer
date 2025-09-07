@@ -1,4 +1,4 @@
-# HDR Priority Viewer (W10, W11)
+# HDR Priority Viewer
 HDR Priority Viewer is a visual helper tool for Wwise projects that displays your HDR setup on an interactive graph.  
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, helping you maintain consistency throughout your project.
 
@@ -37,28 +37,27 @@ VI - [License](#vi---license) -->
 
 ## I - Getting Started
 ### **Downloads**
-#### [Pre-Release](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip)
+#### [Pre-Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip) [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)  
 
 ### **Setup & Connection**
-First, open your Wwise project and ensure that WAAPI is enabled.  
-Next, verify that the connection settings in your Wwise project match those in the tool, then click "Connect and Analyze Wwise Project."
+   1) First, open your Wwise project and ensure that WAAPI is enabled.  
+   2) Next, verify that the connection settings in your Wwise project match those in the tool, then click "Connect and Analyze Wwise Project."  
+
+More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/public-library/2024.1.7_8863/?source=SDK&id=waapi_prepare.html).  
 
 > [!IMPORTANT]
-> Make sure that the Wwise's *user preferences* window is closed before trying to connect the tool.
-
-> [!NOTE]
-> More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/public-library/2024.1.7_8863/?source=SDK&id=waapi_prepare.html).
+> Make sure that the Wwise's *user preferences* window is closed before trying to connect the tool.  
 <!-- <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p> --> 
 
 ### **Chart controls**
 #### **Search & Filters**  
-You can **hide or highlight specific elements** using the left pannel filters & search bars.
+You can **hide or highlight specific elements** using the left pannel filters & search bars.  
 <p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p>
 
 > [!TIP]
 > Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unnecessary elements.  
-> It's recommended to apply the default filter (first one in the list) if this popup shows-up after the analyze.
+> It's recommended to apply the default filter (first one in the list) if this popup shows-up after the analyze.  
 > <p align="left">
 > <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
 </p>

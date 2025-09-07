@@ -8,14 +8,25 @@ It provides a clear overview of your project and lets you open elements directly
 
 <br>
 
+## Table of Contents
+1 - [Getting Started](#i---getting-started)
+   A) - [Downloads](#i---getting-started)
+1 - [Getting Started](#i---getting-started)
+1 - [Getting Started](#i---getting-started)
+1 - [Getting Started](#i---getting-started)
+1 - [Getting Started](#i---getting-started)
+1 - [Getting Started](#i---getting-started)
+
+<br>
+
 ## I - Getting Started  
-### 📥 Downloads  
+### A) Downloads (Windows 10, 11)
 #### [Pre-Release](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip) [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)  
 
 <br>
 
-### 🛠️ Setup & Connection
+### B) Setup & Connection
 First, open your Wwise project and ensure that WAAPI is enabled.  
 Next, verify that the connection settings in your Wwise project match those in the tool, then click "Connect and Analyze Wwise Project."
 
@@ -28,44 +39,44 @@ Next, verify that the connection settings in your Wwise project match those in t
 
 <br>
 
-### ⌨️ Chart controls
-#### Search & Filters:  
+### C) Chart controls
+#### 1) Search & Filters:  
 You can **hide or highlight specific elements** using the left pannel filters & search bars.
 <p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p>
 
 > [!TIP]
-> Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unecessary elements.  
-> It's recommanded to apply the default filter (first one in the list) if this popup shows-up after the analyze.
+> Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unnecessary elements.  
+> It's recommended to apply the default filter (first one in the list) if this popup shows-up after the analyze.
 > <p align="left">
 > <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
 </p>
 
-#### Zoom & Pan:  
+#### 2) Zoom & Pan:  
 Using the right mouse button you can select an area of the chart to zoom-in, or use the scroll-wheel to zoom / de-zoom.
 <p align="left"><img src="https://github.com/user-attachments/assets/810f1185-3afe-4731-a129-9b9aee254a46" width="500" /></p>
 
-#### Chart points:  
+#### 3) Chart points:  
 Hover a point to show its priority properties.  
 Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 <p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>
 
 > [!IMPORTANT]
-> Each time you modify your Wwise project, you need to save it and re-analyse it (Left pannel -> "Re-analyze" button) to update the chart data.
+> Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.
 
 <br>
 
-### 📈 Chart Display  
-### Display logic:  
+### D) Chart Display
+#### 1) Display logic:  
 The logic to display an element is following:
    - If the target audio object of the event has children with specific volume setups, they will be displayed instead of the parent. (Recursive logic).
    - Otherwise, the event target audio object itself is displayed.
 
-#### Priority value:  
-Audio elements are positionned on the Y axis based on there **“fixed” volume setup** (priority), which combines:
+#### 2) Priority value:  
+Audio elements are positionned on the Y axis based on their **“fixed” volume setup** (priority), which combines:
    - The audio object and its parents voice volume
    - The audio object's bus and parents bus voice volume
 
-#### Priority Range:
+#### 3) Priority Range:
 Then, the minimum and maximum priority is displayed with a vertical lign which combines:  
    - Voice volumes random ranges
    - States
@@ -79,10 +90,10 @@ Then, the minimum and maximum priority is displayed with a vertical lign which c
 
 ## II - How it works
 
-### WAAPI Data Retrieval  
+### A) WAAPI Data Retrieval  
 Connects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
 
-### Project Scanning via `.wwu` files  
+### B) Project Scanning via `.wwu` files  
 Retrieves HDR priority data, including:
    - Voice volume
    - Voice volume random ranges
@@ -99,22 +110,11 @@ Retrieves HDR priority data, including:
 
 ## IV - Known issues
 - **Zooming with Ctrl or Alt is a bit buggy.** The zoom axis updates with a slight delay due to the way LiveCharts2 handles input. For now, the most reliable way to zoom in is by using right-click selection.
-- If you un-maximaze the tool window and open an audio object in Wwise with a left click on the graph point, Wwise window will resize to the tool's window size. This looks like a bug on AudioKinetic's side  , I’ll investigate further.
+- If you unmaximize the tool window and open an audio object in Wwise with a left click on the graph point, Wwise window will resize to the tool's window size. This looks like a bug on AudioKinetic's side  , I’ll investigate further.
 
 <br>
 
-## V - License
-Allowed
-- Use the **compiled tool** as an internal tool to develop commercial projects.
-- Use, copy, and modify the **code** for personal or internal purposes.
-
-Not Allowed
-- Sell, distribute, or commercialize the **code**.
-- Sell the **compiled tool** or redistribute it commercially for profit.
-
-<br>
-
-## VI - Credits
+## V - Credits
 This project incorporates third-party code:
 
 1. LiveCharts2
@@ -129,7 +129,17 @@ This project incorporates third-party code:
    Licensed under the 
    <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>
 
-   
+<br>
+
+## VI - License
+Allowed
+- Use the **compiled tool** as an internal tool to develop commercial projects.
+- Use, copy, and modify the **code** for personal or internal purposes.
+
+Not Allowed
+- Sell, distribute, or commercialize the **code**.
+- Sell the **compiled tool** or redistribute it commercially for profit.
+
 <br>
 
 ##

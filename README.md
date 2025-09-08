@@ -2,7 +2,7 @@
 HDR Priority Viewer is a visual helper tool for Wwise projects that displays your HDR setup on an interactive graph.  
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, helping you maintain consistency throughout your project.
 
-> [!IMPORTANT]
+> [!NOTE]
 > The following GIFs and screenshots do not represent typical usage of the tool. They were captured using the Wwise Limbo sample project — which is not an HDR project — with the HDR option enabled on one of the main busses. 💥  
 > I chose this project simply because it provided a large session to test with, allowing me to explore the tool’s limits and refine it.
 
@@ -39,6 +39,8 @@ VI - [License](#vi---license) -->
 ### **Downloads**
 #### [Pre-Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1/HDRPriorityViewer.zip) [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)  
+> [!IMPORTANT]
+> You may need to download and install [Latest Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) otherwise the app will crash at startup. 
 
 ### **Setup & Connection**
    1) First, open your Wwise project and ensure that WAAPI is enabled.  

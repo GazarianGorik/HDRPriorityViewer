@@ -35,14 +35,8 @@ jobs:
       - name: Build Release
         run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release
 
-      - name: Publish self-contained win-x64
-        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj \
-              -c Release \
-              -r win-x64 \
-              --self-contained true \
-              /p:PublishSingleFile=true \
-              /p:IncludeAllContentForSelfExtract=false \
-              -o publish/
+      - name: Publish self-contained single-file exe
+        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=false -o publish/
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2

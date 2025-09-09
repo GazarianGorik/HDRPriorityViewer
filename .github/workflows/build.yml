@@ -27,14 +27,17 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Restore dependencies
-        run: dotnet restore HDRPriorityViewer/HDRPriorityViewer.sln
+        run: dotnet restore HDRPriorityViewer/HDRPriorityViewer.csproj
+
+      - name: List restored packages
+        run: dotnet list HDRPriorityViewer/HDRPriorityViewer.csproj package
 
       - name: Build Release
-        run: dotnet build HDRPriorityViewer/HDRPriorityViewer.sln --configuration Release
-      
+        run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release
+
       - name: Publish self-contained win-x64
         run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -o publish/
-        
+
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:

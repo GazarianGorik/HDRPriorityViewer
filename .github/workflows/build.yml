@@ -36,7 +36,10 @@ jobs:
         run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release
 
       - name: Publish self-contained single-file exe
-        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -o publish/
+        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o publish/
+
+      - name: Zip EXE
+        run: Compress-Archive -Path publish/HDRPriorityViewer.exe -DestinationPath publish/HDRPriorityViewer.zip
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -45,6 +48,6 @@ jobs:
           name: "Release ${{ github.event.inputs.version }}"
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
-          files: publish/**
+          files: publish/HDRPriorityViewer.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

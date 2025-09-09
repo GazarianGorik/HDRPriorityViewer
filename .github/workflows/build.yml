@@ -1,0 +1,47 @@
+name: Manual Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: v1.0.0)"
+        required: true
+        default: "v0.1.0"
+      prerelease:
+        description: "Mark as pre-release?"
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore HDRPriorityViewer/HDRPriorityViewer.csproj
+
+      - name: Build Release
+        run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release
+
+      - name: Publish self-contained win-x64
+        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -o publish/
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: "Release ${{ github.event.inputs.version }}"
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease }}
+          files: publish/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

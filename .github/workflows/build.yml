@@ -47,4 +47,4 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease }}
           files: publish/**
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}

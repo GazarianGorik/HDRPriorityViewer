@@ -37,10 +37,10 @@ VI - [License](#vi---license) -->
 
 ## I - Getting Started
 ### **Downloads**
-#### [Pre-Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1.0/HDRPriorityViewer.zip)
+#### [Pre-Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
 [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)
-[![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1.0/HDRPriorityViewer.zip)
-[![Build](https://github.com/GazarianGorik/HDRPriorityViewer/actions/workflows/build.yml/badge.svg)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/download/v0.1.0/HDRPriorityViewer.zip)
+[![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
+[![Build](https://github.com/GazarianGorik/HDRPriorityViewer/actions/workflows/build.yml/badge.svg)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
 
 
 > [!IMPORTANT]

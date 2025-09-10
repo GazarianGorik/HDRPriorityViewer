@@ -42,9 +42,8 @@ VI - [License](#vi---license) -->
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/tag/v0.1.0)
 [![Build](https://github.com/GazarianGorik/HDRPriorityViewer/actions/workflows/build.yml/badge.svg)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/tag/v0.1.0)
 
-
 > [!IMPORTANT]
-> You may need to download and install [Latest Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) otherwise the app will crash at startup. 
+> On Windows 10, you may need to download and install [Latest Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) otherwise the app will crash at startup. 
 
 ### **Setup & Connection**
    1) First, open your Wwise project and ensure that WAAPI is enabled.  

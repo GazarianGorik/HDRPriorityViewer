@@ -56,6 +56,7 @@ namespace HDRPriorityViewer
         public static List<ErrorPoint> chartDefaultPoints = new List<ErrorPoint>();
         public static string wampPort = "8080";
         public static string wampIP = "localhost";
+        public static string wwiseVersion = "";
     }
 
     public class ParentData()

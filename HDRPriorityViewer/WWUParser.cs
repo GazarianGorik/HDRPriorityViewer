@@ -539,7 +539,7 @@ namespace HDRPriorityViewer
             var ancestors = element.AncestorsAndSelf().ToList();
 
             // --- 2. Fallback WorkUnit ---
-            var workUnit = FindAncestor(ancestors, "WorkUnit", "Work Unit");
+            var workUnit = AppUtility.FindAncestor(ancestors, "WorkUnit");
             if (workUnit != null && workUnit.Attribute("Name")?.Value != "Default Work Unit")
             {
                 parentData.Name = workUnit.Attribute("Name")?.Value ?? "[NONE]";
@@ -552,7 +552,7 @@ namespace HDRPriorityViewer
             }
 
             // --- 3. Fallback Folder ---
-            var folder = FindAncestor(ancestors, "Folder", "Folder");
+            var folder = AppUtility.FindAncestor(ancestors, "Folder");
             if (folder != null)
             {
                 parentData.Name = folder.Attribute("Name")?.Value ?? "[NONE]";
@@ -565,7 +565,7 @@ namespace HDRPriorityViewer
             }
 
             // --- 4. Fallback Actor-Mixer ---
-            var actorMixer = FindAncestor(ancestors, "ActorMixer", "Actor-Mixer");
+            var actorMixer = AppUtility.FindAncestor(ancestors, AppUtility.actorMixerByWwiseVersion());
             if (actorMixer != null)
             {
                 parentData.Name = actorMixer.Attribute("Name")?.Value ?? "[NONE]";
@@ -578,26 +578,6 @@ namespace HDRPriorityViewer
             }
 
             return parentData;
-        }
-
-        private static XElement FindAncestor(IEnumerable<XElement> ancestors, string tagName, string nameContains = null)
-        {
-            // 1. Old format: direct tag
-            var match = ancestors.LastOrDefault(a =>
-                string.Equals(a.Name.LocalName, tagName, StringComparison.OrdinalIgnoreCase));
-
-            if (match != null)
-                return match;
-
-            // 2. New format: PropertyContainer with Name containing the index
-            if (!string.IsNullOrEmpty(nameContains))
-            {
-                match = ancestors.LastOrDefault(a =>
-                    string.Equals(a.Name.LocalName, "PropertyContainer", StringComparison.OrdinalIgnoreCase) &&
-                    (a.Attribute("Name")?.Value?.Contains(nameContains, StringComparison.OrdinalIgnoreCase) ?? false));
-            }
-
-            return match;
         }
 
         private static SKColor GetColorBasedOnIndexAndPaletteRange(int paletteRange, int index)
@@ -635,7 +615,7 @@ namespace HDRPriorityViewer
                     {
                         var doc = XDocument.Load(file);
                         var objects = doc.Descendants()
-                            .Where(e => e.Name == "ActorMixer" || e.Name == "Sound" ||
+                            .Where(e => e.Name == AppUtility.actorMixerByWwiseVersion() || e.Name == "Sound" ||
                                         e.Name == "RandomSequenceContainer" || e.Name == "BlendContainer" ||
                                         e.Name == "SwitchContainer" || e.Name == "Folder");
 

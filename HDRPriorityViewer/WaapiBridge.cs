@@ -111,12 +111,10 @@ namespace HDRPriorityViewer
                 // Get the project name
                 string displayTitle = projectInfo["displayTitle"]?.ToString() ?? "";
 
-                string wwiseVersion = "unknown";
-
                 System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(displayTitle, @"Wwise (\d+\.\d+\.\d+)");
                 if (match.Success)
                 {
-                    wwiseVersion = match.Groups[1].Value;
+                    WwiseCache.wwiseVersion = match.Groups[1].Value;
                 }
 
                 // Get the full path of the project (.wproj file)
@@ -130,8 +128,8 @@ namespace HDRPriorityViewer
                 }
 
                 // Determine the root folder to use depending on the version
-                string audioObjFolderName = wwiseVersion.StartsWith("2025") ? "Containers" : "Actor-Mixer Hierarchy";
-                string busFolderName = wwiseVersion.StartsWith("2025") ? "Busses" : "Master-Mixer Hierarchy";
+                string audioObjFolderName = WwiseCache.wwiseVersion.StartsWith("2025") ? "Containers" : "Actor-Mixer Hierarchy";
+                string busFolderName = WwiseCache.wwiseVersion.StartsWith("2025") ? "Busses" : "Master-Mixer Hierarchy";
 
                 // Build the full path of the Audio object folder
                 string audioObjWWUFolderPath = System.IO.Path.Combine(projectFolder, audioObjFolderName);
@@ -140,7 +138,7 @@ namespace HDRPriorityViewer
 
                 string eventsWWUFolderPath = System.IO.Path.Combine(projectFolder, "Events");
 
-                Log.Info($"Wwise version: {wwiseVersion}");
+                Log.Info($"Wwise version: {WwiseCache.wwiseVersion}");
                 Log.Info($"Project folder path: {projectFolder}");
                 Log.Info($"Events folder path: {eventsWWUFolderPath}");
                 Log.Info($"Audio object folder path: {audioObjWWUFolderPath}");
@@ -148,7 +146,7 @@ namespace HDRPriorityViewer
 
                 WWUParser.SetProjectFolderPaths(eventsWWUFolderPath, audioObjWWUFolderPath, busWWUFolderPath);
 
-                WriteDataToUI(wwiseVersion, displayTitle);
+                WriteDataToUI(WwiseCache.wwiseVersion, displayTitle);
             }
             catch (Exception e)
             {

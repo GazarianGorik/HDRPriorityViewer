@@ -124,6 +124,11 @@ namespace HDRPriorityViewer
                     {
                         MainWindow.Instance.MainViewModel.ChartViewModel.UpdateHighlightedPointPoistion();
                     });
+                    
+                    await MainWindow.Instance.DispatcherQueue.EnqueueAsync(() =>
+                    {
+                        MainWindow.Instance.MainViewModel.ChartViewModel.UpdateBorders();
+                    });
                 }
                 catch (Exception ex)
                 {

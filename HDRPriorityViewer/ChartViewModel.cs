@@ -53,6 +53,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
             YToolTipLabelFormatter = null,
         };
 
+        _borderSerie.IsHoverable = false;
         Series = new ObservableCollection<ISeries> { };
     }
 
@@ -427,10 +428,9 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     public void UpdateBorders()
     {
-        Log.Info("Updating chart borders...");
-        double maxY = double.MinValue;
-        double maxX = double.MinValue;
-        double minX = double.MaxValue;
+        double maxY = 0;
+        double maxX = 5;
+        double minX = 0;
 
         int pointsCount = 0;
 
@@ -482,7 +482,6 @@ public partial class ChartViewModel : INotifyPropertyChanged
                 new ObservablePoint(maxX, maxY),
                 new ObservablePoint(minX, maxY)
             };
-
             if (!Series.Contains(_borderSerie))
                 Series.Add(_borderSerie);
         });

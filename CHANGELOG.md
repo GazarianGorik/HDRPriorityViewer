@@ -8,5 +8,4 @@
 - Chart borders are now correctly updated
 
 ## [v0.1.0] - 2025-09-10
-### Added
 - Initial pre-release

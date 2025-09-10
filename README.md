@@ -62,7 +62,7 @@ You can **hide or highlight specific elements** using the left pannel filters & 
 
 > [!TIP]
 > Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unnecessary elements.  
-> It's recommended to click on "apply the default filter" (first one in the list) if this popup shows-up after the analyze.  
+> It's recommended to click on "Apply default filter" (first one in the list) if this popup shows-up after the analyze.  
 > <p align="left">
 > <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
 </p>

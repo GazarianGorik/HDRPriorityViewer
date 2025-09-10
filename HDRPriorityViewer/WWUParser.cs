@@ -804,9 +804,14 @@ namespace HDRPriorityViewer
             if (xtractFromRTPC)
             {
                 var rtpcs = obj.Element("ObjectLists")?
-                               .Elements("ObjectList")
-                               .Where(ol => (string)ol.Attribute("Name") == "RTPC")
-                               .Elements("RTPC");
+               .Elements("ObjectList")
+               .Where(ol => (string)ol.Attribute("Name") == "RTPC")
+               .SelectMany(ol =>
+                   // cas 1 : Wwise 2025
+                   ol.Elements("RTPC")
+                   // cas 2 : Wwise 2024
+                   .Concat(ol.Descendants("Local").Elements("RTPC"))
+               );
 
                 if (rtpcs != null)
                 {

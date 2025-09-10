@@ -6,33 +6,6 @@ It provides a clear overview of your project and lets you open elements directly
 > The following GIFs and screenshots do not represent typical usage of the tool. They were captured using the Wwise Limbo sample project — which is not an HDR project — with the HDR option enabled on one of the main busses. 💥  
 > I chose this project simply because it provided a large session to test with, allowing me to explore the tool’s limits and refine it.
 
-> [!TIP]
-> You can access GitHub’s built-in table of contents from the header filters in the top-right corner.
-
-<!--I - [Getting Started](#i---getting-started)  
- A) [Downloads](#a-downloads)  
- B) [Setup & Connection](#b-setup--connection)  
- C) [Chart controls](#c-chart-controls)  
-  1) [Search & Filters](#1-search--filters)  
-  2) [Zoom & Pan](#2-zoom--pan)  
-  3) [Chart points](#3-chart-points)  
- D) [Chart Display](#d-chart-display)  
-  1) [Display logic](#1-display-logic)  
-  2) [Priority value](#2-priority-value)  
-  3) [Priority range](#3-priority-range)  
-
-II - [How it works](#ii---how-it-works)  
- A) [WAAPI Data Retrieval](#a-waapi-data-retrieval)  
- B) [Project Scanning](#b-project-scanning)  
-
-III - [Is it safe to use?](#iii---is-it-safe-to-use)  
-
-IV - [Known issues](#iv---known-issues)  
-
-V - [Credits](#v---credits)  
-
-VI - [License](#vi---license) -->
-
 <br>
 
 ## I - Getting Started

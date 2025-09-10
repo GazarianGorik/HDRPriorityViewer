@@ -169,9 +169,9 @@ Not Allowed
       <br>
          Copyright © 2025 Gorik Gazarian - 
          This project is licensed under the 
-         <a href="https://polyformproject.org/licenses/internal-use/1.0.0/">PolyForm Internal Use License 1.0.0</a> - 
-         For full details, see the 
-         <a href="./LICENSE">LICENSE file in this repository</a>
+         <a href="https://polyformproject.org/licenses/internal-use/1.0.0/">PolyForm Internal Use License 1.0.0</a>  
+          - For full details, see the 
+         <a href="./LICENSE">LICENSE file.</a>
       <br>
    </p>
 </sub>

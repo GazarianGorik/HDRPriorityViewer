@@ -12,6 +12,10 @@ on:
         required: true
         type: boolean
         default: true
+      changelog:
+        description: "Changelog"
+        required: true
+        default: ""
 
 jobs:
   build:
@@ -57,5 +61,8 @@ jobs:
             ✅ The attached executable was generated directly from the source code in this repository.  
             🔒 This ensures that the binary matches the published source code and has not been manually modified.  
             📝 A SHA256 checksum is also provided to verify file integrity.
+
+            💫 Changelog:
+            ${{ github.event.inputs.changelog }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

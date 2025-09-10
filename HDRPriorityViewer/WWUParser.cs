@@ -67,7 +67,6 @@ namespace HDRPriorityViewer
             busWWUFolderPath = string.Empty;
         }
 
-
         public static void SetProjectFolderPaths(string _eventsWWUFolderPath, string _audioObjWWUFolderPath, string _busWWUFolderPath)
         {
             eventsWWUFolderPath = _eventsWWUFolderPath;
@@ -115,7 +114,6 @@ namespace HDRPriorityViewer
 
             Log.Info($"Cached {WwiseCache.busesByIdCache.Count} buses.");
         }
-
 
         /// <summary>
         /// Traverses the Bus hierarchy (OutputBus → parent → root HDR)
@@ -240,8 +238,6 @@ namespace HDRPriorityViewer
             return actionsWithTargets;
         }
 
-        #region Algorithme optimisé (flowchart)
-
         private static List<XElement> GetHDRTargetsWithFlowchartLogic(XElement root)
         {
             var result = new List<XElement>();
@@ -253,10 +249,10 @@ namespace HDRPriorityViewer
 
             MainWindow.Instance.loadingDialog?.SetDetailsText($"Processing {audioObjName}...");
 
-            // 🔹 Récupérer TOUS les leafs valides
-            var validLeafs = FindAllValidLeafs(root, cache);
+            // 🔹 Récupérer TOUS les leaves valides
+            var validLeaves = FindAllValidLeaves(root, cache);
 
-            if (!validLeafs.Any())
+            if (!validLeaves.Any())
             {
                 var rid = root.Attribute("ID")?.Value;
                 if (!string.IsNullOrEmpty(rid))
@@ -264,11 +260,11 @@ namespace HDRPriorityViewer
                     result.Add(root);
                 }
 
-                Log.Info("No valid leafs found, returning root only.");
+                Log.Info("No valid leaves found, returning root only.");
                 return result;
             }
 
-            Log.Info($"Found {validLeafs.Count} valid leafs.");
+            Log.Info($"Found {validLeaves.Count} valid leaves.");
 
             void ProcessParent(XElement parent)
             {
@@ -313,7 +309,7 @@ namespace HDRPriorityViewer
             }
 
 
-            foreach (var leaf in validLeafs)
+            foreach (var leaf in validLeaves)
             {
                 Log.Info($"Processing branch from leaf: {leaf.Attribute("Name")?.Value} ({leaf.Attribute("ID")?.Value})");
                 if (leaf.Parent?.Parent != null)
@@ -331,11 +327,11 @@ namespace HDRPriorityViewer
         }
 
         /// <summary>
-        /// Trouve tous les leafs qui ont un setup volume spécifique.
+        /// Trouve tous les leaves qui ont un setup volume spécifique.
         /// </summary>
-        private static List<XElement> FindAllValidLeafs(XElement root, Dictionary<string, bool> cache)
+        private static List<XElement> FindAllValidLeaves(XElement root, Dictionary<string, bool> cache)
         {
-            var validLeafs = new List<XElement>();
+            var validLeaves = new List<XElement>();
             var stack = new Stack<(XElement node, int depth)>();
             stack.Push((root, 0));
 
@@ -345,7 +341,7 @@ namespace HDRPriorityViewer
 
                 if (node != root && HasSpecificVoiceVolumeSetupCached(node, cache))
                 {
-                    validLeafs.Add(node);
+                    validLeaves.Add(node);
                 }
 
                 foreach (var child in GetImmediateChildren(node))
@@ -354,7 +350,7 @@ namespace HDRPriorityViewer
                 }
             }
 
-            return validLeafs;
+            return validLeaves;
         }
 
         private static bool HasSpecificVoiceVolumeSetupCached(XElement e, Dictionary<string, bool> cache)
@@ -463,7 +459,6 @@ namespace HDRPriorityViewer
             Log.Info($"No specific volume setup found for {obj.Attribute("Name")?.Value ?? "Unknown"}");
             return false;
         }
-        #endregion
 
         #region RTPC Preloading (parse audio object WWU once)
 
@@ -605,7 +600,6 @@ namespace HDRPriorityViewer
             return match;
         }
 
-
         private static SKColor GetColorBasedOnIndexAndPaletteRange(int paletteRange, int index)
         {
             // Pastel palette generated in HSL -> SKColor
@@ -643,20 +637,20 @@ namespace HDRPriorityViewer
                         var objects = doc.Descendants()
                             .Where(e => e.Name == "ActorMixer" || e.Name == "Sound" ||
                                         e.Name == "RandomSequenceContainer" || e.Name == "BlendContainer" ||
-                                        e.Name == "SwitchContainer");
+                                        e.Name == "SwitchContainer" || e.Name == "Folder");
 
                         foreach (var obj in objects)
                         {
                             var id = obj.Attribute("ID")?.Value;
                             if (string.IsNullOrEmpty(id))
                             {
-
                                 Log.Warning($"{obj.Attribute("Name")?.Value} has been ignored due to null or empty ID");
                                 continue;
                             }
 
                             // Add to the raw object cache
                             WwiseCache.audioObjectsByIdCache[id] = obj;
+                            Log.Info($"{id} {obj.Name} added to cache!");
 
                             // Add audio object → bus link
                             WwiseCache.outputBusCache.TryAdd(id, GetOutputBus(obj));
@@ -737,8 +731,6 @@ namespace HDRPriorityViewer
             return lastBus;
         }
 
-
-
         /// <summary>
         /// Traverses the hierarchy and accumulates:
         /// - VoiceVolume of the object and its parents up to the HDR bus
@@ -761,7 +753,12 @@ namespace HDRPriorityViewer
                 totalMax += contrib.max;
 
                 // Move up to the parent
-                currentId = obj.Parent?.Parent?.Attribute("ID")?.Value;
+                obj = obj.Parent;
+                while (obj != null && obj.Name == "ChildrenList")
+                {
+                    obj = obj.Parent;
+                }
+                currentId = obj?.Attribute("ID")?.Value;
             }
 
             if (WwiseCache.outputBusCache.TryGetValue(id, out string? outputBusId))

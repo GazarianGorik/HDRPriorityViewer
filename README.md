@@ -7,7 +7,7 @@ It provides a clear overview of your project and lets you open elements directly
 > I chose this project simply because it provided a large session to test with, allowing me to explore the tool’s limits and refine it.
 
 > [!TIP]
-> Open and navigate GitHub’s built-in table of contents using the header filters in the top-right corner.
+> You can access GitHub’s built-in table of contents from the header filters in the top-right corner.
 
 <!--I - [Getting Started](#i---getting-started)  
  A) [Downloads](#a-downloads)  

@@ -12,14 +12,10 @@ on:
         required: true
         type: boolean
         default: true
-      changelog:
-        description: "Changelog"
-        required: true
-        default: ""
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source
@@ -45,6 +41,23 @@ jobs:
       - name: Generate SHA256 checksum
         run: Get-FileHash publish/HDRPriorityViewer.zip -Algorithm SHA256 | Out-File publish/checksum.txt
 
+      - name: Extract changelog for current version
+        id: extract_changelog
+        run: |
+          version="${{ github.event.inputs.version }}"
+          echo "Searching changelog for $version"
+
+          # On capture toutes les lignes depuis "## [version]" jusqu'à la prochaine "## ["
+          content=$(awk -v ver="## [$version]" '
+            $0 ~ ver {flag=1; next}
+            /^## \[/ && flag {flag=0}
+            flag
+          ' CHANGELOG.md)
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -63,6 +76,6 @@ jobs:
             📝 A SHA256 checksum is also provided to verify file integrity.
 
             💫 Changelog:
-            ${{ github.event.inputs.changelog }}
+            ${{ steps.extract_changelog.outputs.changelog }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

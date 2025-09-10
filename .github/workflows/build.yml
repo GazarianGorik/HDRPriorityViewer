@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout source
@@ -43,20 +43,33 @@ jobs:
 
       - name: Extract changelog for current version
         id: extract_changelog
+        shell: pwsh
         run: |
-          version="${{ github.event.inputs.version }}"
-          echo "Searching changelog for $version"
+          $version = "${{ github.event.inputs.version }}"
+          Write-Output "Searching changelog for $version"
 
-          # On capture toutes les lignes depuis "## [version]" jusqu'à la prochaine "## ["
-          content=$(awk -v ver="## [$version]" '
-            $0 ~ ver {flag=1; next}
-            /^## \[/ && flag {flag=0}
-            flag
-          ' CHANGELOG.md)
+          $lines = Get-Content CHANGELOG.md
+          $inBlock = $false
+          $content = @()
 
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$content" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          foreach ($line in $lines) {
+            if ($line -match "## \[$version\]") {
+              $inBlock = $true
+              continue
+            }
+            elseif ($line -match "^## \[" -and $inBlock) {
+              break
+            }
+            if ($inBlock) {
+              $content += $line
+            }
+          }
+
+          $joined = $content -join "`n"
+          echo "changelog<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$joined" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2

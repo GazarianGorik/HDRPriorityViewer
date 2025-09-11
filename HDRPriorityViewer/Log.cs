@@ -40,6 +40,15 @@ public static class Log
     {
         Debug.WriteLine("[TEMP] " + message);
     }
+    public static void TempOverridedPopup(string message)
+    {
+        Debug.WriteLine("[TEMP] " + message);
+
+        MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
+        {
+            await MainWindow.Instance.EnqueueDialogAsync("[Debug Popup] (you should not see this message!)", $"{message}", true, "Ok");
+        });
+    }
 
     public static void Info(string message)
     {
@@ -57,7 +66,7 @@ public static class Log
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
         {
-            await MainWindow.Instance.EnqueueDialogAsync("Error", $"{message}", true);
+            await MainWindow.Instance.EnqueueDialogAsync("Error", $"{message}", true, "Ok");
         });
     }
 
@@ -67,7 +76,7 @@ public static class Log
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
         {
-            await MainWindow.Instance.EnqueueDialogAsync("Error", $"{ex.Message}\n{ex.ToString()}", true);
+            await MainWindow.Instance.EnqueueDialogAsync("Error", $"{ex.Message}\n{ex.ToString()}", true, "Ok");
         });
     }
 }

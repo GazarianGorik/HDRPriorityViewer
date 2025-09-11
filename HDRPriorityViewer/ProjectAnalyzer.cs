@@ -81,16 +81,15 @@ namespace HDRPriorityViewer
                             "Potential Performance Issue",
                             message,
                             false,
-                            "Apply default filter",
+                            null,
                             "Proceed anyway",
-                            (Microsoft.UI.Xaml.Style)Application.Current.Resources["ValidateButton"],
-                            (Microsoft.UI.Xaml.Style)Application.Current.Resources["RiskyButton"]);
+                            "Apply default filter",
+                            null,
+                            (Microsoft.UI.Xaml.Style)Application.Current.Resources["RiskyButton"],
+                            (Microsoft.UI.Xaml.Style)Application.Current.Resources["ValidateButton"]);
                         });
 
-                        // This looks weird but it's correct, None is the close button which is Apply default filter here cause I want it to the right side
-                        // I cant use primary / secondary cause primary is only used for copy
-                        // TODO, clean up this mess 
-                        if (result == ContentDialogResult.None)
+                        if (result == ContentDialogResult.Secondary)
                         {
                             needToApplyDefaultFilter = true;
                         }

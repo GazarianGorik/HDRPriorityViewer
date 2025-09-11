@@ -83,5 +83,6 @@
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <WindowsPackageType>None</WindowsPackageType>
     <ApplicationIcon>HDRPriorityViewer_Icon.ico</ApplicationIcon>
+    <Version>0.3.0</Version>
   </PropertyGroup>
 </Project>

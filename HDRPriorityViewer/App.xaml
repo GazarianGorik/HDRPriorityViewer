@@ -18,7 +18,7 @@
             <Style x:Key="RiskyButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
                 <Setter Property="Background" Value="{ThemeResource SystemFillColorCriticalBackgroundBrush}"/>
             </Style>
-            <Style x:Key="ValidateButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Style x:Key="ValidateButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
             </Style>
         </ResourceDictionary>
     </Application.Resources>

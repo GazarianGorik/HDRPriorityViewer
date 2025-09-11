@@ -13,6 +13,8 @@
 #                                                                             #
 ******************************************************************************/
 
+using System;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace HDRPriorityViewer.Views
@@ -48,6 +50,26 @@ namespace HDRPriorityViewer.Views
                 {
                     DetailsMessage.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
                 }
+            });
+        }
+
+        private void ContentDialog_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Attendre que le layout soit finalisé
+            this.DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+            {
+                var grid = (Grid)this.Content;
+                var size = Math.Min(grid.ActualWidth, grid.ActualHeight);
+                SquareContainer.Width = size;
+                SquareContainer.Height = size * 2 / 3;
+
+                // S'abonner au changement de taille si le dialog est redimensionné
+                grid.SizeChanged += (s, args) =>
+                {
+                    var newSize = Math.Min(grid.ActualWidth, grid.ActualHeight);
+                    SquareContainer.Width = newSize;
+                    SquareContainer.Height = newSize * 2 / 3;
+                };
             });
         }
     }

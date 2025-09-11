@@ -88,6 +88,8 @@ namespace HDRPriorityViewer
 
             LoadAppIcon();
 
+            RootGrid.Loaded += OnAppLoaded;
+
             this.AppWindow.Closing += AppWindow_Closing;
 
             // Maximize window
@@ -153,6 +155,19 @@ namespace HDRPriorityViewer
             Chart.YAxes.FirstOrDefault().SeparatorsPaint = new SolidColorPaint(separatorColor, 0.4f);
             Chart.YAxes.FirstOrDefault().NamePaint = new SolidColorPaint(namePaintColor, 1);
             Chart.YAxes.FirstOrDefault().LabelsPaint = new SolidColorPaint(labelsPaintColor, 1);
+        }
+
+        private async void OnAppLoaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                await UpdateManager.CheckForUpdateAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+                throw;
+            }
         }
 
         public ElementTheme GetCurrentTheme()
@@ -228,7 +243,7 @@ namespace HDRPriorityViewer
 
         IAsyncOperation<ContentDialogResult> _connectDialogTask;
 
-        private void OpenLoadingDialog(string loadingText, string detailsText)
+        public void OpenLoadingDialog(string loadingText, string detailsText)
         {
             loadingDialog = new LoadingDialog
             {
@@ -239,7 +254,7 @@ namespace HDRPriorityViewer
             _connectDialogTask = loadingDialog.ShowAsync();
         }
 
-        private async Task CloseLoadingDialog()
+        public async Task CloseLoadingDialog()
         {
             if (loadingDialog != null)
             {
@@ -256,8 +271,8 @@ namespace HDRPriorityViewer
             if (await EnqueueDialogAsync("Wwise project changes detected!",
             "You may want to first save your Wwise project to analyze the current state of your Wwise session.\nClick OK once you saved it.",
             false,
-            "Ok",
-            "Cancel") == ContentDialogResult.Secondary)
+            "Cancel",
+            "Ok") == ContentDialogResult.Primary)
             {
                 AnalyzeButton.IsEnabled = true;
                 return;
@@ -484,7 +499,7 @@ namespace HDRPriorityViewer
             }
         }
 
-        private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
+        private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
         {
             new Thread(() =>
             {
@@ -499,21 +514,25 @@ namespace HDRPriorityViewer
             }).Start();
         }
 
-        private readonly ConcurrentQueue<(string Title, string Message, string CloseText, bool allowCopy, string? SecondaryText,
-            TaskCompletionSource<ContentDialogResult> Tcs, Style CloseButtonStyle, Style SecondaryButtonStyle)> _dialogQueue = new();
+        private readonly ConcurrentQueue<(string Title, string Message, bool canCopyMessage, string? CloseText, string? PrimaryText, string? SecondaryText,
+            TaskCompletionSource<ContentDialogResult> Tcs, Style? CloseButtonStyle, Style? PrimaryButtonStyle, Style? SecondaryButtonStyle, TextBlock? overridingMessageTextBlock)> _dialogQueue = new();
+
         private bool _isDialogOpen = false;
 
         public Task<ContentDialogResult> EnqueueDialogAsync(
             string title,
             string message,
-            bool allowCopy,
-            string closeButtonText = "OK",
+            bool canCopyMessage,
+            string? closeButtonText = null,
+            string? primaryButtonText = null,
             string? secondaryButtonText = null,
-            Style closeButtonStyle = null,
-            Style secondaryButtonStyle = null)
+            Style? closeButtonStyle = null,
+            Style? primaryButtonStyle = null,
+            Style? secondaryButtonStyle = null,
+            TextBlock? overridingMessageTextBlock = null)
         {
             var tcs = new TaskCompletionSource<ContentDialogResult>();
-            _dialogQueue.Enqueue((title, message, closeButtonText, allowCopy, secondaryButtonText, tcs, closeButtonStyle, secondaryButtonStyle));
+            _dialogQueue.Enqueue((title, message, canCopyMessage, closeButtonText, primaryButtonText, secondaryButtonText, tcs, closeButtonStyle, primaryButtonStyle, secondaryButtonStyle, overridingMessageTextBlock));
             _ = ProcessDialogQueueAsync();
             return tcs.Task;
         }
@@ -544,13 +563,30 @@ namespace HDRPriorityViewer
                         var dialog = new ContentDialog
                         {
                             Title = item.Title,
-                            Content = new TextBlock { Text = item.Message, TextWrapping = TextWrapping.Wrap },
-                            CloseButtonText = item.CloseText,
+                            Content = item.overridingMessageTextBlock ?? new TextBlock { Text = item.Message, TextWrapping = TextWrapping.Wrap },
                             XamlRoot = this.Content.XamlRoot
                         };
 
-                        if (item.allowCopy)
+                        // Close Button
+                        if (!string.IsNullOrWhiteSpace(item.CloseText))
                         {
+                            if (item.CloseButtonStyle != null)
+                                dialog.CloseButtonStyle = item.CloseButtonStyle;
+                        }
+
+                        dialog.CloseButtonText = item.CloseText;
+
+                        // Primary Button
+                        if (!string.IsNullOrWhiteSpace(item.PrimaryText))
+                        {
+                            dialog.PrimaryButtonText = item.PrimaryText;
+
+                            if (item.PrimaryButtonStyle != null)
+                                dialog.PrimaryButtonStyle = item.PrimaryButtonStyle;
+                        }
+                        else if (item.canCopyMessage)
+                        {
+                            // Copy Button
                             dialog.PrimaryButtonText = "Copy";
                             dialog.PrimaryButtonClick += (sender, args) =>
                             {
@@ -563,14 +599,15 @@ namespace HDRPriorityViewer
                             };
                         }
 
-                        if (item.CloseButtonStyle != null)
-                            dialog.CloseButtonStyle = item.CloseButtonStyle;
-
-                        if (item.SecondaryButtonStyle != null)
-                            dialog.SecondaryButtonStyle = item.SecondaryButtonStyle;
-
+                        // Secondary Button
                         if (!string.IsNullOrWhiteSpace(item.SecondaryText))
+                        {
                             dialog.SecondaryButtonText = item.SecondaryText;
+
+                            if (item.SecondaryButtonStyle != null)
+                                dialog.SecondaryButtonStyle = item.SecondaryButtonStyle;
+                        }
+
 
                         return await dialog.ShowAsync();
                     });

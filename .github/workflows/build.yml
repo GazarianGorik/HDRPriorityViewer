@@ -82,13 +82,14 @@ jobs:
             publish/HDRPriorityViewer.zip
             publish/checksum.txt
           body: |
+            ### **Changelog** 💫
+            ${{ steps.extract_changelog.outputs.changelog }}
+            ##
+            
             🚀 This release was automatically built and published by [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions).
 
             ✅ The attached executable was generated directly from the source code in this repository.  
             🔒 This ensures that the binary matches the published source code and has not been manually modified.  
             📝 A SHA256 checksum is also provided to verify file integrity.
-
-            💫 Changelog:
-            ${{ steps.extract_changelog.outputs.changelog }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

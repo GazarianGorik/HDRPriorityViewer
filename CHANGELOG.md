@@ -1,6 +1,10 @@
 # Changelog
 
-## [v0.3.0] - 2025-09-11
+## [v0.3.1] - 2025-09-12
+### Changed
+- Pre-release tag added to update popup if the update is a pre-release
+  
+## [v0.3.0] - 2025-09-12
 ### Added
 - Bug report & donate buttons
 - App auto updated

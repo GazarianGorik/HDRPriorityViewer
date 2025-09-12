@@ -53,10 +53,12 @@ jobs:
           $content = @()
 
           foreach ($line in $lines) {
-            if ($line -match "## \[$version\]") {
+            # Start capturing when the line matches the version
+            if ($line -match "^## \[\Q$version\E\]") {
               $inBlock = $true
               continue
             }
+            # Stop if we reach the next version
             elseif ($line -match "^## \[" -and $inBlock) {
               break
             }
@@ -66,10 +68,12 @@ jobs:
           }
 
           $joined = $content -join "`n"
+
+          $joined = $joined -replace '^### (Changed|Added|Removed|Initial)', '#### $1'
+
           echo "changelog<<EOF" >> $env:GITHUB_OUTPUT
           echo "$joined" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
-
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2

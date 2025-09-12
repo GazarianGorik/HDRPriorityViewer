@@ -20,9 +20,21 @@ internal class UpdateManager
 {
     public static async Task CheckForUpdateAsync()
     {
-        var release = await GetLatestReleaseAsync(true);
+        var releases = await GetReleasesAsync(true);
+        var latestRelease = releases.FirstOrDefault();
 
-        var latestVersion = new Version(release.tag_name.TrimStart('v'));
+        if (latestRelease == null)
+        {
+            Log.Error("Latest release: null");
+            return;
+        }
+
+        var latestVersion = new Version(latestRelease.tag_name.TrimStart('v'));
+
+        var localVersion = AppUtility.GetAppVersion();
+        var changelog = await GetNewerChangelogSectionsAsync(localVersion, true);
+
+        string prereleaseText = latestRelease.prerelease ? " [Pre-release]" : "";
 
         if (latestVersion == null)
         {
@@ -30,19 +42,13 @@ internal class UpdateManager
             return;
         }
 
-        var zipAsset = release.assets.FirstOrDefault(a => a.name.EndsWith(".zip"));
+        var zipAsset = latestRelease.assets.FirstOrDefault(a => a.name.EndsWith(".zip"));
 
         if (zipAsset == null)
         {
             Log.Error("zipAsset: null");
             return;
         }
-
-        string prereleaseText = release.prerelease ? " [Pre-release]" : "";
-        var changelog = GetChangelogSections(release.body);
-
-        var localVersion = AppUtility.GetAppVersion();
-
 
         Log.Info($"Current version {localVersion} / latest version {latestVersion}");
 
@@ -63,7 +69,7 @@ internal class UpdateManager
 
             foreach (var kv in changelog)
             {
-                textBlock.Inlines.Add("\n");
+                textBlock.Inlines.Add("\n\n");
                 textBlock.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run
                 {
                     FontWeight = FontWeights.Bold,
@@ -108,7 +114,7 @@ internal class UpdateManager
         }
     }
 
-    static async Task<GitHubRelease?> GetLatestReleaseAsync(bool includePrerelease)
+    static async Task<List<GitHubRelease>> GetReleasesAsync(bool includePrerelease)
     {
         using var client = new HttpClient();
         client.DefaultRequestHeaders.UserAgent.ParseAdd("HDRPriorityViewer");
@@ -116,19 +122,39 @@ internal class UpdateManager
         var json = await client.GetStringAsync("https://api.github.com/repos/gazariangorik/HDRPriorityViewer/releases");
         var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json);
 
-        var latest = releases
+        return releases
             .Where(r => !r.draft)
             .Where(r => includePrerelease || !r.prerelease)
-            .FirstOrDefault();
+            .OrderByDescending(r => new Version(r.tag_name.TrimStart('v')))
+            .ToList();
+    }
 
-        if (latest != null && latest.assets != null && latest.assets.Count > 0)
+    static async Task<Dictionary<string, List<string>>> GetNewerChangelogSectionsAsync(Version localVersion, bool includePrerelease)
+    {
+        var releases = await GetReleasesAsync(includePrerelease);
+
+        var result = new Dictionary<string, List<string>>();
+
+        foreach (var release in releases)
         {
-            // par exemple, prendre le premier asset
-            var downloadUrl = latest.assets[0].browser_download_url;
-            Console.WriteLine("Download URL: " + downloadUrl);
+            var releaseVersion = new Version(release.tag_name.TrimStart('v'));
+
+            if (releaseVersion > localVersion)
+            {
+                var changelog = GetChangelogSections(release.body);
+
+                // Merge sections into result
+                foreach (var kv in changelog)
+                {
+                    if (!result.ContainsKey(kv.Key))
+                        result[kv.Key] = new List<string>();
+
+                    result[kv.Key].AddRange(kv.Value);
+                }
+            }
         }
 
-        return latest;
+        return result;
     }
 
     static async Task UpdateFromZipAsync(string downloadUrl)
@@ -188,13 +214,11 @@ internal class UpdateManager
                                     echo Step 3: Deleting extracted folder...
                                     rmdir /s /q ""{tempExtract}""
 
-                                    echo Step 5: Restarting application...
+                                    echo Step 4: Restarting application...
                                     start """" ""{Process.GetCurrentProcess().MainModule.FileName}""
 
-                                    echo Update complete.
-
                                     :: Countdown before auto-destruction
-                                    echo Step 4: Auto-destruction...
+                                    echo Step 5: Auto-destruction...
                                     for /L %%i in (2,-1,1) do (
                                         echo %%i...
                                         timeout /t 1 /nobreak > nul

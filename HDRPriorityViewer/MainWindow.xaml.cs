@@ -159,6 +159,8 @@ namespace HDRPriorityViewer
 
         private async void OnAppLoaded(object sender, RoutedEventArgs e)
         {
+            DispatcherQueue.TryEnqueue(() => mainWindowUIElement.Title = $"HDR Priority Viewer - {AppUtility.GetAppVersion()}");
+
             try
             {
                 await UpdateManager.CheckForUpdateAsync();
@@ -168,8 +170,6 @@ namespace HDRPriorityViewer
                 Log.Error(ex);
                 throw;
             }
-
-            DispatcherQueue.TryEnqueue(() => mainWindowUIElement.Title = $"HDR Priority Viewer - {AppUtility.GetAppVersion()}");
         }
 
         public ElementTheme GetCurrentTheme()

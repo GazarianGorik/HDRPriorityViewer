@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (example: v1.0.0)"
+        description: "Release version"
         required: true
-        default: "v0.1.0"
+        default: ""
       prerelease:
         description: "Mark as pre-release?"
         required: true

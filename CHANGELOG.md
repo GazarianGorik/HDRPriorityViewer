@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.3]
+#### Added
+- Tool update popup now displays cumulative changelogs
+
 ## [v0.3.2]
 #### Added
 - Tool version added to the main window title

@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.2]
+#### Added
+- Tool version added to the main window title
+
 ## [v0.3.1]
 #### Changed
 - Pre-release tag added to update popup if the update is a pre-release

@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 
 namespace HDRPriorityViewer
@@ -75,6 +76,12 @@ namespace HDRPriorityViewer
             }
 
             Log.Info("All caches and state have been reset for a fresh rescan.");
+        }
+
+        public static Version GetAppVersion()
+        {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            return new Version(version.Major, version.Minor, version.Build);
         }
     }
 }

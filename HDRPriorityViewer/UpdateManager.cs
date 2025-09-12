@@ -18,11 +18,6 @@ using Windows.UI.Text;
 namespace HDRPriorityViewer;
 internal class UpdateManager
 {
-    public static Version GetAppVersion()
-    {
-        return Assembly.GetExecutingAssembly().GetName().Version;
-    }
-
     public static async Task CheckForUpdateAsync()
     {
         var release = await GetLatestReleaseAsync(true);
@@ -46,8 +41,7 @@ internal class UpdateManager
         string prereleaseText = release.prerelease ? " [Pre-release]" : "";
         var changelog = GetChangelogSections(release.body);
 
-        var local = GetAppVersion();
-        var localVersion = new Version(local.Major, local.Minor, local.Build);
+        var localVersion = AppUtility.GetAppVersion();
 
 
         Log.Info($"Current version {localVersion} / latest version {latestVersion}");

@@ -52,13 +52,16 @@ jobs:
           $inBlock = $false
           $content = @()
 
+          # Escape [ and ] for regex
+          $escapedVersion = [Regex]::Escape($version)
+
           foreach ($line in $lines) {
-            # Start capturing when the line matches the version
-            if ($line -match "^## \[\Q$version\E\]") {
+            # Start capturing when the line matches the version header
+            if ($line -match "^## \[$escapedVersion\]") {
               $inBlock = $true
               continue
             }
-            # Stop if we reach the next version
+            # Stop when the next version header is found
             elseif ($line -match "^## \[" -and $inBlock) {
               break
             }
@@ -68,8 +71,6 @@ jobs:
           }
 
           $joined = $content -join "`n"
-
-          $joined = $joined -replace '^### (Changed|Added|Removed|Initial)', '#### $1'
 
           echo "changelog<<EOF" >> $env:GITHUB_OUTPUT
           echo "$joined" >> $env:GITHUB_OUTPUT

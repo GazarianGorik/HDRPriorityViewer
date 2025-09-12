@@ -43,6 +43,7 @@ internal class UpdateManager
             return;
         }
 
+        string prereleaseText = release.prerelease ? " [Pre-release]" : "";
         var changelog = GetChangelogSections(release.body);
 
         var local = GetAppVersion();
@@ -57,7 +58,7 @@ internal class UpdateManager
 
             var textBlock = new Microsoft.UI.Xaml.Controls.TextBlock { TextWrapping = TextWrapping.Wrap};
 
-            textBlock.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = $"Latest release {latestVersion} is available, do you want to update now?\n" });
+            textBlock.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = $"Latest release {latestVersion}{prereleaseText} is available, do you want to update now?\n" });
             /*
             textBlock.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run
             {

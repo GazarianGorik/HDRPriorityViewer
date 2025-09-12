@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.3.0] - 2025-09-11
+### Added
+- Bug report & donate buttons
+- App auto updated
+
+### Changed
+- Fix : Typos
+- Fix : Low res app icon
+- Popup code cleaned
+
 ## [v0.2.0] - 2025-09-11
 ### Fixed
 - RTPC are now detected on Wwise 2024

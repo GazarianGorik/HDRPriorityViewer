@@ -16,7 +16,7 @@ It provides a clear overview of your project and lets you open elements directly
 [![Build](https://github.com/GazarianGorik/HDRPriorityViewer/actions/workflows/build.yml/badge.svg)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/tag/v0.2.0)
 
 > [!IMPORTANT]
-> On Windows 10, you may need to download and install [Latest Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) otherwise the app will crash at startup. 
+> You may need to download and install [Latest Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) otherwise the app will crash at startup. 
 
 ### **Setup & Connection**
    1) First, open your Wwise project and ensure that WAAPI is enabled.  

@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -13,7 +12,6 @@ using CSharpMarkup.WinUI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.UI.Text;
 
 namespace HDRPriorityViewer;
 internal class UpdateManager
@@ -34,7 +32,7 @@ internal class UpdateManager
         var localVersion = AppUtility.GetAppVersion();
         var changelog = await GetNewerChangelogSectionsAsync(localVersion, true);
 
-        string prereleaseText = latestRelease.prerelease ? " [Pre-release]" : "";
+        var prereleaseText = latestRelease.prerelease ? " [Pre-release]" : "";
 
         if (latestVersion == null)
         {
@@ -56,7 +54,7 @@ internal class UpdateManager
         {
             Log.Info("Maj found!");
 
-            var textBlock = new Microsoft.UI.Xaml.Controls.TextBlock { TextWrapping = TextWrapping.Wrap};
+            var textBlock = new Microsoft.UI.Xaml.Controls.TextBlock { TextWrapping = TextWrapping.Wrap };
 
             textBlock.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = $"Latest release {latestVersion}{prereleaseText} is available, do you want to update now?\n" });
             /*
@@ -95,7 +93,7 @@ internal class UpdateManager
                 result = await
                 MainWindow.Instance.EnqueueDialogAsync(
                     "New update available! 💫",
-                    null,
+                    "",
                     false,
                     null,
                     "Cancel",
@@ -114,19 +112,34 @@ internal class UpdateManager
         }
     }
 
-    static async Task<List<GitHubRelease>> GetReleasesAsync(bool includePrerelease)
+    static async Task<List<GitHubRelease>?> GetReleasesAsync(bool includePrerelease)
     {
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("HDRPriorityViewer");
+        try
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("HDRPriorityViewer");
 
-        var json = await client.GetStringAsync("https://api.github.com/repos/gazariangorik/HDRPriorityViewer/releases");
-        var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json);
+            var json = await client.GetStringAsync("https://api.github.com/repos/gazariangorik/HDRPriorityViewer/releases");
+            var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json);
 
-        return releases
-            .Where(r => !r.draft)
-            .Where(r => includePrerelease || !r.prerelease)
-            .OrderByDescending(r => new Version(r.tag_name.TrimStart('v')))
-            .ToList();
+
+
+            return releases?
+                .Where(r => !r.draft)
+                .Where(r => includePrerelease || !r.prerelease)
+                .OrderByDescending(r => new Version(r.tag_name.TrimStart('v')))
+                .ToList();
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("403"))
+        {
+            Log.Error("Check for update failed...\nGitHub rate limit reached, retrying next tool opening...");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Check for update failed: " + ex.Message);
+            return null;
+        }
     }
 
     static async Task<Dictionary<string, List<string>>> GetNewerChangelogSectionsAsync(Version localVersion, bool includePrerelease)
@@ -147,7 +160,9 @@ internal class UpdateManager
                 foreach (var kv in changelog)
                 {
                     if (!result.ContainsKey(kv.Key))
+                    {
                         result[kv.Key] = new List<string>();
+                    }
 
                     result[kv.Key].AddRange(kv.Value);
                 }
@@ -162,7 +177,7 @@ internal class UpdateManager
         var tempZip = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "HDRPriorityViewer.zip");
         var tempExtract = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "HDRPriorityViewer_update");
 
-        MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
+        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
             MainWindow.Instance.OpenLoadingDialog("Donwloading latest update from", $"{downloadUrl}");
         });
@@ -180,7 +195,7 @@ internal class UpdateManager
             await MainWindow.Instance.CloseLoadingDialog();
         });
 
-        MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
+        MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
             MainWindow.Instance.OpenLoadingDialog("Extracting file...", "HDRPriorityViewer.exe");
         });

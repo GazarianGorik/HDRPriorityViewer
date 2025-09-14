@@ -33,7 +33,7 @@ namespace AK.Wwise.Waapi
     /// </summary>
     public class JsonClient
     {
-        private AK.Wwise.Waapi.Client client = new AK.Wwise.Waapi.Client();
+        private readonly AK.Wwise.Waapi.Client client = new AK.Wwise.Waapi.Client();
 
         public delegate void PublishHandler(Newtonsoft.Json.Linq.JObject json);
 
@@ -57,7 +57,7 @@ namespace AK.Wwise.Waapi
         /// <example>Connect("ws://localhost:8080/waapi")</example>
         /// <param name="timeout">The maximum timeout in milliseconds for the function to execute. Will raise Waapi.TimeoutException when timeout is reached.</param>
         public async System.Threading.Tasks.Task Connect(
-            string uri = "ws://localhost:8080/waapi", 
+            string uri = "ws://localhost:8080/waapi",
             int timeout = System.Int32.MaxValue)
         {
             await client.Connect(uri, timeout);
@@ -87,14 +87,19 @@ namespace AK.Wwise.Waapi
         /// <param name="timeout">The maximum timeout in milliseconds for the function to execute. Will raise Waapi.TimeoutException when timeout is reached.</param>
         /// <returns>A Newtonsoft.Json.Linq.JObject with the result of the Remote Procedure Call.</returns>
         public async System.Threading.Tasks.Task<Newtonsoft.Json.Linq.JObject> Call(
-            string uri, object args = null, 
-            object options = null, 
+            string uri, object args = null,
+            object options = null,
             int timeout = System.Int32.MaxValue)
         {
             if (args == null)
+            {
                 args = new { };
+            }
+
             if (options == null)
+            {
                 options = new { };
+            }
 
             return await Call(uri, Newtonsoft.Json.Linq.JObject.FromObject(args), Newtonsoft.Json.Linq.JObject.FromObject(options), timeout);
         }
@@ -108,16 +113,21 @@ namespace AK.Wwise.Waapi
         /// <param name="timeout">The maximum timeout in milliseconds for the function to execute. Will raise Waapi.TimeoutException when timeout is reached.</param>
         /// <returns>A Newtonsoft.Json.Linq.JObject with the result of the Remote Procedure Call.</returns>
         public async System.Threading.Tasks.Task<Newtonsoft.Json.Linq.JObject> Call(
-            string uri, Newtonsoft.Json.Linq.JObject args, 
-            Newtonsoft.Json.Linq.JObject options, 
+            string uri, Newtonsoft.Json.Linq.JObject args,
+            Newtonsoft.Json.Linq.JObject options,
             int timeout = System.Int32.MaxValue)
         {
             if (args == null)
+            {
                 args = new Newtonsoft.Json.Linq.JObject();
-            if (options == null)
-                options = new Newtonsoft.Json.Linq.JObject();
+            }
 
-            string result = await client.Call(uri, args.ToString(), options.ToString(), timeout);
+            if (options == null)
+            {
+                options = new Newtonsoft.Json.Linq.JObject();
+            }
+
+            var result = await client.Call(uri, args.ToString(), options.ToString(), timeout);
 
             return Newtonsoft.Json.Linq.JObject.Parse(result);
         }
@@ -131,12 +141,14 @@ namespace AK.Wwise.Waapi
         /// <param name="timeout">The maximum timeout in milliseconds for the function to execute. Will raise Waapi.TimeoutException when timeout is reached.</param>
         /// <returns></returns>
         public async System.Threading.Tasks.Task<int> Subscribe(
-            string topic, object options, 
-            PublishHandler publishHandler, 
+            string topic, object options,
+            PublishHandler publishHandler,
             int timeout = System.Int32.MaxValue)
         {
             if (options == null)
+            {
                 options = new { };
+            }
 
             return await Subscribe(topic, Newtonsoft.Json.Linq.JObject.FromObject(options), publishHandler, timeout);
         }
@@ -150,13 +162,15 @@ namespace AK.Wwise.Waapi
         /// <param name="timeout">The maximum timeout in milliseconds for the function to execute. Will raise Waapi.TimeoutException when timeout is reached.</param>
         /// <returns>The subscription id assigned to the subscription. Store the id to call Unsubscribe.</returns>
         public async System.Threading.Tasks.Task<int> Subscribe(
-            string topic, 
-            Newtonsoft.Json.Linq.JObject options, 
-            PublishHandler publishHandler, 
+            string topic,
+            Newtonsoft.Json.Linq.JObject options,
+            PublishHandler publishHandler,
             int timeout = System.Int32.MaxValue)
         {
             if (options == null)
+            {
                 options = new Newtonsoft.Json.Linq.JObject();
+            }
 
             return await client.Subscribe(
                 topic,
@@ -164,7 +178,7 @@ namespace AK.Wwise.Waapi
                 (string json) =>
                 {
                     publishHandler(Newtonsoft.Json.Linq.JObject.Parse(json));
-                }, 
+                },
                 timeout);
         }
 
@@ -174,7 +188,7 @@ namespace AK.Wwise.Waapi
         /// <param name="subscriptionId">The subscription id received from the initial subscription.</param>
         /// <param name="timeout">The maximum timeout in milliseconds for the function to execute. Will raise Waapi.TimeoutException when timeout is reached.</param>
         public async System.Threading.Tasks.Task Unsubscribe(
-            int subscriptionId, 
+            int subscriptionId,
             int timeout = System.Int32.MaxValue)
         {
             await client.Unsubscribe(subscriptionId, timeout);

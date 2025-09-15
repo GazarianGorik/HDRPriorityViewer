@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.4]
+#### Added
+- Filter mod
+
+#### Changed
+- Fix: Chart update state
+- Fix: Check for update limits errors
+- Fix: Wwise reconnection error
+- UI minor adjustments
+
 ## [v0.3.3]
 #### Added
 - Tool update popup now displays cumulative changelogs

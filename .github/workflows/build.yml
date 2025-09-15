@@ -41,7 +41,17 @@ jobs:
         run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release --no-restore
 
       - name: Publish self-contained single-file exe
-        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o publish/ --no-restore
+        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj \
+             -c Release \
+             -r win-x64 \
+             --self-contained true \
+             -p:PublishSingleFile=true \
+             -p:IncludeAllContentForSelfExtract=true \
+             -p:DebugType=None \
+             -p:DebugSymbols=false \
+             -p:PublishReadyToRun=false \
+             -o publish/ \
+             --no-restore
 
       - name: Zip executable
         run: Compress-Archive -Path publish/HDRPriorityViewer.exe -DestinationPath publish/HDRPriorityViewer.zip

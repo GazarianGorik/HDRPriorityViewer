@@ -35,7 +35,8 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore HDRPriorityViewer/HDRPriorityViewer.csproj --disable-parallel
+        run: dotnet restore HDRPriorityViewer/HDRPriorityViewer.csproj --disable-parallel --verbosity minimal /p:RestoreTimeout=300
+
 
       - name: Build Release
         run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release --no-restore

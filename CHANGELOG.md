@@ -11,7 +11,7 @@
 - UI minor adjustments
 
 ## [v0.3.3]
-#### Added
+#### Changed
 - Tool update popup now displays cumulative changelogs
 
 ## [v0.3.2]

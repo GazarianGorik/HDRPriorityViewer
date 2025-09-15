@@ -26,14 +26,22 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
-        run: dotnet restore HDRPriorityViewer/HDRPriorityViewer.csproj
+        run: dotnet restore HDRPriorityViewer/HDRPriorityViewer.csproj --disable-parallel
 
       - name: Build Release
-        run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release
+        run: dotnet build HDRPriorityViewer/HDRPriorityViewer.csproj --configuration Release --no-restore
 
       - name: Publish self-contained single-file exe
-        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o publish/
+        run: dotnet publish HDRPriorityViewer/HDRPriorityViewer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o publish/ --no-restore
 
       - name: Zip executable
         run: Compress-Archive -Path publish/HDRPriorityViewer.exe -DestinationPath publish/HDRPriorityViewer.zip

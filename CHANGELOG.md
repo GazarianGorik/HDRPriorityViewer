@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.4]
+## [v0.4.0]
 #### Added
 - Filter mod
 

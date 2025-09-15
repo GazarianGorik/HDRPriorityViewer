@@ -17,24 +17,24 @@
           Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
         <Grid>
-            <!-- Layout global : 1) bandeau (auto)  2) zone principale (s'étire) -->
             <Grid.RowDefinitions>
+                <!-- left panel (auto)-->
                 <RowDefinition Height="Auto"/>
+                <!-- chart -->
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Zone principale : colonne gauche (panneau filtres), colonne droite (graph) -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="250"/>
-                    <!-- panneau de filtres -->
+                    <!-- left panel -->
                     <ColumnDefinition Width="12"/>
-                    <!-- gouttière -->
+                    <!-- separator -->
                     <ColumnDefinition Width="*"/>
-                    <!-- graphique -->
+                    <!-- chart -->
                 </Grid.ColumnDefinitions>
 
-                <!-- PANNEAU FILTRES (il s’étire en hauteur car on est en Row="1" Height="*") -->
+                <!-- left panel -->
                 <Border
                     Grid.Column="0"
                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
@@ -43,22 +43,21 @@
                     BorderBrush="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                     BorderThickness="5">
 
-                    <!-- Séparer haut (titre+recherche) et bas (catégories) : Auto / * / Auto -->
                     <Grid>
                         <Grid.RowDefinitions>
                             <!-- Titre -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Infos -->
+                            <!-- Info -->
                             <RowDefinition Height="Auto"/>
 
                             <!-- Titre -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Catégories en bas -->
+                            <!-- Searches -->
                             <RowDefinition Height="Auto"/>
 
                             <!-- Titre -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Catégories en bas -->
+                            <!-- Filters -->
                             <RowDefinition Height="*"/>
                             
                             <!-- Buttons -->
@@ -66,24 +65,24 @@
                         </Grid.RowDefinitions>
 
 
-                        <!-- Titre -->
-                        <Grid HorizontalAlignment="Stretch" Padding="8,5,0,0">
+
+                        <Grid Grid.Row="0" HorizontalAlignment="Stretch" Padding="8,5,8,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <!-- Colonne texte : prend tout l'espace dispo -->
                                 <ColumnDefinition Width="Auto"/>
-                                <!-- Colonne bouton : prend juste ce qu'il faut -->
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Row="0"
+                            <!-- Project Info -->
+                            <TextBlock Grid.Column="0"
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Center"
-                                   Text="Project Infos"
+                                   Text="Project Info"
                                    FontSize="18"
                                    FontWeight="SemiBold"
                                    Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
                                    Margin="0,0,0,0"/>
-                            <Button Grid.Row="2" 
+                            <!-- Reanalyze button -->
+                            <Button Grid.Column="1" 
                                 x:Name="ReAnalyzeButton"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Center"
@@ -95,8 +94,7 @@
                                 Height="30"/>
                         </Grid>
 
-                        <!-- Stats overlay en haut à droite du graphique -->
-
+                        <!-- Stats -->
                         <ScrollViewer HorizontalScrollMode="Auto"
                                       Background="Transparent" 
                                       Grid.Row="1"
@@ -124,7 +122,7 @@
                             </StackPanel>
                         </ScrollViewer>
 
-                        <!-- Titre -->
+                        <!-- Searches Title -->
                         <TextBlock Grid.Row="2"
                                Text="Searches"
                                FontSize="18"
@@ -132,8 +130,7 @@
                                Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
                                Margin="8,0,0,8"/>
 
-                        <!-- Search -->
-
+                        <!-- Searches -->
                         <ScrollViewer Grid.Row="3"
                                       HorizontalScrollMode="Auto"
                                       HorizontalScrollBarVisibility="Auto"
@@ -174,14 +171,73 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
+                        
+                        <!-- Filters -->
+                        <Grid Grid.Row="4" HorizontalAlignment="Stretch" Padding="8,5,8,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                        <!-- Titre -->
-                        <TextBlock Grid.Row="4"
-                               Text="Filters"
-                               FontSize="18"
-                               FontWeight="SemiBold"
-                               Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
-                               Margin="8,0,0,8"/>
+                            <!-- Filters Title -->
+                            <TextBlock Grid.Column="0"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Text="Filters"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
+                                       Margin="0,0,0,8"/>
+
+                            <StackPanel  Grid.Column ="2" 
+                                         Orientation="Horizontal"
+                                         HorizontalAlignment="Right"
+                                         VerticalAlignment="Center"
+                                         Spacing="5">
+                                
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Text=""
+                                           FontSize="14"
+                                           Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
+                                           Margin="0,0,0,8"/>
+                                <!-- Filters mod -->
+                                <DropDownButton x:Name="FiltersModDropDown"
+                                                Grid.Row="2"
+                                                FontSize="11"
+                                                MinWidth="100"
+                                                MaxWidth="140"
+                                                Height="26"
+                                                Margin="0,0,0,8">
+
+                                    <DropDownButton.Content>
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <!-- Icon -->
+                                            <FontIcon Glyph="&#xe9f5;" 
+                                                      FontSize="12"
+                                                      VerticalAlignment="Center"
+                                                      Foreground="{ThemeResource ApplicationForegroundThemeBrush}"/>
+                                            <!-- Text -->
+                                            <TextBlock x:Name="FiltersModText"
+                                                       Text="Auto"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{ThemeResource ApplicationForegroundThemeBrush}"/>
+                                        </StackPanel>
+                                    </DropDownButton.Content>
+
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout Placement="Bottom">
+                                            <MenuFlyoutItem Text="Auto" Click="OnFilterModSelected"/>
+                                            <MenuFlyoutItem Text="Color" Click="OnFilterModSelected"/>
+                                            <MenuFlyoutItem Text="WorkUnit" Click="OnFilterModSelected"/>
+                                            <MenuFlyoutItem Text="Folder" Click="OnFilterModSelected"/>
+                                            <MenuFlyoutItem Text="ActorMixer" Click="OnFilterModSelected"/>
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                            </StackPanel>
+                        </Grid>
                         
                         <!-- Filters -->
                         <ScrollViewer Grid.Row="5"
@@ -217,23 +273,45 @@
                             </StackPanel>
                         </ScrollViewer>
                         
-                        <!-- Links -->
-                        <StackPanel Grid.Row="6" 
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="20">
-                            <TextBlock TextWrapping="WrapWholeWords"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center">
-                                <Span xml:space="preserve"><Hyperlink UnderlineStyle="None" Foreground="#508ecc" NavigateUri="https://github.com/GazarianGorik/HDRPriorityViewer/issues">🐛 Bug Report</Hyperlink></Span>
-                            </TextBlock>
-                            <TextBlock TextWrapping="WrapWholeWords"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center">
-                                <Span xml:space="preserve"><Hyperlink UnderlineStyle="None" Foreground="#508ecc" NavigateUri="https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4">🍺 Donate</Hyperlink></Span>
-                            </TextBlock>
-                        </StackPanel>
+                        <!-- Buttons -->
+                        <Grid Grid.Row="6" HorizontalAlignment="Stretch" Padding="0,5,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Border Grid.Column="0"
+                                    BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+                                    BorderThickness="0.5"
+                                    Padding="8"
+                                    CornerRadius="8"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center">
+
+                                <TextBlock TextWrapping="WrapWholeWords"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0,8,0">
+                                    <Span xml:space="preserve"><Hyperlink UnderlineStyle="None" FontSize="12" Foreground="{ThemeResource ApplicationForegroundThemeBrush}" NavigateUri="https://github.com/GazarianGorik/HDRPriorityViewer/issues">🐛 Bug Report</Hyperlink></Span>
+                                </TextBlock>
+                            </Border>
+                            
+                            <Border Grid.Column="2"
+                                    BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+                                    BorderThickness="0.5"
+                                    Padding="8"
+                                    CornerRadius="8"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
+                                <TextBlock TextWrapping="WrapWholeWords"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0,8,0">
+                                    <Span xml:space="preserve"><Hyperlink UnderlineStyle="None" FontSize="12" Foreground="{ThemeResource ApplicationForegroundThemeBrush}" NavigateUri="https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4">🍺 Donate</Hyperlink></Span>
+                                </TextBlock>
+                            </Border>
+                        </Grid>
                     </Grid>
                 </Border>
 
@@ -252,7 +330,7 @@
         </Grid>
 
 
-        <!-- Connexion -->
+        <!-- Connection -->
         <Grid x:Name="FirstAnalyzePanel" VerticalAlignment="Stretch" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -263,7 +341,7 @@
 
             <StackPanel Grid.Row="2" Orientation="Vertical" HorizontalAlignment="Center">
 
-                <!-- Titre -->
+                <!-- Title -->
                 <TextBlock HorizontalAlignment="Left"
                    VerticalAlignment="Center"
                    Text="WAAPI Connection Settings"
@@ -314,7 +392,7 @@
                             Margin="0,0,0,30"/>
                 </StackPanel>
 
-                <!-- Bouton principal -->
+                <!-- Boutons -->
                 <Button x:Name="AnalyzeButton"
                 Content="Connect and Analyze Wwise project"
                 Click="AnalyzeButton_Click"
@@ -339,7 +417,7 @@
                 </Button>
 
 
-                <!-- Lien -->
+                <!-- Links -->
                 <StackPanel Orientation="Horizontal" 
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
@@ -361,7 +439,7 @@
 
 
 
-        <!-- Popup de suggestions (inchangé) -->
+        <!-- Searches suggestion popup-->
         <Popup x:Name="SuggestionsPopup">
             <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" 
                     BorderBrush="Gray" 

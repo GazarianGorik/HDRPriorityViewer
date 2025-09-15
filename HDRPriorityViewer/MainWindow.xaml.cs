@@ -176,6 +176,23 @@ public sealed partial class MainWindow : Window
         return root.ActualTheme;
     }
 
+    private void OnFilterModSelected(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item)
+        {
+            // Update filters and reanalyze
+            if (Enum.TryParse<FilterMod>(item.Text, out var selected))
+            {
+                if(AppSettings.filterMod != selected)
+                {
+                    AppSettings.filterMod = selected;
+                    FiltersModText.Text = item.Text;
+                    AnalyzeButtonFullProcess();
+                }
+            }
+        }
+    }
+
     private async void ChartPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         Log.Info($"Point clicked!");
@@ -212,7 +229,12 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async void AnalyzeButton_Click(object sender, RoutedEventArgs e)
+    private void AnalyzeButton_Click(object sender, RoutedEventArgs e)
+    {
+        AnalyzeButtonFullProcess();
+    }
+
+    private async void AnalyzeButtonFullProcess()
     {
         AppUtility.ResetCacheAndUI();
 

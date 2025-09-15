@@ -498,83 +498,95 @@ namespace HDRPriorityViewer
             };
 
             // --- 1. Based on Color Override ---
-            Log.Info("Trying to get inherited parent data based on color override...");
-
-            var current = element;
-            while (current != null)
+            if (AppSettings.filterMod == FilterMod.Auto || AppSettings.filterMod == FilterMod.Color)
             {
-                var propertyList = current.Element("PropertyList");
-                if (propertyList != null)
+                Log.Info("Trying to get inherited parent data based on color override...");
+
+                var current = element;
+                while (current != null)
                 {
-                    var overrideColor = propertyList.Elements("Property")
-                        .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideColor")
-                        ?.Attribute("Value")?.Value;
-
-                    var colorProp = propertyList.Elements("Property")
-                        .FirstOrDefault(p => p.Attribute("Name")?.Value == "Color")
-                        ?.Attribute("Value")?.Value;
-
-                    if (colorProp != null && int.TryParse(colorProp, out var colorCode))
+                    var propertyList = current.Element("PropertyList");
+                    if (propertyList != null)
                     {
-                        if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
-                        {
-                            parentData.Color = GetSkColorFromWwiseCode(colorCode);
-                            parentData.Name = current.Attribute("Name")?.Value ?? "[NONE]";
-                            parentData.ID = current.Attribute("ID")?.Value ?? "[UNKOWN]";
+                        var overrideColor = propertyList.Elements("Property")
+                            .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideColor")
+                            ?.Attribute("Value")?.Value;
 
-                            Log.Info("Succeeded.");
-                            Log.AddSpace();
-                            return parentData;
+                        var colorProp = propertyList.Elements("Property")
+                            .FirstOrDefault(p => p.Attribute("Name")?.Value == "Color")
+                            ?.Attribute("Value")?.Value;
+
+                        if (colorProp != null && int.TryParse(colorProp, out var colorCode))
+                        {
+                            if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
+                            {
+                                parentData.Color = GetSkColorFromWwiseCode(colorCode);
+                                parentData.Name = current.Attribute("Name")?.Value ?? "[NONE]";
+                                parentData.ID = current.Attribute("ID")?.Value ?? "[UNKOWN]";
+
+                                Log.Info("Succeeded.");
+                                Log.AddSpace();
+                                return parentData;
+                            }
                         }
                     }
+                    current = current.Parent;
                 }
-                current = current.Parent;
+
+                Log.Info("Failed.");
+                Log.AddSpace();
+                Log.Info("Trying to get inherited parent data based on work unit...");
             }
-
-            Log.Info("Failed.");
-            Log.AddSpace();
-            Log.Info("Trying to get inherited parent data based on work unit...");
-
 
             var ancestors = element.AncestorsAndSelf().ToList();
 
             // --- 2. Fallback WorkUnit ---
-            var workUnit = AppUtility.FindAncestor(ancestors, "WorkUnit");
-            if (workUnit != null && workUnit.Attribute("Name")?.Value != "Default Work Unit")
+            if (AppSettings.filterMod == FilterMod.Auto || AppSettings.filterMod == FilterMod.WorkUnit)
             {
-                parentData.Name = workUnit.Attribute("Name")?.Value ?? "[NONE]";
-                parentData.ID = workUnit.Attribute("ID")?.Value ?? "[UNKOWN]";
-                parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
 
-                Log.Info("Succeeded.");
-                Log.AddSpace();
-                return parentData;
+                var workUnit = AppUtility.FindAncestor(ancestors, "WorkUnit");
+                if (workUnit != null && workUnit.Attribute("Name")?.Value != "Default Work Unit")
+                {
+                    parentData.Name = workUnit.Attribute("Name")?.Value ?? "[NONE]";
+                    parentData.ID = workUnit.Attribute("ID")?.Value ?? "[UNKOWN]";
+                    parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+
+                    Log.Info("Succeeded.");
+                    Log.AddSpace();
+                    return parentData;
+                }
             }
 
             // --- 3. Fallback Folder ---
-            var folder = AppUtility.FindAncestor(ancestors, "Folder");
-            if (folder != null)
+            if (AppSettings.filterMod == FilterMod.Auto || AppSettings.filterMod == FilterMod.Folder)
             {
-                parentData.Name = folder.Attribute("Name")?.Value ?? "[NONE]";
-                parentData.ID = folder.Attribute("ID")?.Value ?? "[UNKOWN]";
-                parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+                var folder = AppUtility.FindAncestor(ancestors, "Folder");
+                if (folder != null)
+                {
+                    parentData.Name = folder.Attribute("Name")?.Value ?? "[NONE]";
+                    parentData.ID = folder.Attribute("ID")?.Value ?? "[UNKOWN]";
+                    parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
 
-                Log.Info("Succeeded.");
-                Log.AddSpace();
-                return parentData;
+                    Log.Info("Succeeded.");
+                    Log.AddSpace();
+                    return parentData;
+                }
             }
 
             // --- 4. Fallback Actor-Mixer ---
-            var actorMixer = AppUtility.FindAncestor(ancestors, AppUtility.actorMixerByWwiseVersion());
-            if (actorMixer != null)
+            if (AppSettings.filterMod == FilterMod.Auto || AppSettings.filterMod == FilterMod.ActorMixer)
             {
-                parentData.Name = actorMixer.Attribute("Name")?.Value ?? "[NONE]";
-                parentData.ID = actorMixer.Attribute("ID")?.Value ?? "[UNKOWN]";
-                parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+                var actorMixer = AppUtility.FindAncestor(ancestors, AppUtility.actorMixerByWwiseVersion());
+                if (actorMixer != null)
+                {
+                    parentData.Name = actorMixer.Attribute("Name")?.Value ?? "[NONE]";
+                    parentData.ID = actorMixer.Attribute("ID")?.Value ?? "[UNKOWN]";
+                    parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
 
-                Log.Info("Succeeded.");
-                Log.AddSpace();
-                return parentData;
+                    Log.Info("Succeeded.");
+                    Log.AddSpace();
+                    return parentData;
+                }
             }
 
             return parentData;

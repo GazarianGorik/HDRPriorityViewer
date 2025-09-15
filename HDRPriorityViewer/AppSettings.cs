@@ -22,9 +22,20 @@ using SkiaSharp;
 
 namespace HDRPriorityViewer;
 
+public enum FilterMod
+{
+    Auto,
+    Color,
+    WorkUnit,
+    Folder,
+    ActorMixer
+}
+
 public static class AppSettings
 {
-    public static readonly int totalChartPointsWarningTreshold = 1000;
+    public static readonly int totalChartPointsWarningTreshold = 1500;
+
+    public static FilterMod filterMod;
 
     // Wwise audio objects point settings
     public static readonly float chartPointSize = 15;

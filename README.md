@@ -10,7 +10,7 @@ It provides a clear overview of your project and lets you open elements directly
 
 ## I - Getting Started
 ### **Downloads**
-#### [Pre-Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
+#### [Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
 [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
 [![Build](https://github.com/GazarianGorik/HDRPriorityViewer/actions/workflows/build.yml/badge.svg)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)

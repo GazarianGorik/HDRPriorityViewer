@@ -1,5 +1,5 @@
 # HDR Priority Viewer
-HDR Priority Viewer is a visual helper tool for Wwise (v2024-2025) projects that displays your HDR setup on an interactive graph.  
+HDR Priority Viewer is a visual helper tool for Wwise (2024/2025) projects that displays your HDR setup on an interactive graph.  
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, helping you maintain consistency throughout your project.
 
 > [!NOTE]

@@ -30,8 +30,8 @@
 - App auto updated
 
 #### Fixed
-- Fix : Typos
-- Fix : Low res app icon
+- Typos
+- Low res app icon
   
 ### Changed
 - Popup code cleaned

@@ -39,7 +39,7 @@ public static class ProjectAnalyzer
             try
             {
                 // === 1. Fetching data on default thread ===
-                var allBusses = await ChartBridge.GetRelevantAudioBuses();
+                var allBusses = await ChartBridge.GetRelevantAudioBusses();
                 var allEvents = await ChartBridge.GetAllEvents();
 
                 WWUParser.PreloadBusData();

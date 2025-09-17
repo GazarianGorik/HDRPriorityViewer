@@ -22,10 +22,10 @@ namespace HDRPriorityViewer
 {
     internal class ChartBridge
     {
-        public static async Task<List<AudioBus>> GetRelevantAudioBuses()
+        public static async Task<List<AudioBus>> GetRelevantAudioBusses()
         {
-            Log.Info("Requesting Audio Buses...");
-            List<AudioBus> allBusses = await WaapiBridge.GetAudioBuses();
+            Log.Info("Requesting Audio Busses...");
+            List<AudioBus> allBusses = await WaapiBridge.GetAudioBusses();
 
             if (allBusses == null || allBusses.Count == 0)
             {
@@ -97,7 +97,7 @@ namespace HDRPriorityViewer
                 }
             }
 
-            Log.Info($"Found {routedActions.Count} actions routed to HDR buses via their targets.");
+            Log.Info($"Found {routedActions.Count} actions routed to HDR busses via their targets.");
 
             return routedActions;
         }
@@ -155,7 +155,8 @@ namespace HDRPriorityViewer
                             Math.Max(volumes.Value.min, -96f),
                             volumes.Value.max,
                             action.ParentData,
-                            action.TargetId
+                            action.TargetId,
+                            evt.Name
                         );
                     }
                     catch (Exception ex)

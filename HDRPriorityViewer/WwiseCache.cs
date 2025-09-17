@@ -61,6 +61,29 @@ public class WwiseEvent
     }
 }
 
+public class ParentData()
+{
+    public string Name
+    {
+        get; set;
+    }
+    public SKColor Color
+    {
+        get; set;
+    }
+    public string ID
+    {
+        get; set;
+    }
+
+    public override bool Equals(object obj)
+    {
+        return obj is ParentData other && ID.Equals(other.ID);
+    }
+
+    public override int GetHashCode() => ID.GetHashCode();
+}
+
 public class WwiseAction
 {
     public string? Id
@@ -94,34 +117,11 @@ public static class WwiseCache
     public static ConcurrentDictionary<string, string?> outputBusCache = new(); // A link between AudioOjbId and OutputBusId
     public static ConcurrentDictionary<string, (float value, float min, float max)?> volumeRangeCache = new();
     public static readonly ConcurrentDictionary<string, XElement> audioObjectsByIdCache = new();
-    public static readonly ConcurrentDictionary<string, XElement> busesByIdCache = new();
-    public static List<ErrorPoint> chartDefaultPoints = new();
+    public static readonly ConcurrentDictionary<string, XElement> bussesByIdCache = new();
+    public static List<ErrorPoint> chartAudioObjectsPoints = new();
     public static string wampPort = "8080";
     public static string wampIP = "localhost";
     public static string wwiseVersion = "";
     public static bool isProjectDirty = false;
     public static bool hasProjectChangeSinceLastAnalyze = false;
-}
-
-public class ParentData()
-{
-    public string Name
-    {
-        get; set;
-    }
-    public SKColor Color
-    {
-        get; set;
-    }
-    public string ID
-    {
-        get; set;
-    }
-
-    public override bool Equals(object obj)
-    {
-        return obj is ParentData other && ID.Equals(other.ID);
-    }
-
-    public override int GetHashCode() => ID.GetHashCode();
 }

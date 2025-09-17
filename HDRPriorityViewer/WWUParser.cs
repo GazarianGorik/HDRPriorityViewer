@@ -77,7 +77,7 @@ namespace HDRPriorityViewer
         }
 
         /// <summary>
-        /// Loads all the WWU Buses and caches them (by ID).
+        /// Loads all the WWU Busses and caches them (by ID).
         /// </summary>
         public static void PreloadBusData()
         {
@@ -95,15 +95,16 @@ namespace HDRPriorityViewer
                 try
                 {
                     var doc = XDocument.Load(file);
-                    var buses = doc.Descendants("Bus");
-                    foreach (var bus in buses)
+                    var busses = doc.Descendants("Bus");
+                    foreach (var bus in busses)
                     {
                         var id = bus.Attribute("ID")?.Value;
                         if (string.IsNullOrEmpty(id))
                             continue;
 
                         // Cache complet des bus XML
-                        WwiseCache.busesByIdCache[id] = bus;
+                        WwiseCache.bussesByIdCache[id] = bus;
+                        Log.Info($"Bus {bus.Attribute("Name")?.Value} cached!");
                     }
                 }
                 catch (Exception ex)
@@ -112,7 +113,7 @@ namespace HDRPriorityViewer
                 }
             }
 
-            Log.Info($"Cached {WwiseCache.busesByIdCache.Count} buses.");
+            Log.Info($"Cached {WwiseCache.bussesByIdCache.Count} busses.");
         }
 
         /// <summary>
@@ -123,7 +124,7 @@ namespace HDRPriorityViewer
         {
             float totalValue = 0f, totalMin = 0f, totalMax = 0f;
 
-            while (!string.IsNullOrEmpty(busId) && WwiseCache.busesByIdCache.TryGetValue(busId, out var bus))
+            while (!string.IsNullOrEmpty(busId) && WwiseCache.bussesByIdCache.TryGetValue(busId, out var bus))
             {
                 Log.Info($"Extracting volume contribution of: {bus.Attribute("Name")?.Value} ({busId})");
                 var contrib = ExtractVolumeContributions(bus, false);
@@ -502,35 +503,19 @@ namespace HDRPriorityViewer
             {
                 Log.Info("Trying to get inherited parent data based on color override...");
 
-                var current = element;
-                while (current != null)
+                var colorCode = GetAudioElementHeritedColor(element, out XElement? ancestorElement);
+
+                if (colorCode != null && ancestorElement != null)
                 {
-                    var propertyList = current.Element("PropertyList");
-                    if (propertyList != null)
-                    {
-                        var overrideColor = propertyList.Elements("Property")
-                            .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideColor")
-                            ?.Attribute("Value")?.Value;
 
-                        var colorProp = propertyList.Elements("Property")
-                            .FirstOrDefault(p => p.Attribute("Name")?.Value == "Color")
-                            ?.Attribute("Value")?.Value;
+                    parentData.Color = GetSkColorFromWwiseCode(GetAudioElementHeritedColor(element).Value);
+                    parentData.Name = ancestorElement.Attribute("Name")?.Value ?? "[NONE]";
+                    parentData.ID = ancestorElement.Attribute("ID")?.Value ?? "[UNKOWN]";
 
-                        if (colorProp != null && int.TryParse(colorProp, out var colorCode))
-                        {
-                            if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
-                            {
-                                parentData.Color = GetSkColorFromWwiseCode(colorCode);
-                                parentData.Name = current.Attribute("Name")?.Value ?? "[NONE]";
-                                parentData.ID = current.Attribute("ID")?.Value ?? "[UNKOWN]";
 
-                                Log.Info("Succeeded.");
-                                Log.AddSpace();
-                                return parentData;
-                            }
-                        }
-                    }
-                    current = current.Parent;
+                    Log.Info("Succeeded.");
+                    Log.AddSpace();
+                    return parentData;
                 }
 
                 Log.Info("Failed.");
@@ -549,7 +534,10 @@ namespace HDRPriorityViewer
                 {
                     parentData.Name = workUnit.Attribute("Name")?.Value ?? "[NONE]";
                     parentData.ID = workUnit.Attribute("ID")?.Value ?? "[UNKOWN]";
-                    parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+
+                    var colorCode = GetAudioElementHeritedColor(workUnit);
+                    SKColor color = colorCode != null ? GetSkColorFromWwiseCode(colorCode.Value) : GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+                    parentData.Color = color;
 
                     Log.Info("Succeeded.");
                     Log.AddSpace();
@@ -565,7 +553,10 @@ namespace HDRPriorityViewer
                 {
                     parentData.Name = folder.Attribute("Name")?.Value ?? "[NONE]";
                     parentData.ID = folder.Attribute("ID")?.Value ?? "[UNKOWN]";
-                    parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+
+                    var colorCode = GetAudioElementHeritedColor(folder);
+                    SKColor color = colorCode != null ? GetSkColorFromWwiseCode(colorCode.Value) : GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+                    parentData.Color = color;
 
                     Log.Info("Succeeded.");
                     Log.AddSpace();
@@ -581,7 +572,10 @@ namespace HDRPriorityViewer
                 {
                     parentData.Name = actorMixer.Attribute("Name")?.Value ?? "[NONE]";
                     parentData.ID = actorMixer.Attribute("ID")?.Value ?? "[UNKOWN]";
-                    parentData.Color = GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+
+                    var colorCode = GetAudioElementHeritedColor(actorMixer);
+                    SKColor color = colorCode != null ? GetSkColorFromWwiseCode(colorCode.Value) : GetColorBasedOnIndexAndPaletteRange(defaultPaletteRange, defaultColorPaletteIndex);
+                    parentData.Color = color;
 
                     Log.Info("Succeeded.");
                     Log.AddSpace();
@@ -590,6 +584,66 @@ namespace HDRPriorityViewer
             }
 
             return parentData;
+        }
+
+        private static int? GetAudioElementColor(XElement wwiseAudioElement)
+        {
+            var propertyList = wwiseAudioElement.Element("PropertyList");
+            if (propertyList != null)
+            {
+                var overrideColor = propertyList.Elements("Property")
+                    .FirstOrDefault(p => p.Attribute("Name")?.Value == "OverrideColor")
+                    ?.Attribute("Value")?.Value;
+
+                var colorProp = propertyList.Elements("Property")
+                    .FirstOrDefault(p => p.Attribute("Name")?.Value == "Color")
+                    ?.Attribute("Value")?.Value;
+
+                if (colorProp != null && int.TryParse(colorProp, out var colorCode))
+                {
+                    if (string.Equals(overrideColor, "True", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return colorCode;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static int? GetAudioElementHeritedColor(XElement wwiseAudioElement, out XElement? ancestorElement)
+        {
+            var current = wwiseAudioElement;
+
+            while (current != null)
+            {
+                var colorCode = GetAudioElementColor(current);
+
+                if (colorCode != null)
+                {
+                    ancestorElement = current;
+                    return colorCode;
+                }
+                current = current.Parent;
+            }
+            ancestorElement = null;
+            return null;
+        }
+
+        private static int? GetAudioElementHeritedColor(XElement wwiseAudioElement)
+        {
+            var current = wwiseAudioElement;
+
+            while (current != null)
+            {
+                var colorCode = GetAudioElementColor(current);
+
+                if (colorCode != null)
+                {
+                    return colorCode;
+                }
+                current = current.Parent;
+            }
+            return null;
         }
 
         private static SKColor GetColorBasedOnIndexAndPaletteRange(int paletteRange, int index)
@@ -642,7 +696,7 @@ namespace HDRPriorityViewer
 
                             // Add to the raw object cache
                             WwiseCache.audioObjectsByIdCache[id] = obj;
-                            Log.Info($"{id} {obj.Name} added to cache!");
+                            Log.Info($"{id} {obj.Attribute("Name")?.Value} added to cache!");
 
                             // Add audio object → bus link
                             WwiseCache.outputBusCache.TryAdd(id, GetOutputBus(obj));

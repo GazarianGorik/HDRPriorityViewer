@@ -120,7 +120,7 @@ internal static class WaapiBridge
         {
             try
             {
-                Log.Info("Checking wwise project dirty state...");
+                //Log.Info("Checking wwise project dirty state...");
                 var result = await GenericClientCall("ak.wwise.core.getProjectInfo");
                 var isDirty = result["isDirty"]?.Value<bool>();
 
@@ -217,9 +217,9 @@ internal static class WaapiBridge
 
     #region WAAPI Helpers (unchanged behaviour but batched + cached)
 
-    public static async Task<List<AudioBus>> GetAudioBuses()
+    public static async Task<List<AudioBus>> GetAudioBusses()
     {
-        var buses = new List<AudioBus>();
+        var busses = new List<AudioBus>();
 
         var query = new JObject(
             new JProperty("from", new JObject(
@@ -258,7 +258,7 @@ internal static class WaapiBridge
                     }
                 }
 
-                buses.Add(new AudioBus
+                busses.Add(new AudioBus
                 {
                     Name = bus["name"]?.ToString(),
                     Id = bus["id"]?.ToString(),
@@ -268,12 +268,12 @@ internal static class WaapiBridge
                 });
             }
 
-            return buses;
+            return busses;
         }
         catch (Exception e)
         {
             Log.Error(e);
-            return buses;
+            return busses;
         }
     }
 

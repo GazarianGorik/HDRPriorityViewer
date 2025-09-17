@@ -59,7 +59,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     public Dictionary<ParentData, ScatterSeries<ErrorPoint>> _seriesByParentData = new Dictionary<ParentData, ScatterSeries<ErrorPoint>>();
 
-    public void AddPointWithVerticalError(string name, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, ParentData parentData, string wwiseID)
+    public void AddPointWithVerticalError(string name, float volume, float VolumeRTPCMinValue, float VolumeRTPCMaxValue, ParentData parentData, string wwiseID, string eventName)
     {
         MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
@@ -82,7 +82,8 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         if (point.Context.DataSource is ErrorPoint errorPoint)
                         {
                             PointMetaData? myMeta = errorPoint.MetaData as PointMetaData;
-                            return myMeta?.Name ?? "Unknown";
+                            string tooltipLabel = $"Event: {myMeta?.EventName}{Environment.NewLine}{myMeta?.Name}" ?? "Unknown";
+                            return tooltipLabel;
                         }
                         return "Unknown";
                     },
@@ -98,15 +99,16 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 MetaData = new PointMetaData
                 {
-                    Name = $"{name} : {volume}dB ({VolumeRTPCMinValue} | {VolumeRTPCMaxValue})",
+                    Name = $"Object: {name}{Environment.NewLine}Priority: {volume}dB ({VolumeRTPCMinValue}dB | {VolumeRTPCMaxValue}dB)",
                     WwiseID = wwiseID,
-                    OwnerSerie = series
+                    OwnerSerie = series,
+                    EventName = eventName,
                 }
             };
 
             // Add the point to the correct series
             ((ObservableCollection<ErrorPoint>)series.Values).Add(pointToAdd);
-            WwiseCache.chartDefaultPoints.Add(pointToAdd);
+            WwiseCache.chartAudioObjectsPoints.Add(pointToAdd);
         });
     }
 
@@ -420,7 +422,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
         _borderSerie.Values = new ObservableCollection<ObservablePoint>();
 
         // 4. Optionally reset Wwise cache if needed
-        WwiseCache.chartDefaultPoints.Clear();
+        WwiseCache.chartAudioObjectsPoints.Clear();
 
         Log.Info("Chart cleared successfully.");
     }
@@ -619,6 +621,10 @@ public class PointMetaData : ChartEntityMetaData
         get; set;
     }
     public string WwiseID
+    {
+        get; set;
+    }
+    public string EventName
     {
         get; set;
     }

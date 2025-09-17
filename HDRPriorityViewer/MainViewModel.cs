@@ -147,7 +147,7 @@ public partial class MainViewModel : ObservableObject
             var queryWords = NormalizeKey(item.Text)
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            var matches = WwiseCache.chartDefaultPoints
+            var matches = WwiseCache.chartAudioObjectsPoints
                 .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
                 .Where(n =>
                 {

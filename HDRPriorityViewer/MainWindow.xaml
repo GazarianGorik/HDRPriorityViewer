@@ -18,7 +18,7 @@
 
         <Grid>
             <Grid.RowDefinitions>
-                <!-- left panel (auto)-->
+                <!-- left panel -->
                 <RowDefinition Height="Auto"/>
                 <!-- chart -->
                 <RowDefinition Height="*"/>

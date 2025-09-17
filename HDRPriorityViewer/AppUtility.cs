@@ -60,10 +60,10 @@ namespace HDRPriorityViewer
             WWUParser.ResetProjectFolderPaths();
 
             WwiseCache.audioObjectsByIdCache.Clear();
-            WwiseCache.busesByIdCache.Clear();
+            WwiseCache.bussesByIdCache.Clear();
             WwiseCache.volumeRangeCache.Clear();
             WwiseCache.outputBusCache.Clear();
-            WwiseCache.chartDefaultPoints.Clear();
+            WwiseCache.chartAudioObjectsPoints.Clear();
 
             var mainWindow = MainWindow.Instance;
             if (mainWindow != null)

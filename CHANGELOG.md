@@ -27,7 +27,7 @@
 ## [v0.3.0]
 #### Added
 - Bug report & donate buttons
-- App auto updated
+- App auto update
 
 #### Fixed
 - Typos

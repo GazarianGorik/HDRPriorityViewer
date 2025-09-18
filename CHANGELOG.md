@@ -2,16 +2,18 @@
 
 ## [v0.4.0]
 #### Added
-- Filter mod
+- Option to select filter generation logic (auto, color, work unit, folder, actor mixer)
+
+#### Fixed
+- Chart update state
+- Check for update limits errors
+- Wwise reconnection error
 
 #### Changed
-- Fix: Chart update state
-- Fix: Check for update limits errors
-- Fix: Wwise reconnection error
 - UI minor adjustments
 
 ## [v0.3.3]
-#### Changed
+#### Fixed
 - Tool update popup now displays cumulative changelogs
 
 ## [v0.3.2]
@@ -19,17 +21,19 @@
 - Tool version added to the main window title
 
 ## [v0.3.1]
-#### Changed
+#### Added
 - Pre-release tag added to update popup if the update is a pre-release
   
 ## [v0.3.0]
 #### Added
 - Bug report & donate buttons
-- App auto updated
+- App auto update
 
-#### Changed
-- Fix : Typos
-- Fix : Low res app icon
+#### Fixed
+- Typos
+- Low res app icon
+  
+### Changed
 - Popup code cleaned
 
 ## [v0.2.0]

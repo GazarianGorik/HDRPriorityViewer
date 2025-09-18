@@ -144,32 +144,45 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(item.Text))
         {
-            var queryWords = NormalizeKey(item.Text)
+            // Detects if the search should be based on Event
+            bool searchByEvent = item.Text.StartsWith("(event)", StringComparison.OrdinalIgnoreCase);
+            var searchText = searchByEvent
+                ? item.Text.Substring("(event)".Length).Trim()
+                : item.Text;
+
+            var queryWords = NormalizeKey(searchText)
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
             var matches = WwiseCache.chartAudioObjectsPoints
                 .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
                 .Where(n =>
                 {
-                    var name = (n.MetaData as PointMetaData).Name.Split(':')[0];
-                    var normalized = NormalizeKey(name);
+                    var objectName = (n.MetaData as PointMetaData).AudioObjectName;
+
+                    var eventName = (n.MetaData as PointMetaData).EventName;
+
+                    // Choose the text to use for the search
+                    var nameToSearch = searchByEvent ? eventName : objectName;
+
+                    var normalized = NormalizeKey(nameToSearch);
                     var nameWords = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
                     return queryWords.All(q => nameWords.Any(nw => nw.StartsWith(q, StringComparison.Ordinal)));
                 });
 
-            // Prepare normalized sets for O(1) tests
+            // Prepare normalized sets to avoid duplicates
             var normalizedSearched = new HashSet<string>(Searches.Select(NormalizeKey));
             var normalizedListed = new HashSet<string>(SearchSuggestions.Select(NormalizeKey));
 
             foreach (var m in matches)
             {
-                var suggestionToAdd = (m.MetaData as PointMetaData).Name.Split(':')[0];
-                var key = NormalizeKey(suggestionToAdd);
+                var objectName = (m.MetaData as PointMetaData).AudioObjectName;
 
-                // Not already listed (same name, different case, spaces, _...) AND not already searched
+                var key = NormalizeKey(objectName);
+
                 if (!normalizedListed.Contains(key) && !normalizedSearched.Contains(key))
                 {
-                    SearchSuggestions.Add(suggestionToAdd);
+                    SearchSuggestions.Add(objectName);
                     normalizedListed.Add(key);
                 }
             }

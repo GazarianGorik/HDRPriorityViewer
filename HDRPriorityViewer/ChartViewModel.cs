@@ -82,7 +82,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         if (point.Context.DataSource is ErrorPoint errorPoint)
                         {
                             PointMetaData? myMeta = errorPoint.MetaData as PointMetaData;
-                            string tooltipLabel = $"Event: {myMeta?.EventName}{Environment.NewLine}{myMeta?.Name}" ?? "Unknown";
+                            string tooltipLabel = $"Event: {eventName}{Environment.NewLine}Object: {name}{Environment.NewLine}Priority: {volume}dB ({VolumeRTPCMinValue}dB | {VolumeRTPCMaxValue}dB)";
                             return tooltipLabel;
                         }
                         return "Unknown";
@@ -99,10 +99,10 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 MetaData = new PointMetaData
                 {
-                    Name = $"Object: {name}{Environment.NewLine}Priority: {volume}dB ({VolumeRTPCMinValue}dB | {VolumeRTPCMaxValue}dB)",
-                    WwiseID = wwiseID,
-                    OwnerSerie = series,
+                    AudioObjectName = name,
                     EventName = eventName,
+                    WwiseID = wwiseID,
+                    OwnerSerie = series
                 }
             };
 
@@ -141,16 +141,16 @@ public partial class ChartViewModel : INotifyPropertyChanged
             {
                 foreach (ErrorPoint pt in scatterSeries.Values)
                 {
-                    string ptNameWithoutOtherData = "";
+                    string ptAudioObjectName = "";
                     PointMetaData md = new PointMetaData();
 
                     if (pt.MetaData is PointMetaData pointMetaData)
                     {
                         md = pointMetaData;
-                        ptNameWithoutOtherData = md.Name.Split(':')[0].Trim();
+                        ptAudioObjectName = md.AudioObjectName;
                     }
 
-                    if (!string.IsNullOrEmpty(ptNameWithoutOtherData) && ptNameWithoutOtherData == pointName)
+                    if (!string.IsNullOrEmpty(ptAudioObjectName) && ptAudioObjectName == pointName)
                     {
                         SKColor ptColor = SKColors.Red; // fallback
                         if (scatterSeries.Fill is SolidColorPaint solidColor)
@@ -160,8 +160,8 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         {
                             MetaData = new PointMetaData
                             {
-                                Name = md.Name,
                                 WwiseID = md.WwiseID,
+                                AudioObjectName = md.AudioObjectName,
                                 TwinPoint = pt
                             }
                         };
@@ -203,7 +203,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         if (cp.Context.DataSource is ErrorPoint ep &&
                             ep.MetaData is PointMetaData md)
                         {
-                            return md.Name.Split(':')[0];
+                            return md.AudioObjectName;
                         }
                         return "";
                     },
@@ -315,13 +315,13 @@ public partial class ChartViewModel : INotifyPropertyChanged
 
     public void MakeClickablePointByName(ErrorPoint point)
     {
-        string pointName = (point.MetaData as PointMetaData).Name;
+        string pointAudioObjectName = (point.MetaData as PointMetaData).AudioObjectName;
 
         UnmakeClickablePointByName();
 
-        Log.Info($"Making clickable '{pointName}'...");
+        Log.Info($"Making clickable '{pointAudioObjectName}'...");
 
-        List<ErrorPoint> pointsToHighlight = new List<ErrorPoint>();
+        List<ErrorPoint> clickablePoints = new List<ErrorPoint>();
 
         // Go through all series (including highlights already added)
         List<ISeries> baseSeries = Series.ToList();
@@ -345,11 +345,11 @@ public partial class ChartViewModel : INotifyPropertyChanged
                             Log.Info($"Color: {color}");
                         }
 
-                        pointsToHighlight.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
+                        clickablePoints.Add(new ErrorPoint(pt.X ?? 0, pt.Y ?? 0, 0, 0, 0, 0)
                         {
                             MetaData = new PointMetaData
                             {
-                                Name = md.Name,
+                                AudioObjectName = md.AudioObjectName,
                                 WwiseID = md.WwiseID,
                                 SerieColor = color
                             }
@@ -359,13 +359,13 @@ public partial class ChartViewModel : INotifyPropertyChanged
             }
         }
 
-        if (pointsToHighlight.Count > 0)
+        if (clickablePoints.Count > 0)
         {
             ScatterSeries<ErrorPoint> clickableSeries = new ScatterSeries<ErrorPoint>
             {
                 AnimationsSpeed = TimeSpan.FromMilliseconds(100),
-                Values = new ObservableCollection<ErrorPoint>(pointsToHighlight),
-                Fill = AppSettings.chartPointClickableFill((pointsToHighlight[0]?.MetaData as PointMetaData).SerieColor),
+                Values = new ObservableCollection<ErrorPoint>(clickablePoints),
+                Fill = AppSettings.chartPointClickableFill((clickablePoints[0]?.MetaData as PointMetaData).SerieColor),
                 GeometrySize = AppSettings.chartPointClickabeSize,
                 IsHoverable = false,
                 ZIndex = 50,
@@ -378,11 +378,11 @@ public partial class ChartViewModel : INotifyPropertyChanged
             // Store the series by name to avoid duplicates
             _clickableSerieByName = clickableSeries;
 
-            Log.Info($"Point '{pointName}' Clickable with {pointsToHighlight.Count} points.");
+            Log.Info($"Point '{pointAudioObjectName}' Clickable with {clickablePoints.Count} points.");
         }
         else
         {
-            Log.Info($"No point found with the name '{pointName}'.");
+            Log.Info($"No point found with the name '{pointAudioObjectName}'.");
         }
     }
 
@@ -616,15 +616,15 @@ public class NoTooltip : IChartTooltip, IDisposable
 
 public class PointMetaData : ChartEntityMetaData
 {
-    public string Name
-    {
-        get; set;
-    }
-    public string WwiseID
+    public string AudioObjectName
     {
         get; set;
     }
     public string EventName
+    {
+        get; set;
+    }
+    public string WwiseID
     {
         get; set;
     }

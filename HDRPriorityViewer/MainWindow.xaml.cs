@@ -210,10 +210,10 @@ public sealed partial class MainWindow : Window
             if (point.Context.DataSource is ErrorPoint errorPoint)
             {
                 var meta = errorPoint.MetaData as PointMetaData;
-                var name = meta?.Name ?? "Unknown";
+                var audioObjectName = meta?.AudioObjectName ?? "Unknown";
                 var wwiseID = meta?.WwiseID ?? "Unknown";
 
-                Log.Info($"Point clicked: {name} ({wwiseID})");
+                Log.Info($"Point clicked: {audioObjectName} ({wwiseID})");
 
                 await WaapiBridge.FocusWwiseWindow();
                 await WaapiBridge.FindObjectInProjectExplorer(wwiseID);
@@ -371,8 +371,8 @@ public sealed partial class MainWindow : Window
             var chartPoint = chartPointUnderCursor.FirstOrDefault();
             if (chartPoint?.Context.DataSource is ErrorPoint ep)
             {
-                var pointName = (ep.MetaData as PointMetaData)?.Name?.Split(':')[0]?.Trim();
-                if (!string.IsNullOrEmpty(pointName))
+                var pointAudioObjectName = (ep.MetaData as PointMetaData)?.AudioObjectName;
+                if (!string.IsNullOrEmpty(pointAudioObjectName))
                 {
                     // Only redo if the point has changed
                     if (!_isPointClickable || !IsSameAsLast(chartPointUnderCursor))

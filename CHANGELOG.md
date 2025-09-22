@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.2]
+#### Fixed
+- Tool limited to a single instance to improve stability
+
 ## [v0.4.1]
 #### Added
 - Option to select search method (audio object name or event name)

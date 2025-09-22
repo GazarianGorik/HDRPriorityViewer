@@ -56,7 +56,7 @@ Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 
 ### **Chart Display**
 #### **Display logic**  
-The logic to display an element is the following:
+The logic for displaying an element is as follows:
    - If the target audio object of the event has children with specific volume setups, they will be displayed instead of the parent. (Recursive logic).
    - Otherwise, the event target audio object itself is displayed.
 

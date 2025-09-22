@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.4.1]
+#### Added
+- Option to select search method (audio object name or event name)
+
+#### Fixed
+- Invalid searches are no longer added / processed
+
+#### Changed
+- Chart tooltip improved to show: event name, object name, priority value
+
 ## [v0.4.0]
 #### Added
 - Option to select filter generation logic (auto, color, work unit, folder, actor mixer)

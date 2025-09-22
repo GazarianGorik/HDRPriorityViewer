@@ -2,7 +2,7 @@
 
 ## [v0.4.3]
 #### Fixed
-- Nothing, just an auto update test
+- Single instance bug fix
   
 ## [v0.4.2]
 #### Fixed

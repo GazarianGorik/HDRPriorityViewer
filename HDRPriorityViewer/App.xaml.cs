@@ -17,15 +17,10 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using System.Runtime.InteropServices;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using Microsoft.Windows.AppLifecycle;
 
 namespace HDRPriorityViewer
 {
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
     public partial class App : Application
     {
         public Window MainWindow => m_window!;
@@ -33,51 +28,79 @@ namespace HDRPriorityViewer
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
 
+        private Window? m_window;
 
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
         public App()
         {
+            EnsureSingleInstance();
 
-            // UI thread exceptions
-            this.UnhandledException += App_UnhandledException;
-
-            // Task exceptions
-            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-
-            // Non-UI thread exceptions
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-
+            RegisterGlobalExceptionHandlers();
 
             this.InitializeComponent();
         }
 
         /// <summary>
+        /// Prevents multiple instances of the app from running.
+        /// Redirects activation to the first instance if another is launched.
+        /// </summary>
+        private void EnsureSingleInstance()
+        {
+            string key = "HDRPriorityViewer_SingleInstance";
+            var mainInstance = AppInstance.FindOrRegisterForKey(key);
+
+            if (!mainInstance.IsCurrent)
+            {
+                // Notify user
+                MessageBox(IntPtr.Zero,
+                    "HDRPriorityViewer is already running.\nOnly one instance can run at a time.",
+                    "HDRPriorityViewer",
+                    0x30); // MB_ICONWARNING
+
+                // Redirect activation to the existing instance
+                mainInstance
+                    .RedirectActivationToAsync(AppInstance.GetCurrent().GetActivatedEventArgs())
+                    .AsTask()
+                    .Wait();
+
+                // Kill this process
+                Environment.Exit(0);
+            }
+        }
+
+        /// <summary>
+        /// Hooks global exception handlers (UI, task, and domain).
+        /// </summary>
+        private void RegisterGlobalExceptionHandlers()
+        {
+            this.UnhandledException += App_UnhandledException;
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        }
+
+        /// <summary>
         /// Invoked when the application is launched.
         /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             try
             {
-                m_window = new MainWindow();
-                m_window.Activate();
+                if (m_window == null)
+                {
+                    m_window = new MainWindow();
+                }
+
+                m_window.Activate(); // bring to foreground if already running
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                MessageBox(IntPtr.Zero, ex.ToString(), "Crash au démarrage", 0);
+                MessageBox(IntPtr.Zero, ex.ToString(), "OnLaunch() crash!", 0);
             }
         }
-
-        private Window? m_window;
-
 
         private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
         {
             Log.Error(e.Exception);
-            e.Handled = true; // empêche le crash brutal
+            e.Handled = true;
         }
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)

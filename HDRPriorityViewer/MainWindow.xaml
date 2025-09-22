@@ -122,13 +122,70 @@
                             </StackPanel>
                         </ScrollViewer>
 
-                        <!-- Searches Title -->
-                        <TextBlock Grid.Row="2"
-                               Text="Searches"
-                               FontSize="18"
-                               FontWeight="SemiBold"
-                               Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
-                               Margin="8,0,0,8"/>
+
+                        <!-- Searches -->
+                        <Grid Grid.Row="2" HorizontalAlignment="Stretch" Padding="8,5,8,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Filters Title -->
+                            <TextBlock Grid.Column="0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        Text="Searches"
+                                        FontSize="18"
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
+                                        Margin="0,0,0,8"/>
+
+                            <StackPanel  Grid.Column ="2" 
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Spacing="5">
+
+                                <TextBlock HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Text=""
+                                            FontSize="14"
+                                            Foreground="{ThemeResource ApplicationForegroundThemeBrush}"
+                                            Margin="0,0,0,8"/>
+                                <!-- Searches mod -->
+                                <DropDownButton x:Name="SearchesModDropDown"
+                                                    Grid.Row="2"
+                                                    FontSize="11"
+                                                    MinWidth="100"
+                                                    MaxWidth="140"
+                                                    Height="26"
+                                                    Margin="0,0,0,8">
+
+                                    <DropDownButton.Content>
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <!-- Icon -->
+                                            <FontIcon Glyph="&#xe9f5;" 
+                                                            FontSize="12"
+                                                            VerticalAlignment="Center"
+                                                            Foreground="{ThemeResource ApplicationForegroundThemeBrush}"/>
+                                            <!-- Text -->
+                                            <TextBlock x:Name="SearchesModText"
+                                                    Text="AudioObj"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{ThemeResource ApplicationForegroundThemeBrush}"/>
+                                        </StackPanel>
+                                    </DropDownButton.Content>
+
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout Placement="Bottom">
+                                            <MenuFlyoutItem Text="AudioObj" Click="OnSearchModSelected"/>
+                                            <MenuFlyoutItem Text="Event" Click="OnSearchModSelected"/>
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                            </StackPanel>
+                        </Grid>
 
                         <!-- Searches -->
                         <ScrollViewer Grid.Row="3"
@@ -157,7 +214,7 @@
                                         <StackPanel Orientation="Vertical" VerticalAlignment="Top" Spacing="4">
                                             <TextBox Width="190"
                                                     Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    PlaceholderText="Audio object to highlight..."
+                                                    PlaceholderText="{Binding PlaceholderText}"
                                                     PlaceholderForeground="Gray"
                                                     FontSize="13"
                                                     KeyDown="SearchField_KeyDown"

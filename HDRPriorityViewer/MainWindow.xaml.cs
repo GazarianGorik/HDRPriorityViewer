@@ -193,6 +193,27 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void OnSearchModSelected(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item)
+        {
+            // Update search mod
+            if (Enum.TryParse<SearchMod>(item.Text, out var selected))
+            {
+                if (AppSettings.searchMod != selected)
+                {
+                    AppSettings.searchMod = selected;
+                    SearchesModText.Text = item.Text;
+
+                    foreach (var searchItem in MainViewModel.SearchItems)
+                    {
+                        searchItem.PlaceholderText = $"Search by {item.Text}...";
+                    }
+                }
+            }
+        }
+    }
+
     private async void ChartPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         Log.Info($"Point clicked!");

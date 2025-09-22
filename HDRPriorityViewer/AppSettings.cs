@@ -30,12 +30,18 @@ public enum FilterMod
     Folder,
     ActorMixer
 }
+public enum SearchMod
+{
+    AudioObj,
+    Event
+}
 
 public static class AppSettings
 {
     public static readonly int totalChartPointsWarningTreshold = 1500;
 
     public static FilterMod filterMod;
+    public static SearchMod searchMod;
 
     // Wwise audio objects point settings
     public static readonly float chartPointSize = 15;

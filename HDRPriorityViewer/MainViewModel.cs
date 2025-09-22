@@ -111,7 +111,7 @@ public partial class MainViewModel : ObservableObject
         ChartViewModel.HighlightPointByName(trimmedText);
         item.PreviousValideText = trimmedText;
 
-        // 3. Add to the global list if it’s a new term (comparaison normalisée)
+        // 3. Add to the global list if it’s a new term
         if (!Searches.Any(s => NormalizeKey(s) == NormalizeKey(trimmedText)))
         {
             if (item == SearchItems.First())
@@ -125,7 +125,19 @@ public partial class MainViewModel : ObservableObject
 
     public void ValidateSearchItem(SearchItemViewModel item)
     {
-        if (!string.IsNullOrWhiteSpace(item.Text))
+        //check search query match any audio objects / events
+        var matches = WwiseCache.chartAudioObjectsPoints
+                .Where(n => (n.MetaData as PointMetaData).OwnerSerie.IsVisible)
+                .Where(n =>
+                {
+                    var objectName = (n.MetaData as PointMetaData).AudioObjectName;
+
+                    var normalized = NormalizeKey(objectName);
+
+                    return objectName == item.Text;
+                });
+
+        if (!string.IsNullOrWhiteSpace(item.Text) && matches.Count() > 0)
         {
             AddSearchItem(item);
         }
@@ -145,10 +157,7 @@ public partial class MainViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(item.Text))
         {
             // Detects if the search should be based on Event
-            bool searchByEvent = item.Text.StartsWith("(event)", StringComparison.OrdinalIgnoreCase);
-            var searchText = searchByEvent
-                ? item.Text.Substring("(event)".Length).Trim()
-                : item.Text;
+            var searchText = item.Text;
 
             var queryWords = NormalizeKey(searchText)
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -162,7 +171,7 @@ public partial class MainViewModel : ObservableObject
                     var eventName = (n.MetaData as PointMetaData).EventName;
 
                     // Choose the text to use for the search
-                    var nameToSearch = searchByEvent ? eventName : objectName;
+                    var nameToSearch = AppSettings.searchMod == SearchMod.Event ? eventName : objectName;
 
                     var normalized = NormalizeKey(nameToSearch);
                     var nameWords = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -341,5 +350,15 @@ public class SearchItemViewModel : ObservableObject
     {
         get => _previousValideText;
         set => SetProperty(ref _previousValideText, value);
+    }
+
+    private string _placeholderText = "Search by AudioObject...";
+    public string PlaceholderText
+    {
+        get => _placeholderText;
+        set
+        {
+            _placeholderText = value; OnPropertyChanged();
+        }
     }
 }

@@ -83,7 +83,7 @@
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <WindowsPackageType>None</WindowsPackageType>
     <ApplicationIcon>HDRPriorityViewer_Icon.ico</ApplicationIcon>
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <Title>HDR Priority Viewer</Title>
   </PropertyGroup>
 </Project>

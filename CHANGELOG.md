@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.3]
+#### Fixed
+- Nothing, just an auto update test
+  
 ## [v0.4.2]
 #### Fixed
 - Tool limited to a single instance to improve stability

@@ -56,12 +56,6 @@ namespace HDRPriorityViewer
                     "HDRPriorityViewer",
                     0x30); // MB_ICONWARNING
 
-                // Redirect activation to the existing instance
-                mainInstance
-                    .RedirectActivationToAsync(AppInstance.GetCurrent().GetActivatedEventArgs())
-                    .AsTask()
-                    .Wait();
-
                 // Kill this process
                 Environment.Exit(0);
             }

@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.4]
+#### Fixed
+- Tool not closing properly fixed
+
 ## [v0.4.3]
 #### Fixed
 - Single instance bug fix

@@ -194,16 +194,47 @@ internal class UpdateManager
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
         {
-            MainWindow.Instance.OpenLoadingDialog("Donwloading latest update from", $"{downloadUrl}");
+            MainWindow.Instance.OpenLoadingDialog("Donwloading latest update", $"{downloadUrl}");
         });
 
         // Create a temporary folder for extraction
         Directory.CreateDirectory(tempExtract);
 
-        // Download the zip
         using var client = new HttpClient();
-        var data = await client.GetByteArrayAsync(downloadUrl);
-        await File.WriteAllBytesAsync(tempZip, data); // <- write complete file
+
+        // Get response as stream (instead of full buffer)
+        using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+
+        var contentLength = response.Content.Headers.ContentLength ?? -1L;
+
+        // Stream download with progress
+        using (var contentStream = await response.Content.ReadAsStreamAsync())
+        using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true))
+        {
+            var buffer = new byte[81920];
+            long totalRead = 0;
+            int read;
+
+            while ((read = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                await fileStream.WriteAsync(buffer, 0, read);
+                totalRead += read;
+
+                int? percent = null;
+                if (contentLength > 0)
+                {
+                    percent = (int)((double)totalRead / contentLength * 100.0);
+                }
+
+                MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                {
+                    var percentText = percent.HasValue ? $"{percent.Value.ToString()}%" : "NaN";
+
+                    MainWindow.Instance.UpdateLoadingDialog($"Downloading latest update ({percentText})", $"{downloadUrl}");
+                });
+            }
+        }
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
         {
@@ -215,8 +246,36 @@ internal class UpdateManager
             MainWindow.Instance.OpenLoadingDialog("Extracting file...", "HDRPriorityViewer.exe");
         });
 
-        // Extract the zip
-        ZipFile.ExtractToDirectory(tempZip, tempExtract, overwriteFiles: true);
+        // Extract with progress per entry
+        using (var archive = ZipFile.OpenRead(tempZip))
+        {
+            var entries = archive.Entries;
+            var totalEntries = entries.Count;
+            var processed = 0;
+
+            foreach (var entry in entries)
+            {
+                var destinationPath = System.IO.Path.Combine(tempExtract, entry.FullName);
+
+                var directory = System.IO.Path.GetDirectoryName(destinationPath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                if (!string.IsNullOrEmpty(entry.Name))
+                {
+                    entry.ExtractToFile(destinationPath, overwrite: true);
+                }
+
+                processed++;
+
+                var percentText = $"{(double)processed / totalEntries * 100.0}%";
+
+                MainWindow.Instance.DispatcherQueue.TryEnqueue(() =>
+                    MainWindow.Instance.UpdateLoadingDialog($"Extracting file ({percentText})...", "HDRPriorityViewer.exe"));
+            }
+        }
 
         MainWindow.Instance.DispatcherQueue.TryEnqueue(async () =>
         {

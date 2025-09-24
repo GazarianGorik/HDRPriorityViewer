@@ -294,6 +294,19 @@ public sealed partial class MainWindow : Window
         _connectDialogTask = loadingDialog.ShowAsync();
     }
 
+    public void UpdateLoadingDialog(string loadingText, string detailsText)
+    {
+        if (loadingDialog != null)
+        {
+            loadingDialog.SetLoadingText(loadingText);
+            loadingDialog.SetDetailsText(detailsText);
+        }
+        else
+        {
+            Log.Error("Failed to update loading dialog: loadingDialog is null!");
+        }
+    }
+
     public async Task CloseLoadingDialog()
     {
         if (loadingDialog != null)

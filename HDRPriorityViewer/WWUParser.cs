@@ -126,7 +126,7 @@ namespace HDRPriorityViewer
 
             while (!string.IsNullOrEmpty(busId) && WwiseCache.bussesByIdCache.TryGetValue(busId, out var bus))
             {
-                Log.Info($"Extracting volume contribution of: {bus.Attribute("Name")?.Value} ({busId})");
+                Log.Info($"Extracting volume contribution of: {bus.Attribute("Name")?.Value}");
                 var contrib = ExtractVolumeContributions(bus, false);
                 totalValue += contrib.value;
                 totalMin += contrib.min;
@@ -870,7 +870,7 @@ namespace HDRPriorityViewer
             if (xtractFromRTPC)
             {
                 var rtpcs = obj.Element("ObjectLists")?
-               .Elements("ObjectList")
+               .Descendants("ObjectList")
                .Where(ol => (string)ol.Attribute("Name") == "RTPC")
                .SelectMany(ol =>
                    // cas 1 : Wwise 2025

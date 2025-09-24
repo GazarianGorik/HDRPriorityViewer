@@ -10,7 +10,7 @@ It provides a clear overview of your project and lets you open elements directly
 <br>
 
 ## I - Getting Started
-## **Downloads**
+### **Downloads**
 #### [Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
 [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
@@ -19,7 +19,7 @@ It provides a clear overview of your project and lets you open elements directly
 > [!IMPORTANT]
 > You may need to download and install [Latest Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) otherwise the app will crash at startup. 
 
-## **Setup & Connection**
+### **Setup & Connection**
    1) First, open your Wwise project and ensure that WAAPI is enabled.  
    2) Next, verify that the connection settings in your Wwise project match those in the tool, then click "Connect and Analyze Wwise Project."  
 

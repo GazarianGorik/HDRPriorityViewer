@@ -31,7 +31,10 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 
 ## Chart controls
 #### **Search & Filters**  
-- You can **hide or highlight specific elements** using the left pannel filters & search bars.  
+- You can **hide or highlight specific elements** using the left pannel filters & search bars.
+- With the dropdown option, you can choose to search by audio object or by event.
+> [!NOTE]
+> When searching by event, all audio objects linked to that event are displayed.
 <!--<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p> -->
 
 #### **Zoom & Pan**  
@@ -44,7 +47,7 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 <!--<p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>-->
 
 > [!IMPORTANT]
-> Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.
+> Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Reanalyze" button) to update the chart data.
 
 ## Chart Display
 #### **Display logic**  
@@ -69,18 +72,10 @@ Then, the minimum and maximum priority is displayed with a vertical lign which c
 
 <br>
 
-## How it works
+## How it works 
+The tool first connects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
+Then, it scans the `.wwu` files to retrieve HDR priority data.
 
-#### **WAAPI Data Retrieval**  
-The tool first onnects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
-
-#### **Project Scanning**  
-Then, it scans the `.wwu` files to retrieve HDR priority data, including:
-   - Voice volume
-   - Voice volume random ranges
-   - Voice volume affected by States
-   - Voice volume RTPCs
-This is done for both audio objects and their busses.
 
 <br>
 

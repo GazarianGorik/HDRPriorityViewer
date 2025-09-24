@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.5]
+#### Changed
+- Show percentage progress during update download and extraction
+  
 ## [v0.4.4]
 #### Fixed
 - Tool not closing properly fixed

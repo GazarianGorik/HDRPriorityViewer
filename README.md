@@ -31,23 +31,23 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 ### **Chart controls**
 #### **Search & Filters**  
 You can **hide or highlight specific elements** using the left pannel filters & search bars.  
-<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p>
+<!--<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p> -->
 
 > [!TIP]
 > Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unnecessary elements.  
 > It's recommended to click on "Apply default filter" (first one in the list) if this popup shows-up after the analyze.  
 > <p align="left">
-> <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" />
+<!--> <img width="400" alt="HDR Priority Viewer Screenshot" src="https://github.com/user-attachments/assets/443fb10e-b3ab-4be9-81c7-ced9d38d72bd" /> -->
 </p>
 
 #### **Zoom & Pan**  
 Using the right mouse button you can select an area of the chart to zoom-in, or use the scroll-wheel to zoom / de-zoom.
-<p align="left"><img src="https://github.com/user-attachments/assets/810f1185-3afe-4731-a129-9b9aee254a46" width="500" /></p>
+<!--<p align="left"><img src="https://github.com/user-attachments/assets/810f1185-3afe-4731-a129-9b9aee254a46" width="500" /></p>-->
 
 #### **Chart points**  
 Hover a point to show its priority properties.  
 Ctrl + Left Click to open an audio object in Wwise directly from the graph.
-<p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>
+<!--<p align="left"><img src="https://github.com/user-attachments/assets/43d9249b-026a-4188-bb1c-b3ba8659fc7e" width="500" /></p>-->
 
 > [!IMPORTANT]
 > Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.

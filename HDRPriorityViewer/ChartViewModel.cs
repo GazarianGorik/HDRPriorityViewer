@@ -82,7 +82,7 @@ public partial class ChartViewModel : INotifyPropertyChanged
                         if (point.Context.DataSource is ErrorPoint errorPoint)
                         {
                             PointMetaData? myMeta = errorPoint.MetaData as PointMetaData;
-                            string tooltipLabel = $"Event: {eventName}{Environment.NewLine}Object: {name}{Environment.NewLine}Priority: {volume}dB ({VolumeRTPCMinValue}dB | {VolumeRTPCMaxValue}dB)";
+                            string tooltipLabel = $"Event: {myMeta.EventName}{Environment.NewLine}Object: {myMeta.AudioObjectName}{Environment.NewLine}Priority: {errorPoint.Y}dB ({errorPoint.YErrorI}dB | {errorPoint.YErrorJ}dB)";
                             return tooltipLabel;
                         }
                         return "Unknown";

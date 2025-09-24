@@ -9,7 +9,7 @@ It provides a clear overview of your project and lets you open elements directly
 
 <br>
 
-## I - Getting Started
+## Getting Started
 ### **Downloads**
 #### [Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
 [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)
@@ -29,7 +29,7 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 > Make sure that the Wwise's *user preferences* window is closed before trying to connect the tool.  
 <!-- <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p> --> 
 
-## **Chart controls**
+## Chart controls
 #### **Search & Filters**  
 - You can **hide or highlight specific elements** using the left pannel filters & search bars.  
 <!--<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p> -->
@@ -46,7 +46,7 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 > [!IMPORTANT]
 > Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.
 
-## **Chart Display**
+## Chart Display
 #### **Display logic**  
 The logic for displaying an element is as follows:
    - If the target audio object of the event has children with specific volume setups, they will be displayed instead of the parent. (Recursive logic).
@@ -69,7 +69,7 @@ Then, the minimum and maximum priority is displayed with a vertical lign which c
 
 <br>
 
-## II - How it works
+## How it works
 
 #### **WAAPI Data Retrieval**  
 The tool first onnects to your Wwise session to get basic project data: busses, events, and their target audio objects rooted to an HDR bus, along with `.wwu` file locations.
@@ -84,7 +84,7 @@ This is done for both audio objects and their busses.
 
 <br>
 
-## III - Is it safe to use?
+## Is it safe to use?
 - As the tool is "read-only", the short answer is yes. It **does not modify `.wwu` files** or send any WAAPI commands that write to your project.
 - **BUT**, the tool is still in an early state of development, so always save your work before using it, as large graphs may freeze the tool, and maybe your system (less likely but we never know).
 
@@ -97,13 +97,13 @@ This is done for both audio objects and their busses.
 
 <br>
 
-## IV - Known issues
+## Known issues
 - **Zooming with Ctrl or Alt is a bit buggy.** The zoom axis updates with a slight delay due to the way LiveCharts2 handles input. For now, the most reliable way to zoom in is by using right-click selection.
 - If you unmaximize the tool window and open an audio object in Wwise with a left click on the graph point, Wwise window will resize to the tool's window size. This looks like a bug on AudioKinetic's side  , I’ll investigate further.
 
 <br>
 
-## V - Credits
+## Credits
 This project incorporates third-party code:
 
 1. LiveCharts2
@@ -120,7 +120,7 @@ This project incorporates third-party code:
 
 <br>
 
-## VI - License
+## License
 Allowed
 - Use the **compiled tool** as an internal tool to develop commercial projects.
 - Use, copy, and modify the **code** for personal or internal purposes.

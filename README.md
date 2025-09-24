@@ -85,8 +85,8 @@ This is done for both audio objects and their busses.
 <br>
 
 ## III - Is it safe to use?
-- As the tool is "read only", the short answer is yes. It **does not modify `.wwu` files** or send any WAAPI commands that write to your project.
-- **BUT**, the tool is still in pre-release version, so always save your work before using it, as large graphs may freeze the tool, and maybe your system (less likely but we never know).
+- As the tool is "read-only", the short answer is yes. It **does not modify `.wwu` files** or send any WAAPI commands that write to your project.
+- **BUT**, the tool is still in an early state of development, so always save your work before using it, as large graphs may freeze the tool, and maybe your system (less likely but we never know).
 
 > [!TIP]
 > Depending on the Wwise project complexity, the graph may contain many elements which could cause performance issues. Using filters or search bars is recommended to hide unnecessary elements.  

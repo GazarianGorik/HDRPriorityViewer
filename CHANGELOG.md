@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.6]
+#### Fixed
+- Busses RTPC not detected
+
 ## [v0.4.5]
 #### Changed
 - Show percentage progress during update download and extraction

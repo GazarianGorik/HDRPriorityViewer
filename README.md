@@ -52,8 +52,6 @@ Ctrl + Left Click to open an audio object in Wwise directly from the graph.
 > [!IMPORTANT]
 > Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.
 
-<br>
-
 ### **Chart Display**
 #### **Display logic**  
 The logic for displaying an element is as follows:

@@ -81,6 +81,9 @@ namespace HDRPriorityViewer
                 if (m_window == null)
                 {
                     m_window = new MainWindow();
+
+                    // Handle window closed
+                    m_window.Closed += OnMainWindowClosed;
                 }
 
                 m_window.Activate(); // bring to foreground if already running
@@ -89,6 +92,11 @@ namespace HDRPriorityViewer
             {
                 MessageBox(IntPtr.Zero, ex.ToString(), "OnLaunch() crash!", 0);
             }
+        }
+
+        private void OnMainWindowClosed(object sender, WindowEventArgs e)
+        {
+            Environment.Exit(0); // Force the process to terminate
         }
 
         private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)

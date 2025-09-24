@@ -2,8 +2,9 @@
 HDR Priority Viewer is a visual helper tool for Wwise (2024/2025) projects that displays your HDR setup on an interactive graph.  
 It provides a clear overview of your project and lets you open elements directly in Wwise for editing, helping you maintain consistency throughout your project.
 
+[![IMAGE ALT TEXT HERE](https://github.com/user-attachments/assets/d616f01f-84d3-4906-b6a0-c7857c195715)](https://youtu.be/1EDrH4AksQg)
 > [!NOTE]
-> The following GIFs and screenshots do not represent typical usage of the tool. They were captured using the Wwise Limbo sample project — which is not an HDR project — with the HDR option enabled on one of the main busses. 💥  
+> The following screenshot / video do not represent typical usage of the tool. They were captured using the Wwise Limbo sample project — which is not an HDR project — with the HDR option enabled on one of the main busses. 💥  
 > I chose this project simply because it provided a large session to test with, allowing me to explore the tool’s limits and refine it.
 
 <br>

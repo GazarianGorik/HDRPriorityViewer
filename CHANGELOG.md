@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.8]
+#### Fixed
+- Tooltip value rounded for a more coherent display
+
 ## [v0.4.7]
 #### Fixed
 - Chart tooltip now displays the correct data

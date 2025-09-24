@@ -10,7 +10,7 @@ It provides a clear overview of your project and lets you open elements directly
 <br>
 
 ## I - Getting Started
-### **Downloads**
+## **Downloads**
 #### [Release (Windows 10 & 11)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
 [![PayPal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.com/donate/?hosted_button_id=FPWWD2DV58BF4)
 [![Releases](https://img.shields.io/github/v/release/GazarianGorik/HDRPriorityViewer?include_prereleases&sort=semver)](https://github.com/GazarianGorik/HDRPriorityViewer/releases/latest)
@@ -19,7 +19,7 @@ It provides a clear overview of your project and lets you open elements directly
 > [!IMPORTANT]
 > You may need to download and install [Latest Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) otherwise the app will crash at startup. 
 
-### **Setup & Connection**
+## **Setup & Connection**
    1) First, open your Wwise project and ensure that WAAPI is enabled.  
    2) Next, verify that the connection settings in your Wwise project match those in the tool, then click "Connect and Analyze Wwise Project."  
 
@@ -29,7 +29,7 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 > Make sure that the Wwise's *user preferences* window is closed before trying to connect the tool.  
 <!-- <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p> --> 
 
-### **Chart controls**
+## **Chart controls**
 #### **Search & Filters**  
 - You can **hide or highlight specific elements** using the left pannel filters & search bars.  
 <!--<p align="left"><img src="https://github.com/user-attachments/assets/1a5c63ce-2ca7-4797-a83b-50bf3effc8f3" width="500" /></p> -->
@@ -46,7 +46,7 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 > [!IMPORTANT]
 > Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Re-analyze" button) to update the chart data.
 
-### **Chart Display**
+## **Chart Display**
 #### **Display logic**  
 The logic for displaying an element is as follows:
    - If the target audio object of the event has children with specific volume setups, they will be displayed instead of the parent. (Recursive logic).

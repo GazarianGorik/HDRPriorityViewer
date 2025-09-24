@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.7]
+#### Fixed
+- Chart tooltip now displays the correct data
+
 ## [v0.4.6]
 #### Fixed
 - Busses RTPC not detected

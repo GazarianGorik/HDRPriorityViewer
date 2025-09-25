@@ -29,6 +29,8 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 > Make sure that the Wwise's *user preferences* window is closed before trying to connect the tool.  
 <!-- <p align="left"><img src="https://github.com/user-attachments/assets/99a30778-7079-47a6-b263-88e6b1fba398" width="500" /></p> --> 
 
+<br>
+
 ## 🖱️ Chart controls
 #### **Search & Filters**  
 - You can **hide or highlight specific elements** using the left pannel filters & search bars.
@@ -48,6 +50,8 @@ More info about WAAPI setup & connection [here](https://www.audiokinetic.com/fr/
 
 > [!IMPORTANT]
 > Each time you modify your Wwise project, you need to save it and re-analyze it (Left pannel -> "Reanalyze" button) to update the chart data.
+
+<br>
 
 ## 📈 Chart Display
 #### **Display logic**  
